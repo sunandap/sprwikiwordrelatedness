@@ -1,0 +1,13 @@
+edu.osu.slate.experiments
+edu.osu.slate.experiments.synonym
+edu.osu.slate.experiments.wordpair
+edu.osu.slate.relatedness
+edu.osu.slate.relatedness.fang
+edu.osu.slate.relatedness.rogets
+edu.osu.slate.relatedness.swwr.algorithm
+edu.osu.slate.relatedness.swwr.data
+edu.osu.slate.relatedness.swwr.setup.graph
+edu.osu.slate.relatedness.zesch.wikipedia
+edu.osu.slate.relatedness.zesch.wiktionary
+edu.osu.slate.relatedness.zesch.wiktionary.setup
+edu.osu.slate.relatedness.zesch.wordnet
