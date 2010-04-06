@@ -18,7 +18,17 @@ package edu.osu.slate.experiments;
 import java.util.Arrays;
 import java.util.Vector;
 
-
+/**
+ * Class for calculating Spearman's Rank Correlation between two vectors.
+ * <p>
+ * For more information, go <a href="http://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient">here</a>.
+ * <p>
+ * TODO: More calculation checks for consistency.
+ * 
+ * @author weale
+ * @version 0.9
+ *
+ */
 public class Spearman {
 	
 	/**
@@ -69,30 +79,6 @@ public class Spearman {
 		}//end: for(i)
 
 		double n = X.size();
-//		double xbar = 0.0;
-//		double ybar = 0.0;
-//		for(int i=0; i<n; i++) {
-//			Ranking r = XList[i];
-//			xbar += r.getRank();
-//			
-//			r = YList[i];
-//			ybar += r.getRank();
-//		}
-//		xbar = xbar / n;
-//		ybar = ybar / n;
-//		
-//		double num = 0.0;
-//		double denx = 0.0, deny = 0.0;
-//		for(int i=0; i<n; i++) {
-//			Ranking rx = XList[i];			
-//			Ranking ry = YList[i];
-//			
-//			num += ((rx.getRank() - xbar) * (ry.getRank()-ybar));
-//			denx += Math.pow((rx.getRank() - xbar), 2.0);
-//			deny += Math.pow((ry.getRank() - ybar), 2.0);
-//		}
-
-		//double den = Math.sqrt(denx * deny);
 		double den = n * ((n * n) -1);
 		double num = 6.0 * d2;
 		

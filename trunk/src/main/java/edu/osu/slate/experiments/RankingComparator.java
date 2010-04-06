@@ -17,7 +17,13 @@ package edu.osu.slate.experiments;
 
 import java.util.Comparator;
 
-
+/**
+ * {@link Comparator} class for the {@link Ranking} class.
+ * 
+ * @author weale
+ * @version 1.0
+ * 
+ */
 public class RankingComparator implements Comparator<Ranking> {
 
 	public int compare(Ranking r1, Ranking r2) {
