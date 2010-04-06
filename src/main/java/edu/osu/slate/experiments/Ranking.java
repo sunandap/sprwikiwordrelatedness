@@ -15,28 +15,62 @@
 
 package edu.osu.slate.experiments;
 
+/**
+ * Class for linking relative rankings.
+ * <p>
+ * Used with the {@link Spearman} class for correlation calculation.
+ * 
+ * @author weale
+ * @version 1.0
+ * 
+ */
 public class Ranking {
-	private int originalID;
-	private double value;
-	private double rank;
-	
-	public Ranking(int id, double d) {
-		originalID = id;
-		value = d;
-	}
-	
-	public int getID() {
-		return originalID;
-	}
-	
-	public double getValue() {
-		return value;
-	}
-	public void setRank(double d) {
-		rank = d;
-	}
-	
-	public double getRank() {
-		return rank;
-	}
+  private int originalID;
+  private double value;
+  private double rank;
+
+ /**
+  * Constructor.
+  * <p>
+  * Sets the id value and the raw value. Rank value is set using the appropriate modifier method.
+  */
+  public Ranking(int id, double d) {
+    originalID = id;
+    value = d;
+  }
+
+ /**
+  * Accessor for the id value
+  * 
+  * @return data point id
+  */
+  public int getID() {
+    return originalID;
+  }
+
+ /**
+  * Accessor for the raw value
+  * 
+  * @return raw value
+  */
+  public double getValue() {
+    return value;
+  }
+
+ /**
+  * Accessor for the rank value
+  * 
+  * @return data point rank
+  */
+  public double getRank() {
+    return rank;
+  }
+
+ /**
+  * Modifier for the rank value
+  */
+  public void setRank(double d) {
+    rank = d;
+  }
+
 }
