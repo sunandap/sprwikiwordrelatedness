@@ -17,125 +17,173 @@ package edu.osu.slate.relatedness.fang;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
+import edu.osu.slate.relatedness.RelatednessTerm;
 import edu.osu.slate.relatedness.WordRelatedness;
 
 import net.didion.jwnl.JWNL;
 import net.didion.jwnl.JWNLException;
-import net.didion.jwnl.data.IndexWord;
-import net.didion.jwnl.data.POS;
+import net.didion.jwnl.data.*;
 import net.didion.jwnl.dictionary.Dictionary;
 
 /**
- * Implements the WordNet-based relatedness metric
+ * Implements a WordNet-based relatedness metric using the gloss definitions of given words.
  * 
  * Described in <i>A Re-examination of Query Expansion Using Lexical Resources</i>, Hui Fang 2008
  * 
  * @author weale
- * @version 0.1
+ * @version 0.5
  *
  */
 public class WordNetFangRelatedness implements WordRelatedness {
 
 	/**
-	 * 
+	 * WordNet Dictionary
 	 */
 	private static Dictionary dict;
 	
 	/**
-	 * @throws FileNotFoundException 
-	 * @throws JWNLException 
+	 * Constructor.
 	 * 
+	 * Takes the location of the WordNet configuration file "file_properties.xml" as input.
+	 * 
+	 * @param config The location of the WordNet configuration file.
+	 *
 	 */
-	public WordNetFangRelatedness(String config) throws FileNotFoundException, JWNLException {
-    FileInputStream fis = new FileInputStream(config);
-    JWNL.initialize(fis);
-    dict = Dictionary.getInstance();
+	public WordNetFangRelatedness(String config) {
+	  try {
+        FileInputStream fis = new FileInputStream(config);
+        JWNL.initialize(fis);
+        dict = Dictionary.getInstance();
+	  } catch(FileNotFoundException fnf) {
+	    System.out.println(config + " was not found.");
+	    System.exit(1);
+	  } catch(JWNLException e) {
+	    e.printStackTrace();
+	    System.exit(1);
+	  }
   }//end: WordNetFangRelatedness
 	
-	/**
-	 * @throws  
-	 * 
-	 */
-	public double getRelatedness(String w1, String w2) {
-		List<String> word1Glosses = getGlosses(w1);
-		List<String> word2Glosses = getGlosses(w2);
+ /**
+  * Determines relatedness via the gloss overlap divided by the minimum length
+  */
+  public double getRelatedness(String w1, String w2) {
+    List<String> word1Glosses = getGlosses(w1);
+    List<String> word2Glosses = getGlosses(w2);
+    
+    TreeMap<String,Integer> tm1 = new TreeMap<String,Integer>();
+    TreeMap<String,Integer> tm2 = new TreeMap<String,Integer>();
+    
+    int tm1Length = 0;
+    int tm2Length = 0;
+    
+    for(int i=0; word1Glosses!=null && i<word1Glosses.size(); i++) {
+      String[] arr = word1Glosses.get(i).split(" ");
+      for(int j = 0; j < arr.length; j++) {
+        int count = 1;
+        if(tm1.containsKey(arr[j])) {
+          count += tm1.get(arr[j]);
+        }
+        tm1.put(arr[j], count);
+        tm1Length++;
+      }
+    }
 		
-		for(int i=0; word1Glosses!=null && i<word1Glosses.size(); i++) {
-			System.out.println(word1Glosses.get(i));
-		}
-		
-		for(int i=0; word2Glosses!=null && i<word2Glosses.size(); i++) {
-			System.out.println(word2Glosses.get(i));
-		}
-		
-		return 0;
-	}
+    for(int i=0; word2Glosses!=null && i<word2Glosses.size(); i++) {
+      String[] arr = word2Glosses.get(i).split(" ");
+      for(int j = 0; j < arr.length; j++) {
+        int count = 1;
+        if(tm2.containsKey(arr[j])) {
+          count += tm2.get(arr[j]);
+        }
+        tm2.put(arr[j], count);
+        tm2Length++;
+      }
+    }
+    
+    // Get the overlap
+    double overlap = 0.0;
+    Set<Map.Entry<String,Integer>> set = tm1.entrySet();
+    Iterator<Map.Entry<String,Integer>> it = set.iterator();
+    while(it.hasNext()) {
+      Map.Entry<String, Integer> me = it.next();
+      if(tm2.containsKey(me.getKey())) {
+        overlap += Math.min(tm2.get(me.getKey()), me.getValue());
+      }
+    }
+    
+    return ( overlap / Math.min(tm1Length, tm2Length) );
+  }
 
-	/**
-	 * 
-	 */
-	public double[] getRelatedness(String w) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+ /**
+  * 
+  */
+  public RelatednessTerm[] getRelatedness(String w) {
+    // TODO Auto-generated method stub
+    return null;
+  }
 
-	/**
-	 * 
-	 * @param s
-	 * @return
-	 * @throws JWNLException 
-	 */
-	private List<String> getGlosses(String s) {
-		List<String> glossList = getPOSGlosses(s, POS.ADJECTIVE);
-		glossList.addAll(getPOSGlosses(s, POS.ADVERB));
-		glossList.addAll(getPOSGlosses(s, POS.NOUN));
-		glossList.addAll(getPOSGlosses(s, POS.VERB));
-		return glossList;
-	}
+ /**
+  * 
+  * @param s
+  * @return
+  * @throws JWNLException 
+  */
+  private List<String> getGlosses(String s) {
+    
+    List<String> glossList = getPOSGlosses(s, POS.ADJECTIVE);
+    glossList.addAll(getPOSGlosses(s, POS.ADVERB));
+    glossList.addAll(getPOSGlosses(s, POS.NOUN));
+    glossList.addAll(getPOSGlosses(s, POS.VERB));
+    return glossList;
+    
+  }
 	
-	/**
-	 * 
-	 * @param s
-	 * @param pos
-	 * @return
-	 * @throws JWNLException 
-	 */
-	private List<String> getPOSGlosses(String s, POS pos) {
-	
+ /**
+  * 
+  * @param s
+  * @param pos
+  * @return
+  * @throws JWNLException 
+  */
+  private List<String> getPOSGlosses(String s, POS pos) {
+
     LinkedList<String> glossList = new LinkedList<String>();
     IndexWord idxWord;
     try {
       idxWord = dict.getIndexWord(pos, s);
       if(idxWord != null) {
 
-//        List<WordID> l = (List<WordID>) ((Object) idxWord).getWordIDs();
-//        int i=0;
-//        while(i<l.size()) {
-//          WordID iwid = l.get(i);
-//          Word word = dict.getWord(iwid);
-//          glossList.add(word.getSynset().getGloss().replaceAll("\\p{Punct}", "").toLowerCase());    
-//          i++;
-//        }//end: while(i)
+        Synset[] l = idxWord.getSenses();
+        int i=0;
+        while(i<l.length) {
+          Synset iwid = l[i];
+          glossList.add(iwid.getGloss().replaceAll("\\p{Punct}", "").toLowerCase());    
+          i++;
+        }//end: while(i)
       }
     } catch (JWNLException e) {
       e.printStackTrace();
     }
     
-		return glossList;		
-	}//end: getGlosses
+    return glossList;		
+  }//end: getGlosses
 	
-	/**
-	 * 
-	 * @param args
-	 * @throws JWNLException 
-	 * @throws FileNotFoundException 
-	 */
-	public static void main(String [] args) throws FileNotFoundException, JWNLException {
-		WordNetFangRelatedness fr = new WordNetFangRelatedness("");
-		fr.getRelatedness("tree", "apple");
-	}//end: main()
+ /**
+  * 
+  * @param args
+  * @throws JWNLException 
+  * @throws FileNotFoundException 
+  */
+  public static void main(String [] args) throws FileNotFoundException, JWNLException {
+    WordNetFangRelatedness fr = new WordNetFangRelatedness("/u/weale/opt/jwnl14-rc2/config/file_properties.xml");
+    System.out.println(fr.getRelatedness("gem", "jewel"));
+  }//end: main()
 	
 }//end: WordNetFangRelatedness
