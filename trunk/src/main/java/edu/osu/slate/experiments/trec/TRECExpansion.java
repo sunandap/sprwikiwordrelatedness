@@ -19,113 +19,113 @@ import lemurproject.lemur.IndexManager;
 
 public class TRECExpansion {
 	
-	/* Verbose Flag */
-	public static boolean verbose = true;
+  /* Verbose Flag */
+  public static boolean verbose = true;
 	
-	/* Lemur data structures*/
-	public static Index theIndex;
-	public static QueryFile queryFile;
+  /* Lemur data structures*/
+  public static Index theIndex;
+  public static QueryFile queryFile;
 	
-	/* Wiki data structures */
-	public static AliasStrings as;
-	public static AliasSFToID sf2ID;
-	public static AliasIDToSF ID2SF;
-	public static WikiGraph wgp;
+  /* Wiki data structures */
+  public static AliasStrings as;
+  public static AliasSFToID sf2ID;
+  public static AliasIDToSF ID2SF;
+  public static WikiGraph wgp;
 	
-	/* Relatedness data structure */
-	public static RelatednessInterface spr;
+  /* Relatedness data structure */
+  public static RelatednessInterface spr;
 	
-	/**
-	 * IR Experiment to run {TREC7, TREC8, WT2G}
-	 */
-	public static String experiment;
+ /**
+  * IR Experiment to run {TREC7, TREC8, WT2G}
+  */
+  public static String experiment;
 
-	/**
-	 * Relatedness function to use {1, SPR, SPRlog}
-	 */
-	public static String relAlgo;
+ /**
+  * Relatedness function to use {1, SPR, SPRlog}
+  */
+  public static String relAlgo;
 
-	/**
-	 * Expansion determination {avg, max, multi}
-	 */
-	public static String expansionAlgorithm;
+ /**
+  * Expansion determination {avg, max, multi}
+  */
+  public static String expansionAlgorithm;
 
-	/**
-	 * Corpus to use for IR {TREC7, WT2G}
-	 */
-	public static String corpus;
+ /**
+  * Corpus to use for IR {TREC7, WT2G}
+  */
+  public static String corpus;
 
-	/**
-	 * Set of query questions {TREC7, TREC8}
-	 */
-	public static String querySource;
+ /**
+  * Set of query questions {TREC7, TREC8}
+  */
+  public static String querySource;
 	
-	/**
-	 * Source for relatedness data {enwiki, enwiktionary}
-	 */
-	public static String relData;
+ /**
+  * Source for relatedness data {enwiki, enwiktionary}
+  */
+  public static String relData;
 
-	/**
-	 * Date of relatedness data
-	 */
-	public static String datadate;
+ /**
+  * Date of relatedness data
+  */
+  public static String datadate;
 
-	/**
-	 * Type of relatedness data {M}
-	 */
-	public static String datatype;
+ /**
+  * Type of relatedness data {M}
+  */
+  public static String datatype;
 	
-	/**
-	 * 
-	 * @param args
-	 */
-	public static void setParameters(String[] args) {
-		if(args.length < 6) {
-			System.out.println("USAGE: SingleWordExpansionSPR exp relAlgo expAlgo relData datadate datatype");
-			System.out.println();
-			System.out.println("exp - trec7, trec8, wt2g");
-			System.out.println("relAlgo - 1, SPR, SPRlog");
-			System.out.println("expAlgo - avg, max, multi");			
-			System.out.println("relData - enwiki enwiktionary");
-			System.out.println("datadate - 20080103 20090203");
-			System.out.println("datatype - M");			
-			//System.exit(1);
-		}
+ /**
+  * 
+  * @param args
+  */
+  public static void setParameters(String[] args) {
+    if(args.length < 6) {
+      System.out.println("USAGE: SingleWordExpansionSPR exp relAlgo expAlgo relData datadate datatype");
+      System.out.println();
+      System.out.println("exp - trec7, trec8, wt2g");
+      System.out.println("relAlgo - 1, SPR, SPRlog");
+      System.out.println("expAlgo - avg, max, multi");			
+      System.out.println("relData - enwiki enwiktionary");
+      System.out.println("datadate - 20080103 20090203");
+      System.out.println("datatype - M");			
+      //System.exit(1);
+    }
 		
-		experiment = args[0];
-		querySource = "";
-		corpus = "";
-		
-		if(experiment.equals("trec7")) {
-			corpus = "trec7";
-			querySource = "trec7";
-		} else if(experiment.equals("trec8")) {
-			corpus = "trec7";
-			querySource = "trec8";
-		} else if(experiment.equals("wt2g")) {
-			corpus = "wt2g";
-			querySource = "trec8";
-		}
+    experiment = args[0];
+    querySource = "";
+    corpus = "";
+    
+    if(experiment.equals("trec7")) {
+      corpus = "trec7";
+      querySource = "trec7";
+    } else if(experiment.equals("trec8")) {
+      corpus = "trec7";
+      querySource = "trec8";
+    } else if(experiment.equals("wt2g")) {
+      corpus = "wt2g";
+      querySource = "trec8";
+    }
 		
 //		String relAlgo = "SPR";
 //		String relAlgo = "SPRlog";
- 		relAlgo = args[1];
+    relAlgo = args[1];
 //		String expansionAlgorithm = "max";
-		expansionAlgorithm = args[2];
+    expansionAlgorithm = args[2];
 //		String expansionAlgorithm = "multi";
 		
 //		String dataset = "enwiki";
-		relData = args[3];
+    relData = args[3];
 //		String datadate = "20080103";
-		datadate = args[4];
-		datatype = args[5];
-	}
+    datadate = args[4];
+    datatype = args[5];
+  }
 
-	/**
-	 * 
-	 * @throws Exception
-	 */
-	public static void setFiles() throws Exception {
+ /**
+  * 
+  * @throws Exception
+  */
+  public static void setFiles() throws Exception {
 		/* Open Index Database */
 		theIndex = IndexManager.openIndex("/scratch/weale/ir/indri/" + corpus + "/");
 		
