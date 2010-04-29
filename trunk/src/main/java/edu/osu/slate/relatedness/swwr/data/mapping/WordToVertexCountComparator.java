@@ -18,15 +18,15 @@ package edu.osu.slate.relatedness.swwr.data.mapping;
 import java.util.*;
 
 /**
- * Comparator class for {@link WordToIDCount} objects.
+ * Comparator class for {@link WordToVertexCount} objects.
  * <p>
  * Used for array searching/sorting.
  * 
  * @author weale
  * @version 1.0
  */
-public class WordToIDCountComparator implements Comparator<WordToIDCount> {
-	public int compare(WordToIDCount wc1, WordToIDCount wc2) {
+public class WordToVertexCountComparator implements Comparator<WordToVertexCount> {
+	public int compare(WordToVertexCount wc1, WordToVertexCount wc2) {
 		return wc1.compareTo(wc2);
 	}
 }

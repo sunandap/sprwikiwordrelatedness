@@ -19,23 +19,23 @@ import java.io.*;
 import java.util.Arrays;
 
 /**
- * Simplified lookup class for the {@link IDToWordCount} class.
+ * Simplified lookup class for the {@link VertexToWordCount} class.
  * 
  * @author weale
  * @version 1.0
  */
-public class IDToWordMapping {
+public class VertexToWordMapping {
   
-  IDToWordCount[] ids;
+  VertexToWordCount[] vertices;
   
   /**
    * Constructor.
    * <p>
-   * Reads the {@link IDToWordCount} array from the given <i>.iwc file</i>.
+   * Reads the {@link VertexToWordCount} array from the given <i>.iwc file</i>.
    * 
   * @param filename Input file name.
   */
-  public IDToWordMapping(String filename)
+  public VertexToWordMapping(String filename)
   {
     try {
       ObjectInputStream in = new ObjectInputStream(new FileInputStream(filename));
@@ -44,10 +44,10 @@ public class IDToWordMapping {
       int len = in.readInt();
       
       // Create and initialize array
-      ids = new IDToWordCount[len];
+      vertices = new VertexToWordCount[len];
       for(int i = 0; i < len; i++)
       {
-          ids[i] = (IDToWordCount) in.readObject();
+        vertices[i] = (VertexToWordCount) in.readObject();
       }//end: for(i)
       
       in.close();
@@ -67,19 +67,19 @@ public class IDToWordMapping {
   }//end: IDToWordMapping()
   
  /**
-  * Gets the Words Mapped to a given ID.
+  * Gets the words mapped to a given vertex.
   * <p>
-  * Returns null if ID is not found.
+  * Returns null if vertex is not found.
   *  
-  * @param id ID to be Mapped.
+  * @param v Vertex to be mapped.
   * @return An array of {@link WordCount} objects.
   */
-  public WordCount[] getWordMappings(int id) {
-    int pos = Arrays.binarySearch(ids, new IDToWordCount(id), new IDToWordCountComparator());
+  public WordCount[] getWordMappings(int v) {
+    int pos = Arrays.binarySearch(vertices, new VertexToWordCount(v), new VertexToWordCountComparator());
 
     if(pos >= 0)
     { // FOUND!
-      return ids[pos].getWordCounts();
+      return vertices[pos].getWordCounts();
     }
     
     return null;

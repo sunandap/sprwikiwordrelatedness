@@ -22,14 +22,14 @@ import java.util.Comparator;
 
 
 /**
- * Class to map a given word to a set of IDs.
+ * Class to map a given word to a set of vertices.
  * <p>
- * Uses an array of {@link IDCount} classes for the mapping.
+ * Uses an array of {@link VertexCount} classes for the mapping.
  * 
  * @author weale
  *
  */
-public class WordToIDCount implements Serializable {
+public class WordToVertexCount implements Serializable {
   
  /**
    * 
@@ -37,9 +37,9 @@ public class WordToIDCount implements Serializable {
   private static final long serialVersionUID = 7700956091903015001L;
 
  /**
-  * Pairs of (ID, count) Mappings
+  * Pairs of (vertex, count) Mappings
   */
-  private IDCount[] idcounts;
+  private VertexCount[] vertexCounts;
   
  /**
   * Word for Mapping 
@@ -49,11 +49,11 @@ public class WordToIDCount implements Serializable {
  /**
   * Constructor.
   *  
-  * @param w Word to Map to {@link IDCount} pairs
+  * @param w Word to Map to {@link VertexCount} pairs.
   */
-  public WordToIDCount(String w) {
+  public WordToVertexCount(String w) {
     word = w;
-    idcounts = new IDCount[0];
+    vertexCounts = new VertexCount[0];
   }
   
  /**
@@ -66,55 +66,55 @@ public class WordToIDCount implements Serializable {
   }
   
  /**
-  * Gets the array of {@link IDCount} pairs for the given word.
+  * Gets the array of {@link VertexCount} pairs for the given word.
   * 
-  * @return {@link IDCount} array contained in this mapping
+  * @return {@link VertexCount} array contained in this mapping
   */
-  public IDCount[] getIDCounts() {
-    return idcounts;
+  public VertexCount[] getVertexCounts() {
+    return vertexCounts;
   }
   
  /**
-  * Adds a new ID for the given word.
+  * Adds a new vertex for the given word.
   * 
-  * If the ID is found, we increment the existing count.
-  * If the ID is not found, we extend the given {@link IDCount} array.
+  * If the vertex is found, we increment the existing count.
+  * If the vertex is not found, we extend the given {@link VertexCount} array.
   * 
   * @param id New ID for the given word
   */
-  public void addID(int id) {
-    int pos = Arrays.binarySearch(idcounts, new IDCount(id,1), new IDCountComparator());
+  public void addVertex(int v) {
+    int pos = Arrays.binarySearch(vertexCounts, new VertexCount(v,1), new VertexCountComparator());
     if(pos >= 0)
     {
       //IDCount found!
-      int count = idcounts[pos].getCount();
-      idcounts[pos].setCount(count+1);
+      int count = vertexCounts[pos].getCount();
+      vertexCounts[pos].setCount(count+1);
     }
     else
     {
       //Add new IDCount
-      IDCount[] tmp = new IDCount[idcounts.length + 1];
-      System.arraycopy(idcounts, 0, tmp, 0, idcounts.length);
-      tmp[idcounts.length] = new IDCount(id, 1);
-      idcounts = tmp;
-      Arrays.sort(idcounts, new IDCountComparator());
+      VertexCount[] tmp = new VertexCount[vertexCounts.length + 1];
+      System.arraycopy(vertexCounts, 0, tmp, 0, vertexCounts.length);
+      tmp[vertexCounts.length] = new VertexCount(v, 1);
+      vertexCounts = tmp;
+      Arrays.sort(vertexCounts, new VertexCountComparator());
     }
   }//end: addID
   
  /**
-  * Compares two {@link WordToIDCount} objects.
+  * Compares two {@link WordToVertexCount} objects.
   *  
-  * @param wc2 Input {@link WordToIDCount} object.
+  * @param wc2 Input {@link WordToVertexCount} object.
   * @return Comparison between the two objects.
   */
-  public int compareTo(WordToIDCount wc2) {
+  public int compareTo(WordToVertexCount wc2) {
     return this.word.compareTo(wc2.word);
   }
   
  /**
-  * Write a {@link WordToIDCount} class to a file.
+  * Write a {@link WordToVertexCount} class to a file.
   * <p>
-  * Writes the number of {@link IDCount} objects. Then, writes each object in the array to the file.
+  * Writes the number of {@link VertexCount} objects. Then, writes each object in the array to the file.
   * 
   * @param out {@link ObjectOutputStream} to write to.
   * @throws IOException
@@ -125,16 +125,17 @@ public class WordToIDCount implements Serializable {
     out.writeObject(word);
     
     // Write array of IDCounts
-    out.writeInt(idcounts.length);
-    for(int i=0; i<idcounts.length; i++) {
-      out.writeObject(idcounts[i]);
+    out.writeInt(vertexCounts.length);
+    for(int i = 0; i < vertexCounts.length; i++)
+    {
+      out.writeObject(vertexCounts[i]);
     }
   }
   
  /**
-  * Reads a {@link WordToIDCount} class from a file.
+  * Reads a {@link WordToVertexCount} class from a file.
   * <p>
-  * Reads the length of {@link IDCount} objects. Then, creates and populates an appropriate array of objects.
+  * Reads the length of {@link VertexCount} objects. Then, creates and populates an appropriate array of objects.
   * 
   * @param in {@link ObjectInputStream} to read from.
   * @throws IOException
@@ -147,9 +148,11 @@ public class WordToIDCount implements Serializable {
     
     // Read array of IDCounts
     int len = in.readInt();
-    idcounts = new IDCount[len];
-    for(int i=0; i<len; i++) {
-      idcounts[i] = (IDCount) in.readObject();
+    vertexCounts = new VertexCount[len];
+    
+    for(int i = 0; i < len; i++)
+    {
+      vertexCounts[i] = (VertexCount) in.readObject();
     }//end: for(i)
   }//end: readObject
 }

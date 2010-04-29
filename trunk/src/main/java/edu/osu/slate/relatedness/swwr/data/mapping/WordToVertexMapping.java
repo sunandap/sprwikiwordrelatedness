@@ -19,22 +19,22 @@ import java.io.*;
 import java.util.Arrays;
 
 /**
- * Simplified lookup class for the {@link WordToIDCount} class.
+ * Simplified lookup class for the {@link WordToVertexCount} class.
  * 
  * @author weale
  * @version 1.0
  */
-public class WordToIDMapping {
-  private WordToIDCount[] words;
+public class WordToVertexMapping {
+  private WordToVertexCount[] words;
   
  /**
   * Constructor.
   * <p>
-  * Reads the {@link WordToIDCount} array from the given <i>.wic file</i>.
+  * Reads the {@link WordToVertexCount} array from the given <i>.wic file</i>.
   * 
   * @param filename Input file name.
   */
-  public WordToIDMapping(String filename)
+  public WordToVertexMapping(String filename)
   {
     try
     {
@@ -44,10 +44,10 @@ public class WordToIDMapping {
       int len = in.readInt();
       
       // Create and initialize array
-      words = new WordToIDCount[len];
+      words = new WordToVertexCount[len];
       for(int i = 0; i < len; i++)
       {
-        words[i] = (WordToIDCount) in.readObject();
+        words[i] = (WordToVertexCount) in.readObject();
       }//end: for(i)
       
       in.close();
@@ -72,15 +72,15 @@ public class WordToIDMapping {
   * Returns null if the word is not found in the mapping function.
   *  
   * @param word Word to be mapped.
-  * @return An array of {@link IDCount} objects.
+  * @return An array of {@link VertexCount} objects.
   */
-  public IDCount[] getIDMappings(String word) {
-    int pos = Arrays.binarySearch(words, new WordToIDCount(word),
-                                  new WordToIDCountComparator());
+  public VertexCount[] getVertexMappings(String word) {
+    int pos = Arrays.binarySearch(words, new WordToVertexCount(word),
+                                  new WordToVertexCountComparator());
 
     if(pos >= 0)
     { // FOUND!
-      return words[pos].getIDCounts();
+      return words[pos].getVertexCounts();
     }
      
     return null;

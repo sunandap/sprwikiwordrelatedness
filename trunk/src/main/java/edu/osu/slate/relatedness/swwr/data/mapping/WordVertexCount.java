@@ -19,12 +19,12 @@ import java.io.IOException;
 import java.io.Serializable;
 
 /**
- * Triple of (word, ID, count).
+ * Triple of (word, vertex, count).
  * 
  * @author weale
  * @version 1.0
  */
-public class WordIDCount implements Serializable {
+public class WordVertexCount implements Serializable {
   
  /**
    * 
@@ -34,7 +34,7 @@ public class WordIDCount implements Serializable {
  /**
   * 
   */
-  private int id, count;
+  private int vertex, count;
   
   private String word;
   
@@ -42,17 +42,17 @@ public class WordIDCount implements Serializable {
   * Constructor.
   * 
   * @param w Word for triple.
-  * @param i ID for triple.
+  * @param v Vertex for triple.
   * @param c Initial triple count.
   */
-  public WordIDCount(String w, int i, int c) {
+  public WordVertexCount(String w, int v, int c) {
     word = w;
-    id = i;
+    vertex = v;
     count = c;
   }
   
  /**
-  * Gets the word for the (word, ID, count) triple.
+  * Gets the word for the (word, vertex, count) triple.
   * 
   * @return Word contained in this triple.
   */
@@ -61,16 +61,16 @@ public class WordIDCount implements Serializable {
   }
   
  /**
-  * Gets the ID for the (word, ID, count) triple.
+  * Gets the ID for the (word, vertex, count) triple.
   * 
   * @return ID contained in this triple.
   */
-  public int getID() {
-    return id;
+  public int getVertex() {
+    return vertex;
   }
   
  /**
-  * Gets the count for the (word, ID, count) triple.
+  * Gets the count for the (word, vertex, count) triple.
   * 
   * @return Count contained in this triple.
   */
@@ -95,7 +95,7 @@ public class WordIDCount implements Serializable {
   */
   private void writeObject(java.io.ObjectOutputStream out) throws IOException {
     out.writeObject(word);
-    out.writeInt(id);
+    out.writeInt(vertex);
     out.writeInt(count);
   }
   
@@ -108,7 +108,7 @@ public class WordIDCount implements Serializable {
   */
   private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
     word = (String) in.readObject();
-    id = in.readInt();
+    vertex = in.readInt();
     count = in.readInt();
   }
 }
