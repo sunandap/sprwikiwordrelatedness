@@ -22,7 +22,7 @@ import java.util.Comparator;
 
 
 /**
- * Class to Map a given word to a set of IDs.
+ * Class to map a given word to a set of IDs.
  * <p>
  * Uses an array of {@link IDCount} classes for the mapping.
  * 
@@ -37,7 +37,7 @@ public class WordToIDCount implements Serializable {
   private static final long serialVersionUID = 7700956091903015001L;
 
  /**
-  * Pairs of (Vertex, Count) Mappings
+  * Pairs of (ID, count) Mappings
   */
   private IDCount[] idcounts;
   
@@ -102,8 +102,21 @@ public class WordToIDCount implements Serializable {
   }//end: addID
   
  /**
+  * Compares two {@link WordToIDCount} objects.
+  *  
+  * @param wc2 Input {@link WordToIDCount} object.
+  * @return Comparison between the two objects.
+  */
+  public int compareTo(WordToIDCount wc2) {
+    return this.word.compareTo(wc2.word);
+  }
+  
+ /**
+  * Write a {@link WordToIDCount} class to a file.
+  * <p>
+  * Writes the number of {@link IDCount} objects. Then, writes each object in the array to the file.
   * 
-  * @param out
+  * @param out {@link ObjectOutputStream} to write to.
   * @throws IOException
   */
   private void writeObject(java.io.ObjectOutputStream out) throws IOException {
@@ -119,8 +132,11 @@ public class WordToIDCount implements Serializable {
   }
   
  /**
-  *  
-  * @param in
+  * Reads a {@link WordToIDCount} class from a file.
+  * <p>
+  * Reads the length of {@link IDCount} objects. Then, creates and populates an appropriate array of objects.
+  * 
+  * @param in {@link ObjectInputStream} to read from.
   * @throws IOException
   * @throws ClassNotFoundException
   */
@@ -136,8 +152,4 @@ public class WordToIDCount implements Serializable {
       idcounts[i] = (IDCount) in.readObject();
     }//end: for(i)
   }//end: readObject
-
-  public int compareTo(WordToIDCount wc2) {
-    return this.word.compareTo(wc2.word);
-  }
 }

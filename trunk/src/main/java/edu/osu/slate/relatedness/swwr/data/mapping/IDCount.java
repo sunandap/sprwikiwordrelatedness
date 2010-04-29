@@ -18,10 +18,10 @@ package edu.osu.slate.relatedness.swwr.data.mapping;
 import java.io.Serializable;
 
 /**
- * Class to contain
+ * Container for (ID, count) pairs.
  * 
  * @author weale
- *
+ * @version 1.0
  */
 public class IDCount implements Serializable{
   
@@ -35,10 +35,10 @@ public class IDCount implements Serializable{
   private int id, count;
   
  /**
-  *  
-  * @param w Word to map
-  * @param i ID to 
-  * @param c
+  * Constructor.
+  * 
+  * @param i ID for counting.
+  * @param c Initial count for ID.
   */
   public IDCount(int i, int c) {
     id = i;
@@ -46,37 +46,37 @@ public class IDCount implements Serializable{
   }
   
  /**
-  * Gets the ID for the (Word,ID) pair.
+  * Gets the ID for the (ID, count) pair.
   * 
-  * @return ID contained in this mapping
+  * @return ID contained in this pair.
   */
   public int getID() {
     return id;
   }
   
  /**
-  * Gets the count for the (Word,ID) pair.
+  * Gets the count for the (ID, count) pair.
   * 
-  * @return (Word,ID) pair count in the data set
+  * @return Count contained in this pair.
   */
   public int getCount() {
     return count;
   }
   
  /**
-  * Sets a new (Word,ID) count for the given pair.
+  * Sets a new count for the ID.
   * 
-  * @param c New (Word,ID) count
+  * @param c New ID count.
   */
   public void setCount(int c) {
     count = c;
   }
 
  /**
-  * Compares two {@link IDCount} classes.
+  * Compares two {@link IDCount} objects.
   * 
-  * @param idc2 Input {@link IDCount}
-  * @return Comparison of the two IDs
+  * @param idc2 Input {@link IDCount} object.
+  * @return Comparison of the two objects.
   */
   public int compareTo(IDCount idc2) {
     return this.id - idc2.id;
