@@ -69,7 +69,7 @@ public class IDToWordCount implements Serializable {
   * 
   * @return {@link WordCount} array contained in this mapping
   */
-  public WordCount[] getIDCounts() {
+  public WordCount[] getWordCounts() {
     return wordcounts;
   }
   
