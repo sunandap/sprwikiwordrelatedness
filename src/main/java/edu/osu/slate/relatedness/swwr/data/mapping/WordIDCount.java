@@ -19,10 +19,10 @@ import java.io.IOException;
 import java.io.Serializable;
 
 /**
- * Class to contain
+ * Triple of (word, ID, count).
  * 
  * @author weale
- *
+ * @version 1.0
  */
 public class WordIDCount implements Serializable {
   
@@ -30,17 +30,20 @@ public class WordIDCount implements Serializable {
    * 
    */
   private static final long serialVersionUID = 7700956091903015001L;
-/**
+  
+ /**
   * 
   */
   private int id, count;
+  
   private String word;
   
  /**
-  *  
-  * @param w Word to map
-  * @param i ID to 
-  * @param c
+  * Constructor.
+  * 
+  * @param w Word for triple.
+  * @param i ID for triple.
+  * @param c Initial triple count.
   */
   public WordIDCount(String w, int i, int c) {
     word = w;
@@ -49,44 +52,45 @@ public class WordIDCount implements Serializable {
   }
   
  /**
-  * Gets the Word for the (Word,ID) pair.
+  * Gets the word for the (word, ID, count) triple.
   * 
-  * @return Word contained in this mapping
+  * @return Word contained in this triple.
   */
   public String getWord() {
     return word;
   }
   
  /**
-  * Gets the ID for the (Word,ID) pair.
+  * Gets the ID for the (word, ID, count) triple.
   * 
-  * @return ID contained in this mapping
+  * @return ID contained in this triple.
   */
   public int getID() {
     return id;
   }
   
  /**
-  * Gets the count for the (Word,ID) pair.
+  * Gets the count for the (word, ID, count) triple.
   * 
-  * @return (Word,ID) pair count in the data set
+  * @return Count contained in this triple.
   */
   public int getCount() {
     return count;
   }
   
  /**
-  * Sets a new (Word,ID) count for the given pair.
+  * Sets a new count for the triple.
   * 
-  * @param c New (Word,ID) count
+  * @param c New count.
   */
   public void setCount(int c) {
     count = c;
   }
   
  /**
+  * Writes the individual objects to the stream.
   * 
-  * @param out
+  * @param out {@link ObjectOutputStream} to write to.
   * @throws IOException
   */
   private void writeObject(java.io.ObjectOutputStream out) throws IOException {
@@ -94,9 +98,11 @@ public class WordIDCount implements Serializable {
     out.writeInt(id);
     out.writeInt(count);
   }
+  
  /**
+  * Reads the individual objects from the stream.
   *  
-  * @param in
+  * @param in {@link ObjectInputStream} to read from.
   * @throws IOException
   * @throws ClassNotFoundException
   */

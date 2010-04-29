@@ -26,7 +26,7 @@ import java.util.Arrays;
  * Uses an array of {@link WordCount} classes for the mapping.
  * 
  * @author weale
- *
+ * @version 1.0
  */
 public class IDToWordCount implements Serializable {
   
@@ -47,7 +47,9 @@ public class IDToWordCount implements Serializable {
   
  /**
   * Constructor.
-  *  
+  * <p>
+  * Also creates a {@link WordCount} array of length 0.
+  * 
   * @param i ID to Map to {@link WordCount} pairs
   */
   public IDToWordCount(int i) {
@@ -75,8 +77,8 @@ public class IDToWordCount implements Serializable {
   
  /**
   * Adds a new ID for the given word.
-  * 
-  * If the ID is found, we increment the existing count.
+  * <p>
+  * If the ID is found, we increment the existing count.<br>
   * If the ID is not found, we extend the given {@link IDCount} array.
   * 
   * @param id New ID for the given word
@@ -99,10 +101,22 @@ public class IDToWordCount implements Serializable {
       Arrays.sort(wordcounts, new WordCountComparator());
     }
   }//end: addID
+ /**
+  * Compares the two {@link IDToWordCount} objects.
+  * 
+  * @param wc2 Input {@link IDToWordCount} object.
+  * @return Comparison of the two object IDs.
+  */
+  public int compareTo(IDToWordCount wc2) {
+    return this.id - wc2.id;
+  }
   
  /**
+  * Writes an {@link IDToWordCount} class to a file.
+  * <p>
+  * Writes the number of {@link WordCount} objects. Then, outputs each individual object to the file.
   * 
-  * @param out
+  * @param out {@link ObjectOutputStream} to write to.
   * @throws IOException
   */
   private void writeObject(java.io.ObjectOutputStream out) throws IOException {
@@ -118,8 +132,11 @@ public class IDToWordCount implements Serializable {
   }
   
  /**
-  *  
-  * @param in
+  * Reads an {@link IDToWordCount} class from a file.
+  * <p>
+  * Reads the length of {@link WordCount} objects. Then, creates and populates an appropriate array of objects.
+  * 
+  * @param in {@link ObjectInputStream} to read from.
   * @throws IOException
   * @throws ClassNotFoundException
   */
@@ -136,7 +153,5 @@ public class IDToWordCount implements Serializable {
     }//end: for(i)
   }//end: readObject
 
-  public int compareTo(IDToWordCount wc2) {
-    return this.id - wc2.id;
-  }
+
 }
