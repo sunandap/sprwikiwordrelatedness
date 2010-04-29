@@ -18,12 +18,12 @@ package edu.osu.slate.relatedness.swwr.data.mapping;
 import java.io.Serializable;
 
 /**
- * Container for (ID, count) pairs.
+ * Container for (vertex, count) pairs.
  * 
  * @author weale
  * @version 1.0
  */
-public class IDCount implements Serializable{
+public class VertexCount implements Serializable{
   
  /**
    * 
@@ -32,30 +32,30 @@ public class IDCount implements Serializable{
 /**
   * 
   */
-  private int id, count;
+  private int vertex, count;
   
  /**
   * Constructor.
   * 
-  * @param i ID for counting.
+  * @param v Vertex for counting.
   * @param c Initial count for ID.
   */
-  public IDCount(int i, int c) {
-    id = i;
+  public VertexCount(int v, int c) {
+    vertex = v;
     count = c;
   }
   
  /**
-  * Gets the ID for the (ID, count) pair.
+  * Gets the vertex for the (vertex, count) pair.
   * 
-  * @return ID contained in this pair.
+  * @return Vertex contained in this pair.
   */
-  public int getID() {
-    return id;
+  public int getVertex() {
+    return vertex;
   }
   
  /**
-  * Gets the count for the (ID, count) pair.
+  * Gets the count for the (vertex, count) pair.
   * 
   * @return Count contained in this pair.
   */
@@ -64,21 +64,21 @@ public class IDCount implements Serializable{
   }
   
  /**
-  * Sets a new count for the ID.
+  * Sets a new count for the vertex.
   * 
-  * @param c New ID count.
+  * @param c New vertex count.
   */
   public void setCount(int c) {
     count = c;
   }
 
  /**
-  * Compares two {@link IDCount} objects.
+  * Compares two {@link VertexCount} objects.
   * 
-  * @param idc2 Input {@link IDCount} object.
+  * @param idc2 Input {@link VertexCount} object.
   * @return Comparison of the two objects.
   */
-  public int compareTo(IDCount idc2) {
-    return this.id - idc2.id;
+  public int compareTo(VertexCount idc2) {
+    return this.vertex - idc2.vertex;
   }
 }

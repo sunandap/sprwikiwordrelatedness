@@ -21,14 +21,14 @@ import java.util.Arrays;
 
 
 /**
- * Class used to Map a given ID to a set of words.
+ * Class used to Map a given vertex to a set of words.
  * <p>
  * Uses an array of {@link WordCount} classes for the mapping.
  * 
  * @author weale
  * @version 1.0
  */
-public class IDToWordCount implements Serializable {
+public class VertexToWordCount implements Serializable {
   
  /**
    * 
@@ -41,29 +41,29 @@ public class IDToWordCount implements Serializable {
   private WordCount[] wordcounts;
   
  /**
-  * ID for Mapping 
+  * vertex for Mapping 
   */
-  private int id;
+  private int vertex;
   
  /**
   * Constructor.
   * <p>
   * Also creates a {@link WordCount} array of length 0.
   * 
-  * @param i ID to Map to {@link WordCount} pairs
+  * @param v Vertex to map to {@link WordCount} pairs
   */
-  public IDToWordCount(int i) {
-    id = i;
+  public VertexToWordCount(int v) {
+    vertex = v;
     wordcounts = new WordCount[0];
   }
   
  /**
-  * Gets the ID for this mapping.
+  * Gets the vertex for this mapping.
   * 
-  * @return ID contained in this mapping
+  * @return Vertex contained in this mapping
   */
-  public int getID() {
-    return id;
+  public int getVertex() {
+    return vertex;
   }
   
  /**
@@ -76,12 +76,12 @@ public class IDToWordCount implements Serializable {
   }
   
  /**
-  * Adds a new ID for the given word.
+  * Adds a new word for the given vertex.
   * <p>
-  * If the ID is found, we increment the existing count.<br>
-  * If the ID is not found, we extend the given {@link IDCount} array.
+  * If the word is found, we increment the existing count.<br>
+  * If the word is not found, we extend the given {@link WordsCount} array.
   * 
-  * @param id New ID for the given word
+  * @param w New Word for the given vertex
   */
   public void addWord(String w) {
     int pos = Arrays.binarySearch(wordcounts, new WordCount(w,1), new WordCountComparator());
@@ -101,18 +101,19 @@ public class IDToWordCount implements Serializable {
       Arrays.sort(wordcounts, new WordCountComparator());
     }
   }//end: addID
+  
  /**
-  * Compares the two {@link IDToWordCount} objects.
+  * Compares the two {@link VertexToWordCount} objects.
   * 
-  * @param wc2 Input {@link IDToWordCount} object.
+  * @param wc2 Input {@link VertexToWordCount} object.
   * @return Comparison of the two object IDs.
   */
-  public int compareTo(IDToWordCount wc2) {
-    return this.id - wc2.id;
+  public int compareTo(VertexToWordCount wc2) {
+    return this.vertex - wc2.vertex;
   }
   
  /**
-  * Writes an {@link IDToWordCount} class to a file.
+  * Writes an {@link VertexToWordCount} class to a file.
   * <p>
   * Writes the number of {@link WordCount} objects. Then, outputs each individual object to the file.
   * 
@@ -122,7 +123,7 @@ public class IDToWordCount implements Serializable {
   private void writeObject(java.io.ObjectOutputStream out) throws IOException {
     
     // Write String
-    out.writeInt(id);
+    out.writeInt(vertex);
     
     // Write array of IDCounts
     out.writeInt(wordcounts.length);
@@ -132,7 +133,7 @@ public class IDToWordCount implements Serializable {
   }
   
  /**
-  * Reads an {@link IDToWordCount} class from a file.
+  * Reads an {@link VertexToWordCount} class from a file.
   * <p>
   * Reads the length of {@link WordCount} objects. Then, creates and populates an appropriate array of objects.
   * 
@@ -143,7 +144,7 @@ public class IDToWordCount implements Serializable {
   private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
     
     // Read String
-    id = in.readInt();
+    vertex = in.readInt();
     
     // Read array of IDCounts
     int len = in.readInt();
