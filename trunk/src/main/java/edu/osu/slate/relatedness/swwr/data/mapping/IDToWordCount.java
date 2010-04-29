@@ -28,7 +28,7 @@ import java.util.Arrays;
  * @author weale
  *
  */
-public class IDtoWordCount implements Serializable {
+public class IDToWordCount implements Serializable {
   
  /**
    * 
@@ -50,7 +50,7 @@ public class IDtoWordCount implements Serializable {
   *  
   * @param i ID to Map to {@link WordCount} pairs
   */
-  public IDtoWordCount(int i) {
+  public IDToWordCount(int i) {
     id = i;
     wordcounts = new WordCount[0];
   }
@@ -82,7 +82,7 @@ public class IDtoWordCount implements Serializable {
   * @param id New ID for the given word
   */
   public void addWord(String w) {
-    int pos = Arrays.binarySearch(wordcounts, new WordCount(w,1));
+    int pos = Arrays.binarySearch(wordcounts, new WordCount(w,1), new WordCountComparator());
     if(pos >= 0)
     {
       //IDCount found!
@@ -92,10 +92,11 @@ public class IDtoWordCount implements Serializable {
     else
     {
       //Add new IDCount
-      WordCount[] tmp = new WordCount[wordcounts.length];
+      WordCount[] tmp = new WordCount[wordcounts.length + 1];
       System.arraycopy(wordcounts, 0, tmp, 0, wordcounts.length);
       tmp[wordcounts.length] = new WordCount(w, 1);
       wordcounts = tmp;
+      Arrays.sort(wordcounts, new WordCountComparator());
     }
   }//end: addID
   
@@ -134,4 +135,8 @@ public class IDtoWordCount implements Serializable {
       wordcounts[i] = (WordCount) in.readObject();
     }//end: for(i)
   }//end: readObject
+
+  public int compareTo(IDToWordCount wc2) {
+    return this.id - wc2.id;
+  }
 }
