@@ -17,12 +17,17 @@ package edu.osu.slate.relatedness.swwr.setup.wordmapping;
 
 import java.io.*;
 import java.util.*;
+
+import com.aliasi.tokenizer.LineTokenizerFactory;
+import com.aliasi.tokenizer.PorterStemmerTokenizerFactory;
+import com.aliasi.tokenizer.Tokenizer;
+
 import edu.osu.slate.relatedness.swwr.data.mapping.*;
 
 /**
  * Turns temporary (String, ID) file into Word-ID and ID-Word Mappings.
  * <p>
- * Requires the output of {@link CreateTitleWordMapping} or {@link CreateLinkWordMapping}.
+ * Requires the output of {@link CreateTitleWordMapping} or {@link CreateLinkWordMapping}.  It also requires that <a href="http://alias-i.com/lingpipe/">LingPipe</a> be installed and the jar file accessible to the java environment.
  * <p>
  * If desired, stemming for more robust mapping functions may be applied to the words here.
  * <p>
@@ -46,9 +51,16 @@ import edu.osu.slate.relatedness.swwr.data.mapping.*;
 public class CreateMappings {
 
   private static String baseDir, sourceDir, binaryDir, tempDir;
-  private static String type, date, graph;
+  private static String type, date, graph, stemChar;
   private static boolean stem;
-  
+  private static PorterStemmerTokenizerFactory porter;
+  private static LineTokenizerFactory tokens;
+
+ /**
+  * Parse the configuration file.
+  *  
+  * @param filename Configuration file name.
+  */ 
   private static void parseConfigurationFile(String filename) {
     try {
       Scanner config = new Scanner(new FileReader(filename));
@@ -58,6 +70,7 @@ public class CreateMappings {
       binaryDir = "binary";
       tempDir = "tmp";
       stem = false;
+      stemChar = "f";
       
       while(config.hasNext()) {
         String s = config.nextLine();
@@ -112,6 +125,8 @@ public class CreateMappings {
   }//end: parseConfigurationFile()
   
   /**
+   * Creates a final word-to-vertex mapping from the (word,id) pairs from a wiki data source.
+   *
    * @param args
    * @throws IOException 
    * @throws FileNotFoundException 
@@ -119,21 +134,46 @@ public class CreateMappings {
    */
   public static void main(String[] args) throws FileNotFoundException, IOException, ClassNotFoundException {
     
-    parseConfigurationFile("/scratch/weale/data/config/enwiki/CreateTitleWordMapping.xml");
+    parseConfigurationFile("/scratch/weale/data/config/enwiktionary/CreateMappings.xml");
 
     System.out.println("Opening Temporary File for Reading");
     ObjectInputStream in = new ObjectInputStream(new FileInputStream(baseDir + "/" + tempDir + "/" + type + "-"+ date + "-" + graph + ".titlewordmap"));
     
+    if(stem) {
+      //porter = new PorterStemmerTokenizerFactory(tokens);
+      stemChar = "t";
+    }
+    
+   /* STEP 1
+    * 
+    * Create the word set in order to know how many words
+    * are in our initial file.
+    */
     System.out.println("Creating Word Array");
     TreeSet<String> ts = new TreeSet<String>();
     try {
       while(true) {
-        ts.add((String) in.readObject());
+        String s = (String) in.readObject();
+        if(stem) {
+          ts.add(PorterStemmerTokenizerFactory.stem(s));
+        }
+        else
+        {
+          ts.add(s);
+        }
+        
         in.readInt();
       }//end: while(true)
-    }
+    }//end: try{} 
     catch(IOException e) {} //EOF found
     
+   /* STEP 2
+    * 
+    * Create the WordToIDCount array of the appropriate size
+    * and initialize objects.
+    * 
+    * We use arrays for space efficiency -- these can get large.
+    */
     WordToIDCount[] words = new WordToIDCount[ts.size()];
     Iterator<String> set = ts.iterator();
     int i=0;
@@ -142,15 +182,23 @@ public class CreateMappings {
       i++;
     }//end: while(set)
     Arrays.sort(words, new WordToIDCountComparator());
-    ts = null;
+    ts = null; // Free Up Memory (?)
     in.close();
     
+   /* STEP 3
+    *  
+    * Add IDs to our WordToIDCount objects.
+    */
     System.out.println("Creating Vertex Mappings");
     in = new ObjectInputStream(new FileInputStream(baseDir + "/" + tempDir + "/" + type + "-"+ date + "-" + graph + ".titlewordmap"));
     try {
       while(true) {
         String word = (String) in.readObject();
         int vertex = in.readInt();
+        
+        if(stem) {
+           word = porter.stem(word);
+        }
         
         int pos = Arrays.binarySearch(words, new WordToIDCount(word), new WordToIDCountComparator());
         if(pos >= 0) {
@@ -159,22 +207,30 @@ public class CreateMappings {
           System.err.println("Invalid Word Found: "+ word);
         }
       }//end: while(true)
-    }
+    }//end: try {}
     catch(IOException e) {} //EOF found
     
     in.close();
     
-    // Write object to the WordToID file
-    ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(baseDir + "/" + binaryDir + "/" + type+ "/" + date + "/" + type + "-"+ date + "-" + graph + ".wic"));
+   /* STEP 4
+    * 
+    * Write objects to the .wic file
+    */
+    ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(baseDir + "/" + binaryDir + "/" + type+ "/" + date + "/" + type + "-"+ date + "-" + graph + "-" + stemChar + ".wic"));
     out.writeInt(words.length);
     for(int x = 0; x < words.length; x++) {
       out.writeObject(words[x]);
     }
     out.close();
-    words = null;
+    words = null; // Free Up Memory (?)
     
+    /* STEP 5
+     * 
+     * Create the id set in order to know how many ids
+     * are in our initial file.
+     */
     in = new ObjectInputStream(new FileInputStream(baseDir + "/" + tempDir + "/" + type + "-"+ date + "-" + graph + ".titlewordmap"));
-    
+
     System.out.println("Creating Integer Array");
     TreeSet<Integer> ts2 = new TreeSet<Integer>();
     try {
@@ -184,7 +240,14 @@ public class CreateMappings {
       }//end: while(true)
     }
     catch(IOException e) {} //EOF found
-    
+
+   /* STEP 6
+    * 
+    * Create the IDToWordCount array of the appropriate size
+    * and initialize objects.
+    * 
+    * We use arrays for space efficiency -- these can get large.
+    */ 
     IDToWordCount[] ids = new IDToWordCount[ts2.size()];
     Iterator<Integer> it = ts2.iterator();
     i=0;
@@ -193,9 +256,13 @@ public class CreateMappings {
       i++;
     }//end: while(set)
     Arrays.sort(ids, new IDToWordCountComparator());
-    ts2 = null;
+    ts2 = null; // Free Up Memory (?)
     in.close();
     
+   /* STEP 7
+    *  
+    * Add words to our IDToWordCount objects.
+    */
     System.out.println("Creating Word Mappings");
     in = new ObjectInputStream(new FileInputStream(baseDir + "/" + tempDir + "/" + type + "-"+ date + "-" + graph + ".titlewordmap"));
     try {
@@ -215,14 +282,17 @@ public class CreateMappings {
     
     in.close();
     
-    // Write object to the IDToWord file
-    out = new ObjectOutputStream(new FileOutputStream(baseDir + "/" + binaryDir + "/" + type+ "/" + date + "/" + type + "-"+ date + "-" + graph + ".iwc"));
+    /* STEP 8
+     * 
+     * Write objects to the .iwc file
+     */
+    out = new ObjectOutputStream(new FileOutputStream(baseDir + "/" + binaryDir + "/" + type+ "/" + date + "/" + type + "-"+ date + "-" + graph + "-" + stemChar + ".iwc"));
     out.writeInt(ids.length);
     for(int x = 0; x < ids.length; x++) {
       out.writeObject(ids[x]);
     }
     out.close();
-    ids = null;
+    ids = null; // Free Up Memory (?)
     
   }//end: main()
 
