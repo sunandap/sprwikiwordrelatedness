@@ -48,7 +48,7 @@ public class IDVertexTranslation {
  /**
   * Constructor.
   * <p>
-  * Takes the name of the <i>.vid file</i> generated from {@link CreateValidIDFile} as input.
+  * Takes the name of the <i>.vid file</i> generated from {@link CreateIDToVertexFile} as input.
   * 
   * @param filename File name of the <i>.vid file</i>.
   */
