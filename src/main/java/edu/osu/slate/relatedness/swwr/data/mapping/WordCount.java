@@ -15,13 +15,20 @@
 
 package edu.osu.slate.relatedness.swwr.data.mapping;
 
+import java.io.Serializable;
+
 /**
  * Class to contain
  * 
  * @author weale
  *
  */
-public class WordCount {
+public class WordCount implements Serializable {
+  
+ /**
+  * 
+  */
+  private static final long serialVersionUID = 1L;
   
  /**
   * 

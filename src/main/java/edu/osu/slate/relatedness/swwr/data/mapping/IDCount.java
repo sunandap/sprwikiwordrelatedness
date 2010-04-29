@@ -15,15 +15,21 @@
 
 package edu.osu.slate.relatedness.swwr.data.mapping;
 
+import java.io.Serializable;
+
 /**
  * Class to contain
  * 
  * @author weale
  *
  */
-public class IDCount {
+public class IDCount implements Serializable{
   
  /**
+   * 
+   */
+  private static final long serialVersionUID = 1L;
+/**
   * 
   */
   private int id, count;

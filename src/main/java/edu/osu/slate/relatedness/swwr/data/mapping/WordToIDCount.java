@@ -18,6 +18,7 @@ package edu.osu.slate.relatedness.swwr.data.mapping;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Comparator;
 
 
 /**
@@ -82,7 +83,7 @@ public class WordToIDCount implements Serializable {
   * @param id New ID for the given word
   */
   public void addID(int id) {
-    int pos = Arrays.binarySearch(idcounts, new IDCount(id,1));
+    int pos = Arrays.binarySearch(idcounts, new IDCount(id,1), new IDCountComparator());
     if(pos >= 0)
     {
       //IDCount found!
@@ -92,10 +93,11 @@ public class WordToIDCount implements Serializable {
     else
     {
       //Add new IDCount
-      IDCount[] tmp = new IDCount[idcounts.length];
+      IDCount[] tmp = new IDCount[idcounts.length + 1];
       System.arraycopy(idcounts, 0, tmp, 0, idcounts.length);
       tmp[idcounts.length] = new IDCount(id, 1);
       idcounts = tmp;
+      Arrays.sort(idcounts, new IDCountComparator());
     }
   }//end: addID
   
@@ -134,4 +136,8 @@ public class WordToIDCount implements Serializable {
       idcounts[i] = (IDCount) in.readObject();
     }//end: for(i)
   }//end: readObject
+
+  public int compareTo(WordToIDCount wc2) {
+    return this.word.compareTo(wc2.word);
+  }
 }
