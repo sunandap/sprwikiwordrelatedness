@@ -24,7 +24,7 @@ import edu.osu.slate.relatedness.swwr.data.*;
 /**
  * Creates a simple word-to-vertex mapping for the Wiki graph using the Page title.
  * 
- * Requires initialized {@link ValidIDs} and {@link RedirectList} classes.
+ * Requires initialized {@link ValidIDs} and {@link RedirectList} classes.  All output text is lowercase.
  * 
  * Configuration File Requirements
  * <ul>
@@ -46,7 +46,12 @@ public class CreateTitleWordMapping {
 
   private static String baseDir, sourceDir, binaryDir, tempDir;
   private static String type, date, graph;
-  
+
+ /**
+  * Parse the configuration file.
+  *  
+  * @param filename Configuration file name.
+  */
   private static void parseConfigurationFile(String filename) {
     try {
       Scanner config = new Scanner(new FileReader(filename));
@@ -54,37 +59,56 @@ public class CreateTitleWordMapping {
       binaryDir = "binary";
       tempDir = "tmp";
       while(config.hasNext()) {
+        
         String s = config.nextLine();
-        if(s.contains("<basedir>")) {
-          baseDir = s.substring(s.indexOf("<basedir>") + 9, s.indexOf("</basedir>"));
+        
+        if(s.contains("<basedir>"))
+        {
+          baseDir = s.substring(s.indexOf("<basedir>") + 9,
+                                s.indexOf("</basedir>"));
         }
-        else if(s.contains("<sourcedir>")) {
-          sourceDir = s.substring(s.indexOf("<sourcedir>") + 11, s.indexOf("</sourcedir>"));          
+        else if(s.contains("<sourcedir>"))
+        {
+          sourceDir = s.substring(s.indexOf("<sourcedir>") + 11,
+                                  s.indexOf("</sourcedir>"));          
         }
-        else if(s.contains("<binarydir>")) {
-          binaryDir = s.substring(s.indexOf("<binarydir>") + 11, s.indexOf("</binarydir>"));
+        else if(s.contains("<binarydir>"))
+        {
+          binaryDir = s.substring(s.indexOf("<binarydir>") + 11,
+                                  s.indexOf("</binarydir>"));
         }
-        else if(s.contains("<tempdir>")) {
-          tempDir = s.substring(s.indexOf("<tempdir>") + 9, s.indexOf("</tempdir>"));
+        else if(s.contains("<tempdir>"))
+        {
+          tempDir = s.substring(s.indexOf("<tempdir>") + 9,
+                                s.indexOf("</tempdir>"));
         }
-        else if(s.contains("<type>")) {
-          type = s.substring(s.indexOf("<type>") + 6, s.indexOf("</type>"));
+        else if(s.contains("<type>"))
+        {
+          type = s.substring(s.indexOf("<type>") + 6,
+                             s.indexOf("</type>"));
         }
-        else if(s.contains("<date>")) {
-          date = s.substring(s.indexOf("<date>") + 6, s.indexOf("</date>"));
+        else if(s.contains("<date>"))
+        {
+          date = s.substring(s.indexOf("<date>") + 6,
+                             s.indexOf("</date>"));
         }
-        else if(s.contains("<graph>")) {
-          graph = s.substring(s.indexOf("<graph>") + 7, s.indexOf("</graph>"));
+        else if(s.contains("<graph>"))
+        {
+          graph = s.substring(s.indexOf("<graph>") + 7,
+                              s.indexOf("</graph>"));
         }
-      }
-    }
-    catch (IOException e) {
+      }//end: while(config)
+    }//end: try {}
+    catch (IOException e)
+    {
       System.err.println("Problem reading from file: " + filename);
       System.exit(1);
     }
-  }
+  }//end: parseConfigurationFile(String)
   
   /**
+   * Creates a (word, ID) pairs from the titles of a wiki data source.
+   * 
    * @param args
    * @throws IOException 
    */
@@ -111,8 +135,8 @@ public class CreateTitleWordMapping {
     */
     System.out.println("Writing Page Titles and Vertex IDs to File");
     Pattern p = Pattern.compile("\\([\\p{Graph}\\p{Blank}]+\\)");
-    //LinkedList<WordIDCount> ll = new LinkedList<WordIDCount>();
-    
+
+    // Strip beginning lines from file
     String str = in.nextLine();
     while(str.indexOf("INSERT INTO") == -1) {
       str = in.nextLine();
@@ -122,47 +146,50 @@ public class CreateTitleWordMapping {
     while(tmp < 3 && str != null && !str.trim().equals("")) {
       str = str.substring(str.indexOf("(")+1, str.length()-3);
 
-      // Split the String into the page information
+      // Split the String into the individual page information
       String [] arr = str.split("\\d\\),\\(");
       for(int i=0;i<arr.length;i++) {
-          //System.out.println(arr[i]);
-          String [] info = arr[i].split(",");
+        
+        String [] info = arr[i].split(",");
           
-          // Information is in the correct format if the length == 11
-          if(info.length >= 11)
+        // Information is in the correct format if the length == 11
+        if(info.length >= 11)
+        {
+          // Extract page, namespace and redirect information
+          String page = info[0];
+          String namespace = info[1];
+          String redirect = info[info.length-6];
+              
+          // Extract title information
+          String title = info[2];
+          for(int j=3; j<info.length-8;j++)
           {
-              // Extract page, namespace and redirect information
-              String page = info[0];
-              String namespace = info[1];
-              String redirect = info[info.length-6];
+            title = title + "," + info[j];
+          }
+          title = title.substring(1,title.length()-1).replace('_', ' ').toLowerCase();
+          int pageID = Integer.parseInt(page);
               
-              // Extract title information
-              String title = info[2];
-              for(int j=3; j<info.length-8;j++)
-              {
-                  title = title + "," + info[j];
-              }
-              title = title.substring(1,title.length()-1).replace('_', ' ');
-              int pageID = Integer.parseInt(page);
-              // Add the ID if it's in the needed namespace and not a redirect
-              if(namespace.equals("0") && redirect.equals("0") && vid.isValidID(pageID))
-              {
-                title = addAmbiguity(title, p);
-                out.writeObject(title);
-                out.writeInt(pageID);
-              }//end: if()
+          // Add the ID if it's in the needed namespace and not a redirect
+          if(namespace.equals("0") && redirect.equals("0") && vid.isValidID(pageID))
+          {
+            title = addAmbiguity(title, p);
+            out.writeObject(title);
+            out.writeInt(pageID);
+          }//end: if()
               
-              // Add the ID after redirect
-              else if(namespace.equals("0") && redirect.equals("1") &&
-                      rdl.isRedirectID(pageID))
-              {
-                title = addAmbiguity(title, p);
-                pageID = rdl.redirect(pageID);
-                out.writeObject(title);
-                out.writeInt(pageID);
-              }//end: else if()
-          }//end: if(info.length)
+          // Add the ID after redirect
+          else if(namespace.equals("0") && redirect.equals("1") &&
+                  rdl.isRedirectID(pageID))
+          {
+            title = addAmbiguity(title, p);
+            pageID = rdl.redirect(pageID);
+            out.writeObject(title);
+            out.writeInt(pageID);
+          }//end: else if()
+              
+        }//end: if(info.length)
       }//end: for(i)
+      
       str = in.nextLine();
     }//end: while()
     out.close();
@@ -186,9 +213,10 @@ public class CreateTitleWordMapping {
     if(b)
     {
       // Disambiguating section found. Strip it out.
-      try{
+      try
+      {
         title = p.split(title)[0].trim();
-      }
+      }//end: try {}
       catch(Exception e) {
         /* Problems with multiple ( ) expressions.
          * Minor hack to deal with most issues.
@@ -200,9 +228,9 @@ public class CreateTitleWordMapping {
         {
           title = title.substring(0,title.lastIndexOf("("));
         }
-        System.out.println(title);
-      }
-    }
+      }//end: catch{}
+    }//end: if(b)
+    
     return title;
   }//end: addAmbiguity()
 }//end: CreateSimpleWordMapping
