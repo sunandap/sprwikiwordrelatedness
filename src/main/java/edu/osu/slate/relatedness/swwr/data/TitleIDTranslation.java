@@ -22,12 +22,16 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This file creates a TreeMap<String,Integer> that is used to link Page Titles with Page IDs for translation.
+ * <p>
+ * <b>I DON'T KNOW IF THIS IS USED ANY MORE</b>
  * 
  * @author weale
  *
  */
 public class TitleIDTranslation implements Serializable {
 
+    //TODO: IS THIS USED?
+  
 	/**
 	 * 
 	 */
