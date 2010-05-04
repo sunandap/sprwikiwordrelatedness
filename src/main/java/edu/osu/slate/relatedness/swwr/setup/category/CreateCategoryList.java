@@ -98,7 +98,7 @@ public class CreateCategoryList {
     }
     else
     {
-      Configuration.parseConfigurationFile("/scratch/weale/data/config/enwiktionary/CreateMappings.xml");
+      Configuration.parseConfigurationFile("/scratch/weale/data/config/enwiki/CreateMappings.xml");
     }
     
     /* STEP: 1

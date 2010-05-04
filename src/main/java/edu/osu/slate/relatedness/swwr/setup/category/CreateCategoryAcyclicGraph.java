@@ -67,7 +67,7 @@ public class CreateCategoryAcyclicGraph {
       Configuration.parseConfigurationFile(args[0]);
     }
     else {
-      Configuration.parseConfigurationFile("/scratch/weale/data/config/enwiktionary/CreateMappings.xml");
+      Configuration.parseConfigurationFile("/scratch/weale/data/config/enwiki/CreateMappings.xml");
     }
     
     /* Set file names */
@@ -121,14 +121,9 @@ public class CreateCategoryAcyclicGraph {
     * 
     * Add all CatGraph nodes
     */
-    String[][] cats = ID2Cat.getNames();
-    for(int i = 0; i < cats.length; i++)
-    {
-      for(int j = 0; cats[i] != null && j < cats[i].length; j++)
-      {
-        categoryGraph.addNode(Cat2ID.getID(cats[i][j]));
-      }//end: for(j)
-    }//end: for(i)
+    System.out.println("Adding Graph Nodes");
+    int[] catIDs = Cat2ID.getCategoryIDs();
+    categoryGraph.addNodes(catIDs);
 
    /* STEP 2:
     * 
@@ -241,7 +236,7 @@ public class CreateCategoryAcyclicGraph {
                      Configuration.type + "/" +
                      Configuration.date + "/" +
                      Configuration.type + "-" + Configuration.date +
-                     "-" + seed + ".ctree";
+                     "-" + Configuration.graph + ".cgraph";
     try
     {
       ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(outputFileName));
