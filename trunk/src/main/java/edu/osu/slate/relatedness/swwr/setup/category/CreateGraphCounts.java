@@ -115,7 +115,7 @@ public class CreateGraphCounts {
     }
     else
     {
-      Configuration.parseConfigurationFile("/scratch/weale/data/config/enwiktionary/CreateMappings.xml");
+      Configuration.parseConfigurationFile("/scratch/weale/data/config/enwiki/CreateMappings.xml");
     }
 
     /* Set file names */
@@ -146,6 +146,7 @@ public class CreateGraphCounts {
     catch(IOException e)
     {
       System.err.println("Problem opening input file " + cgraphFileName);
+      e.printStackTrace();
       System.exit(1);
     }
     
@@ -205,7 +206,8 @@ public class CreateGraphCounts {
             if(info[j-1].charAt(info[j-1].length()-1) == '\'' &&
                 info[j].charAt(0) == '\'') {
               breakSpot = j;
-            } else {
+            }
+            else {
               parentCategoryTitle = parentCategoryTitle + "," + info[j];
             }
           }
@@ -222,7 +224,7 @@ public class CreateGraphCounts {
             
             if(catGraph.isMember(parentCategoryID))
             { // Parent is found!
-              catGraph.addEdge(parentCategoryID, childVertexNum);
+              catGraph.addLeaf(parentCategoryID, childVertexNum);
             }//end: if(catGraph)
           }//end: if(vids && Cat2ID)
           
