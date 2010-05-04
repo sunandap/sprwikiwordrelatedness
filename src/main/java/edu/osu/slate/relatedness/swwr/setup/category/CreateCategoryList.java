@@ -18,6 +18,9 @@ package edu.osu.slate.relatedness.swwr.setup.category;
 import java.io.*;
 import java.util.*;
 
+import edu.osu.slate.relatedness.Configuration;
+import edu.osu.slate.relatedness.XMLParser;
+
 import edu.osu.slate.relatedness.swwr.data.TitleID;
 import edu.osu.slate.relatedness.swwr.data.category.CategoryTitleToIDTranslation;
 import edu.osu.slate.relatedness.swwr.data.category.IDToCategoryTitleTranslation;
@@ -25,9 +28,10 @@ import edu.osu.slate.relatedness.swwr.data.category.IDToCategoryTitleTranslation
 /**
  * Creates Category-to-ID translation classes.
  * <p>
- * Creates the .cid file for determination.
- * This is a file of ID->Titles and Titles->ID.
- * 
+ * Creates the .cid file for determination.<br>
+ * This is a file of ID->Titles and Titles->ID.<br>
+ * Titles are saved without beginning and trailing quotes.
+ * <p>
  * Output .cid file contains two binary classes:
  * <ul>
  * <li>{@link CategoryTitleToIDTranslation}</li>
@@ -51,22 +55,26 @@ public class CreateCategoryList {
   /* Name of the output file (.cid) */
   private static String outputFileName;
 
-  /* Appropriate Namespaces */
-  private static TreeSet<String> ns;
-
-  /* Verbose output flag */
-  private static boolean verbose;
-
-  /**
-   * Checks and opens the input file.
-   * 
-   * @return Scanner for reading the input file
-   */
-  private static Scanner openInputFile() {
-    try {
+ /**
+  * Checks and opens the input file.
+  * 
+  * @return Scanner for reading the input file
+  */
+  private static Scanner openInputFile()
+  {
+    inputFileName = Configuration.baseDir + "/" +
+                    Configuration.sourceDir + "/" +
+                    Configuration.type+ "/" +
+                    Configuration.date+ "/" +
+                    Configuration.type + "-" + Configuration.date +
+                    "-page.sql";
+    try
+    {
       Scanner in = new Scanner(new FileReader(inputFileName));
       return in;		
-    } catch (FileNotFoundException e) {
+    }
+    catch (FileNotFoundException e)
+    {
       System.out.println("File not found: " + inputFileName);
       e.printStackTrace();
     }
@@ -84,19 +92,16 @@ public class CreateCategoryList {
    * 
    */
   public static void main(String[] args) {
-    //String type = "enwiktionary";
-    String type = "enwiki";
-    //String date = "20090203";
-    String date = "20080103";
-    String source = "M";
-    String catRoot = "'*Topics'";
-    boolean vertex = false;
-
-    //inputFileName = "/scratch/weale/data/source/enwiktionary/20090203/enwiktionary-20090203-page.sql";
-    //outputFileName= "/scratch/weale/data/binary/enwiktionary/20090203/enwiktionary-20090203-page.cid";
-    inputFileName = "/scratch/weale/data/source/" +type+ "/" +date+ "/" +type+ "-" +date+ "-page.sql";
-    outputFileName= "/scratch/weale/data/binary/" +type+ "/" +date+ "/" +type+ "-" +date+ "-page.cid";
-
+    
+    if(args.length == 1)
+    {
+      XMLParser.parseConfigurationFile(args[0]);
+    }
+    else
+    {
+      XMLParser.parseConfigurationFile("/scratch/weale/data/config/enwiktionary/CreateMappings.xml");
+    }
+    
     /* STEP: 1
      * Find the number of categories.
      */
@@ -105,39 +110,40 @@ public class CreateCategoryList {
 
     /* Open input file */
     Scanner in = openInputFile();
+    
+    /* Burn intro lines */
     String str = in.nextLine();
-    while(str.indexOf("INSERT INTO") == -1) {
+    while(str.indexOf("INSERT INTO") == -1)
+    {
       str = in.nextLine();
     }
 
-    int tmp = 0;
-    while(tmp < 3 && str != null && !str.trim().equals("")) {
+    while(str != null && !str.trim().equals(""))
+    {
       str = str.substring(str.indexOf("(")+1, str.length()-3);
 
       // Split the String into the page information
       String [] arr = str.split("\\d\\),\\(");
-      for(int i=0;i<arr.length;i++)
+      for(int i = 0; i < arr.length; i++)
       {
         String [] info = arr[i].split(",");
 
         // Check if the information is in the correct format
-        if(info.length >= 11) {
+        if(info.length >= 11)
+        {
 
           // Extract namespace and redirect information
           String namespace = info[1];
           String redirect = info[info.length-6];
 
           // Add the ID if it's in the needed namespace and not a redirect
-          if(namespace.equals("14") && redirect.equals("0")) {
+          if(namespace.equals("14") && redirect.equals("0"))
+          {
             numCats++;
           }
         }//end: if(info.length)
       }//end: for(i)
-
-      if(verbose) {
-        System.out.print(".");
-      }
-
+      
       str = in.nextLine();
     }//end: while()
     in.close();
@@ -146,32 +152,38 @@ public class CreateCategoryList {
      * 
      * Create TitleID array
      */
+    System.out.println("Creating Category Title/ID Array");
     TitleID[] tids = new TitleID[numCats];
-
-    System.out.println("Filling Category Array");
-    int currTitleID = 0;
-
-    in = openInputFile();
-    str = in.nextLine();
-    while(str.indexOf("INSERT INTO") == -1) {
-      str = in.nextLine();
-    }
 
     /* STEP: 3
      * 
      * Fill TitleID[].
      */
-    tmp = 0;
-    while(tmp < 3 && str != null && !str.trim().equals("")) {
+    in = openInputFile();
+    
+    /* Burn intro lines */
+    str = in.nextLine();
+    while(str.indexOf("INSERT INTO") == -1)
+    {
+      str = in.nextLine();
+    }
+
+    System.out.println("Filling Category Title/ID Array");
+    int currTitleID = 0;
+
+    while(str != null && !str.trim().equals(""))
+    {
       str = str.substring(str.indexOf("(")+1, str.length()-3);
 
       // Split the String into the page information
       String [] arr = str.split("\\d\\),\\(");
-      for(int i=0;i<arr.length;i++) {
+      for(int i = 0; i < arr.length; i++)
+      {
         String [] info = arr[i].split(",");
 
         // Check if the information is in the correct format
-        if(info.length >= 11) {
+        if(info.length >= 11)
+        {
 
           // Extract page, namespace and redirect information
           String page = info[0];
@@ -179,22 +191,23 @@ public class CreateCategoryList {
           String redirect = info[info.length-6];
 
           // Add the ID if it's in the needed namespace and not a redirect
-          if(ns.contains(namespace) && redirect.equals("0")) {
-
+          if(namespace.equals("14") && redirect.equals("0"))
+          {
+            
+            // Get full title information
             String title = info[2];
-            for(int j=3; j<info.length-8; j++ ) {
+            for(int j = 3; j < info.length - 8; j++ )
+            {
               title = title + "," + info[j]; 
-            }
-
-            if(title.indexOf("Mapudungun")!= -1) {
-              System.out.println(title);
-            }
-
+            }//end: for(j)
+            
+            title = title.substring(1, title.length()-1);
+            
             /* Add TitleID to array */
             TitleID tid = new TitleID(title,Integer.parseInt(page));
             tids[currTitleID] = tid;
             currTitleID++;
-          }//end: if(ns && redirect)
+          }//end: if(ns && !redirect)
         }//end: if(info.length)
       }//end: for(i)
 
@@ -217,15 +230,26 @@ public class CreateCategoryList {
      * Write .cid file.
      */
     System.out.println("Writing .cid file");
-    try {
+    outputFileName = Configuration.baseDir + "/" +
+                     Configuration.binaryDir + "/" +
+                     Configuration.type+ "/" +
+                     Configuration.date+ "/" +
+                     Configuration.type+ "-" + Configuration.date +
+                     "-page.cid";
+    try
+    {
       ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(outputFileName));
       out.writeObject(Cat2ID);
       out.writeObject(ID2Cat);
       out.close();
-    } catch (FileNotFoundException e) {
+    }
+    catch (FileNotFoundException e)
+    {
       System.out.println("File not found: " + outputFileName);
       e.printStackTrace();
-    } catch (IOException e1) {
+    }
+    catch (IOException e1)
+    {
       System.err.println("Problem creating output file.");
       e1.printStackTrace();
     }
