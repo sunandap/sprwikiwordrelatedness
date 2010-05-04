@@ -18,6 +18,7 @@ package edu.osu.slate.relatedness.rogets;
 import java.util.ArrayList;
 
 import ca.site.elkb.RogetELKB;
+import edu.osu.slate.relatedness.RelatednessTerm;
 import edu.osu.slate.relatedness.WordRelatedness;
 
 /*******************************************************************************
@@ -68,7 +69,7 @@ public class RogetsPLRelatedness implements WordRelatedness {
 	/**
  	 *
 	 */
-	public double[] getRelatedness(String w1) {
+	public RelatednessTerm[] getRelatedness(String w1) {
 		return null;
 	}
 		

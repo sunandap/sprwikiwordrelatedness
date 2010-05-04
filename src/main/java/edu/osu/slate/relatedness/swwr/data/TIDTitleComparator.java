@@ -18,12 +18,18 @@ package edu.osu.slate.relatedness.swwr.data;
 import java.util.*;
 
 /**
+ * Comparator for the {@link TitleID} class.
+ * <p>
+ * Comparisons are done based on the titles of each object.<br>
+ * (String comparison) 
  * 
  * @author weale
  *
  */
-public class TitleComparator implements Comparator<TitleID> {
-	public int compare(TitleID tid1, TitleID tid2) {
+public class TIDTitleComparator implements Comparator<TitleID>
+{
+	public int compare(TitleID tid1, TitleID tid2)
+	{
 		return tid1.getTitle().compareTo(tid2.getTitle());
 	}
 }

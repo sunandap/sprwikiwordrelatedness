@@ -27,6 +27,7 @@ import net.didion.jwnl.JWNLException;
 import net.didion.jwnl.data.POS;
 import net.didion.jwnl.data.Synset;
 import net.didion.jwnl.dictionary.Dictionary;
+import edu.osu.slate.relatedness.RelatednessTerm;
 import edu.osu.slate.relatedness.WordRelatedness;
 
 /**
@@ -145,7 +146,7 @@ public class WordNetCVRelatedness  implements WordRelatedness {
  /**
   * 
   */
-  public double[] getRelatedness(String w) {
+  public RelatednessTerm[] getRelatedness(String w) {
     // TODO Auto-generated method stub
     return null;
   }

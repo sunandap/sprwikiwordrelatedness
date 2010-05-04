@@ -15,22 +15,31 @@
 
 package edu.osu.slate.relatedness.swwr.algorithm;
 
+import edu.osu.slate.relatedness.RelatednessTerm;
 import edu.osu.slate.relatedness.WordRelatedness;
 import edu.osu.slate.relatedness.swwr.data.AliasSFToID;
 import edu.osu.slate.relatedness.swwr.data.AliasStrings;
 import edu.osu.slate.relatedness.swwr.data.WikiGraph;
 
+/**
+ * Main class for Sourced PageRank word relatedness.
+ * <p>
+ * Encapsulates {@link SourcedPageRank} graph and the {@link WordToVertexMapping} and {@link VertexToWordMapping} objects.
+ * 
+ * @author weale
+ *
+ */
 public class SPRWikiRelatedness implements WordRelatedness {
 
-    /**
-     * 
-     */
-    private static final long serialVersionUID = 5047145851378614181L;
+ /**
+  * 
+  */
+  private static final long serialVersionUID = 5047145851378614181L;
 
-    private static String aliasStringFile;
-    private static String aliasSFIDFile;
-    private static String graphFile;
-    private SourcedPageRank spr;
+  private static String aliasStringFile;
+  private static String aliasSFIDFile;
+  private static String graphFile;
+  private SourcedPageRank spr;
     
   public SPRWikiRelatedness(String dir, String wikiName) {
     setFiles(dir, wikiName, "");
@@ -40,12 +49,15 @@ public class SPRWikiRelatedness implements WordRelatedness {
     
   }
 
+ /**
+  *  
+  */
   public double getRelatedness(String w1, String w2) {
     // TODO Auto-generated method stub
     return 0;
   }
 
-  public double[] getRelatedness(String w) {
+  public RelatednessTerm[] getRelatedness(String w) {
     // TODO Auto-generated method stub
     return null;
   }
