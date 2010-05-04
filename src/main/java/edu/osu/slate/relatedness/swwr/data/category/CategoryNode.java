@@ -1,10 +1,11 @@
 package edu.osu.slate.relatedness.swwr.data.category;
 
-import it.unimi.dsi.fastutil.ints.*;
 import java.io.*;
 import java.util.*;
 
 import edu.osu.slate.relatedness.swwr.data.category.CategoryGraph;
+import edu.osu.slate.relatedness.swwr.data.graph.WikiInvGraph;
+import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
 
 /**
  * Category graph nodes.
@@ -17,65 +18,78 @@ public class CategoryNode implements Serializable, Comparable<Object> {
   /* Serialization variable */
   private static final long serialVersionUID = 1L;
 
-  /* Page/Category Name */
-  private String nodeName;
+  /* Category ID */
+  private int catID;
 
-  /* CategoryNode array of positions of parents in acyclic graph */
+  /* CategoryNode array of category parents in acyclic graph */
   private CategoryNode[] parents;
 
-  /* Integer array of positions of parents in acyclic graph */
+  /* CategoryNode array of category children in acyclic graph */
+  private CategoryNode[] children;
+  
+  /* Integer array of positions of parents in acyclic graph.
+   * 
+   * Used in reading/writing the object.
+   */
   private int[] parentsIndex;
 
-  /* CategoryNode array of positions of children in acyclic graph */
-  private CategoryNode[] children;
-
-  /* int array of positions of children in acyclic graph */
+  /* int array of positions of children in acyclic graph.
+   * 
+   * Used in reading/writing the object.
+   */
   private int[] childrenIndex;
 
-  /* Coverage percentage of the category */
-  private int coverage;
+  /* Coverage count of the leaves of the category */
+  private int vertexCoverage;
 
-  /* */
-  private int[] immediateLeaves;
+  private int inboundEdgeCoverage;
+  
+  private int outboundEdgeCoverage;
+  
+  /* Array of all immediate category leaves 
+   * 
+   * Array contains vertex numbers from the graph.
+   */
+  private int[] immediateVertices;
 
-  /* */
-  private int[] allLeaves;
+  /* Array of all vertices that belong under this category.
+   * 
+   * Array contains vertex numbers from the graph.
+   */
+  private int[] allVertices;
 
-  /* Set of pages that fall under this category */
-  private IntAVLTreeSet IMleaves;
-
-  /* */
-  private IntAVLTreeSet ALLleaves;
-
-  private boolean IMfinalized;
-
-  private boolean ALLfinalized;
-	
- /**
-  * Creates a category node for the tree.
-  * <p>
-  * No parents and children are initialized on the node.
-  * 
-  * @param name Category name.
-  */
-  public CategoryNode(String name)
+  private boolean AllChildrenVerticesFinalized;
+  private boolean inboundEdgeCountsFinalized;
+  private boolean outboundEdgeCountsFinalized;
+  /**
+   * Creates a category node for the tree.
+   * <p>
+   * No parents and children are initialized on the node.
+   * 
+   * @param name Category name.
+   */
+  public CategoryNode(int id)
   {
-    nodeName = name;
+    catID = id;
+    
     parents = null;
     children = null;
-    IMleaves = null;
-    ALLleaves = null;
-    IMfinalized = false;
-    ALLfinalized = false;
+    
+    immediateVertices = null;
+    allVertices = null;
+    
+    AllChildrenVerticesFinalized = false;
+    inboundEdgeCountsFinalized = false;
+    outboundEdgeCountsFinalized = false;
   }//end: CategoryNode(String)
-	
- /**
-  * Adds a parent to the current node.
-  * <p>
-  * Only adds the ID if the parent is not already listed.
-  * 
-  * @param parent {@link CategoryNode} of the parent.
-  */
+
+  /**
+   * Adds a parent to the current node.
+   * <p>
+   * Only adds the ID if the parent is not already listed.
+   * 
+   * @param parent {@link CategoryNode} of the parent.
+   */
   public void addParent(CategoryNode parent)
   {
     if(parents == null)
@@ -85,22 +99,23 @@ public class CategoryNode implements Serializable, Comparable<Object> {
     }
     else if(Arrays.binarySearch(parents, parent) < 0)
     { // Parent not found in existing parents
-      
+
       // Create new array, copy parent into new array
-      CategoryNode[] tmp = new CategoryNode[parents.length+1];
-      System.arraycopy(parents, 0, tmp, 0, parents.length);
-      tmp[parents.length] = parent;
-      parents = tmp;
+      CategoryNode[] tmpParents = new CategoryNode[parents.length+1];
+      System.arraycopy(parents, 0, tmpParents, 0, parents.length);
+      tmpParents[parents.length] = parent;
+      parents = tmpParents;
+      
       Arrays.sort(parents);
-      tmp = null;
+      tmpParents = null;
     }
   }//end: addParent(CategoryNode)
-	
- /**
-  * Adds a child ID to the current node.  Only adds the ID if the child is not already listed.
-  * 
-  * @param child {@link CategoryNode} of the child.
-  */
+
+  /**
+   * Adds a child ID to the current node.  Only adds the ID if the child is not already listed.
+   * 
+   * @param child {@link CategoryNode} of the child.
+   */
   public void addChild(CategoryNode child)
   {
     int size = 0;
@@ -111,508 +126,653 @@ public class CategoryNode implements Serializable, Comparable<Object> {
       {
         return;
       }
-			
+
       //Set new size
       size = children.length;
     }
     size++;
-    
+
     //Create Child
-    CategoryNode[] tmp = new CategoryNode[size];
-    System.arraycopy(children, 0, tmp, 0, size-1);
-    tmp[size-1] = child;
-    children = tmp;
+    CategoryNode[] tmpChildren = new CategoryNode[size];
+    System.arraycopy(children, 0, tmpChildren, 0, size-1);
+    tmpChildren[size-1] = child;
+    children = tmpChildren;
+    
     Arrays.sort(children);
-    tmp = null;
+    tmpChildren = null;
   }//end: addChild(CategoryNode)
-	
- /**
-  * Removes the named child from the list of children.
-  * <p>
-  * Used by {@link CategoryGraph} and {@link VisitNode} to break cycles in the graph.
-  * 
-  * @param name Name of the child to remove.
-  */
-  public void removeChild(String name)
+
+  /**
+   * Removes the named child from the list of children.
+   * <p>
+   * Used by {@link CategoryGraph} and {@link VisitNode} to break cycles in the graph.
+   * 
+   * @param name Name of the child to remove.
+   */
+  public void removeChild(int id)
   {
-    CategoryNode[] tmp = new CategoryNode[children.length-1];
+    CategoryNode[] tmpChildren = new CategoryNode[children.length-1];
     int currIndex=0, newIndex=0;
-    while(newIndex<tmp.length)
+    while(newIndex < tmpChildren.length)
     {
-      if(!children[currIndex].nodeName.equals(name))
+      if(children[currIndex].catID != id)
       {
-        tmp[newIndex] = children[currIndex];
+        tmpChildren[newIndex] = children[currIndex];
         newIndex++;
       }
       currIndex++;
-    }//end: while()
-    children = tmp;
+    }//end: while(newIndex)
+    
+    children = tmpChildren;
     Arrays.sort(children);
   }//end: removeChild(String)
-	
- /**
-  * Removes the named parent from the list of parents.
-  * <p>
-  * Used by {@link CategoryGraph} to remove non-root reachable nodes in the graph.
-  * 
-  * @param name Name of the parent to remove.
-  */
-  public void removeParent(String name)
+
+  /**
+   * Removes the named parent from the list of parents.
+   * <p>
+   * Used by {@link CategoryGraph} to remove non-root reachable nodes in the graph.
+   * 
+   * @param name Name of the parent to remove.
+   */
+  public void removeParent(int id)
   {
-    CategoryNode[] tmp = new CategoryNode[parents.length-1];
+    CategoryNode[] tmpParents = new CategoryNode[parents.length-1];
     int currIndex=0, newIndex=0;
-    while(newIndex<tmp.length)
+    while(newIndex < tmpParents.length)
     {
-      if(!parents[currIndex].nodeName.equals(name)) {
-        tmp[newIndex] = parents[currIndex];
+      if( parents[currIndex].catID  != id )
+      {
+        tmpParents[newIndex] = parents[currIndex];
         newIndex++;
       }
       currIndex++;
-    }
-    parents = tmp;
+    }//end: while(newIndex)
+    
+    parents = tmpParents;
     Arrays.sort(parents);
   }//end: removeParent(String)
-	
- /**
-  * Gets the name of the node.
-  * 
-  * @return String containing the name of the node
-  */
-  public String getName()
+
+  /**
+   * Gets the ID of the category.
+   * 
+   * @return Integer containing the ID of the category.
+   */
+  public int getCategoryID()
   {
-    return nodeName;
+    return catID;
   }
-	
- /**
-  * Compares a given name to the name of this CategoryNode.
-  * 
-  * @param name Category name being searched for.
-  * @return Boolean value of whether or not the searched name is the name of the node.
-  */
-  public boolean isNodeName(String name)
+
+  /**
+   * Compares a given Wiki ID to the ID of this CategoryNode.
+   * 
+   * @param name Category ID being searched for.
+   * @return Boolean value of whether or not the searched name is the ID of the node.
+   */
+  public boolean isCategoryID(int id)
   {
-    return name.equals(nodeName);
+    return (catID == id);
   }
-	
- /**
-  * Adds the given leafID to the current list of category leaves.
-  * 
-  * @param leafNum ID of the leaf
-  */
-  public void addImmediateLeaf(int leafNum)
+
+  /**
+   * Adds the given leafID to the current list of category leaves.
+   * 
+   * @param vertexNum Graph vertex number.
+   */
+  public void addImmediateLeaf(int vertexNum)
   {
-    if(IMleaves == null)
+    if(immediateVertices == null)
     {
-      IMleaves = new IntAVLTreeSet();
+      immediateVertices = new int[1];
+      immediateVertices[0] = vertexNum;
     }
-		
-    if(ALLleaves == null)
+    else if(Arrays.binarySearch(immediateVertices, vertexNum) < 0)
+    {// Leaf not already in category
+      int[] tmpLeaves = new int[immediateVertices.length+1];
+      System.arraycopy(immediateVertices, 0, tmpLeaves, 0, immediateVertices.length);
+      tmpLeaves[immediateVertices.length] = vertexNum;
+      immediateVertices = tmpLeaves;
+      
+      Arrays.sort(immediateVertices);
+      tmpLeaves = null;
+    }
+  }//end: addImmediateLeaf(int)
+
+ /**
+  * Adds the given vertex number to the current list of category vertices.
+  * 
+  * @param vertexNum Graph vertex number.
+  */
+  private void addAncestorVertex(int vertexNum)
+  {
+    if(allVertices == null)
     {
-      ALLleaves = new IntAVLTreeSet();
+      allVertices = new int[1];
+      allVertices[0] = vertexNum;
     }
-		
-    IMleaves.add(leafNum);
-  }
+    else if(Arrays.binarySearch(allVertices, vertexNum) < 0)
+    {//Leaf not already an ancestor
+      int[] tmpLeaves = new int[allVertices.length+1];
+      System.arraycopy(allVertices, 0, tmpLeaves, 0, allVertices.length);
+      tmpLeaves[allVertices.length] = vertexNum;
+      allVertices = tmpLeaves;
+      
+      Arrays.sort(allVertices);
+      tmpLeaves = null;
+    }
+  }//end: addAncestorLeaf(int)
 
  /**
   * Adds the given leafID to the current list of category leaves.
   * 
   * @param leafNum ID of the leaf
   */
-  public void addAncestorLeaf(int leafNum)
-  {
-    if(ALLleaves == null)
-    {
-      ALLleaves = new IntAVLTreeSet();
-    }
-    ALLleaves.add(leafNum);
-  }
-	
+  private void addAncestorVertices(int[] vertices)
+   {
+     if(allVertices == null)
+     {
+       allVertices = vertices;
+     }
+     else
+     {
+       for(int i = 0; i < vertices.length; i++)
+       {
+         addAncestorVertex(vertices[i]);
+       }//end: for(i)
+     }
+   }//end: addAncestorLeaf(int)
+  
  /**
-  * Accessor for the list of category leaves.
+  * Gets the all graph vertices found under this category.
   * 
-  * @return {@link TreeSet} of integers.
+  * @return Array of graph vertex numbers.
   */
-  public IntAVLTreeSet getAllLeavesAVL()
+  public int[] getAllVertices()
   {
-    return ALLleaves;
-  }
+    return allVertices;
+  }//end: getAllLeaves()
 
-  public int[] getAllLeaves()
-  {
-    return allLeaves;
-  }
-	
-  public int[] getImmediateLeaves()
-  {
-    return immediateLeaves;
-  }
-	
  /**
-  * Given the inverse graph, count the number of edges that are in-bound to the leaves of the category.
+  * Gets the immediate graph vertices under this category.
   * 
-  * @return count of the number of edges inbound to the leaves
+  * @return Array of graph vertex numbers.
   */
-  public int getInboundLeafEdges(WikiInvGraph wg)
+  public int[] getImmediateVertices()
+  {
+    return immediateVertices;
+  }//end: getImmediateLeaves()
+
+  /**
+   * Finds the in-bound edge count for a the category.
+   * <p>
+   * Given the inverse graph, count the number of edges that are in-bound to the leaves of the category.
+   * 
+   * @param wg {@link WikiInvGraph}
+   * @return Count of the number of edges in-bound to the leaves.
+   */
+  public void setOutboundVertexEdgeCount(WikiGraph wg)
   {
     int count = 0;
-    IntIterator it = ALLleaves.iterator();
-    while(it != null && it.hasNext())
+    
+    if(children != null)
     {
-      int[] arr = wg.getInboundLinks(it.nextInt());
-      if(arr != null) {
+      // Visit all children first
+      for(int i = 0; i < children.length; i++)
+      {
+        
+        if(!children[i].outboundEdgeCountsFinalized)
+        {
+          children[i].setOutboundVertexEdgeCount(wg);
+        }
+        
+        count += children[i].inboundEdgeCoverage;
+      }//end: for(i)
+    }//end: children
+
+    // Add children vertex counts
+    for(int i = 0; immediateVertices != null &&
+                   i < immediateVertices.length; i++)
+    {
+      // For each graph vertex, get the in-bound link array
+      int[] arr = wg.getOutboundLinks(immediateVertices[i]);
+
+      if(arr != null)
+      { 
+        //Valid inbound link set
         count += arr.length;
       }
-    }
-    return count;
-  }
-	
- /**
-  * Sets the coverage based on the number of category leaves and the number of overall vertices.
-  * 
-  * @param den Number of vertices in the overall graph.
-  */
+    }//end: for(i)
+    
+    outboundEdgeCountsFinalized = true;
+    outboundEdgeCoverage = count;
+  }//end: setInboundLeaveEdges(WikiInvGraph)
+  
+  /**
+   * Finds the in-bound edge count for a the category.
+   * <p>
+   * Given the inverse graph, count the number of edges that are in-bound to the leaves of the category.
+   * 
+   * @param wg {@link WikiInvGraph}
+   * @return Count of the number of edges in-bound to the leaves.
+   */
+  public void setInboundVertexEdgeCount(WikiInvGraph wg)
+  {
+    int count = 0;
+    
+    if(children != null)
+    {
+      // Visit all children first
+      for(int i = 0; i < children.length; i++)
+      {
+        
+        if(!children[i].inboundEdgeCountsFinalized)
+        {
+          children[i].setInboundVertexEdgeCount(wg);
+        }
+        
+        count += children[i].inboundEdgeCoverage;
+      }//end: for(i)
+    }//end: children
+
+    // Add children vertex counts
+    for(int i = 0; immediateVertices != null &&
+                   i < immediateVertices.length; i++)
+    {
+      // For each graph vertex, get the in-bound link array
+      int[] arr = wg.getInboundLinks(immediateVertices[i]);
+
+      if(arr != null)
+      { 
+        //Valid inbound link set
+        count += arr.length;
+      }
+    }//end: for(i)
+    
+    inboundEdgeCountsFinalized = true;
+    inboundEdgeCoverage = count;
+  }//end: setInboundLeaveEdges(WikiInvGraph)
+
+  /**
+   * Sets the coverage based on the number of category leaves and the number of overall vertices.
+   */
   public void setVertexCoverage()
   {
-    coverage = 0;
-		
-    //finalizeAllLeaves();
-		
-    if(allLeaves != null)
+    vertexCoverage = 0;
+
+    if(allVertices != null)
     {
-      coverage = allLeaves.length;
+      vertexCoverage = allVertices.length;
     }
-  }
-	
+  }//end: setVertexCoverage()
+  
  /**
-  * Sets the coverage based on the number of edges into the node leaves and the number of overall edges.
-  * 
-  * @param den Number of edges in the overall graph.
+  * Sets the ImmediateLeavesFinalized flag.
   */
-  public void setEdgeCoverage(WikiInvGraph wg)
+  public void finalizeImmediateVertices()
   {
-    coverage = 0;
-		
-    //finalizeAllLeaves();
-		
-    if(allLeaves != null)
-    {
-      coverage = getInboundLeafEdges(wg);
-    }
-  }
-	
- public void finalizeImmediateLeaves()
- {
-   if(IMleaves != null)
+    //ImmediateLeavesFinalized = true;
+  }//end: finalizeImmediateLeaves()
+
+ /**
+  * Finalize all the category vertices.
+  */
+  public void finalizeAllVertices()
+  {
+    if(this.children != null)
+    { 
+      // Finalize all children
+      for(int i = 0; i < children.length; i++)
+      {
+        // Check to see if child is finalized
+        if(!children[i].AllChildrenVerticesFinalized)
+        {
+          children[i].finalizeAllVertices();
+        }
+        this.addAncestorVertices(children[i].allVertices);
+      }//end: for(i)
+    }//end: if(this.children)
+    
+    // Set Leaves Finalized Flag
+    this.finalizeImmediateVertices();
+    this.addAncestorVertices(this.immediateVertices);
+    AllChildrenVerticesFinalized = true;
+  }//end: finalizeAllLeaves()
+
+ /**
+  * Gets the vertex coverage amount of the {@link CategoryNode}.
+  * 
+  * @return Vertex coverage amount of the {@link CategoryNode}.
+  */
+  public int getVertexCoverage()
+  {
+    return vertexCoverage;
+  }// getCoverage()
+
+  /**
+   * Gets the in-bound edge coverage amount of the {@link CategoryNode}.
+   * 
+   * @return In-bound edge coverage amount of the {@link CategoryNode}.
+   */
+   public int getInboundEdgeCoverage()
    {
-     immediateLeaves = IMleaves.toIntArray();
-     Arrays.sort(immediateLeaves);
-			
-     if(ALLleaves != null)
-       ALLleaves.addAll(IMleaves);
-     else
-       ALLleaves = IMleaves;
-			
-     IMleaves = null;
-   }
+     return inboundEdgeCoverage;
+   }// getCoverage()
    
-   IMfinalized = true;
- }//end: finalizeImmediateLeaves()
-
- public void finalizeAllLeaves()
- {  
-   if(ALLleaves != null)
-   {
-     allLeaves = ALLleaves.toIntArray();
-			
-     int[] tmp = immediateLeaves;
-     if(tmp == null)
-     {
-       tmp = new int[0]; 
-     }
-			
-     int[] newLeaves = Arrays.copyOf(allLeaves, allLeaves.length + tmp.length);
-     for(int i=0; i<tmp.length; i++) {
-       newLeaves[allLeaves.length+i] = tmp[i];
-     }
-     Arrays.sort(newLeaves);
-     allLeaves = newLeaves;
-     ALLleaves = null;
-   }
-   ALLfinalized = true;
- }
-
-	
+   /**
+    * Gets the out-bound edge coverage amount of the {@link CategoryNode}.
+    * 
+    * @return Out-bound edge coverage amount of the {@link CategoryNode}.
+    */
+    public int getOutboundEdgeCoverage()
+    {
+      return outboundEdgeCoverage;
+    }// getCoverage()
+    
  /**
+  * Determines if the given vertex number is a leaf vertex of the category.
   * 
-  * @return
+  * @return Boolean value based on if the leaf is found.
   */
- public int getCoverage()
- {
-   return coverage;
- }
+  public boolean isImmediateVertex(int vertex)
+  {
+    if(immediateVertices != null)
+    {
+      return (Arrays.binarySearch(immediateVertices, vertex) >= 0);
+    }
+    else
+    {
+      return false;
+    }
+  }//end: isImmediateVertex(int)
+
+  /**
+   * Determines if the given vertex number is a leaf vertex of the category.
+   * 
+   * @return Boolean value based on if the leaf is found.
+   */
+  public boolean isAncestorVertex(int vertex)
+  {
+    if(allVertices != null)
+    {
+      return (Arrays.binarySearch(allVertices, vertex) >= 0);
+    }
+    else
+    {
+      return false;
+    }
+  }//end: isAncestorVertex(int)
+
+  /**
+   * Accessor for the list of children
+   * 
+   * @return {@link CategoryNode} array
+   */
+  public CategoryNode[] getChildrenCategories()
+  {
+    return children;
+  }//end: getChildren()
+
+  /**
+   * Accessor for the list of parents
+   * 
+   * @return {@link CategoryNode} array
+   */
+  public CategoryNode[] getParentCategories()
+  {
+    return parents;
+  }//end: getParents()
+
+  /**
+   * Prints the contents of the node.
+   */
+  public void print()
+  {
+    //Print name of the node
+    System.out.print(catID);
+
+    //Print parents of the node
+    System.out.print("\tParents:");
+    if(parents != null)
+    {
+      for(int j = 0; j < parents.length; j++)
+      {
+        System.out.print(" "+ parents[j].getCategoryID());
+      }
+    }
+    else
+    {
+      System.out.print("-");
+    }
+
+    //Print children of the node
+    System.out.print("\tChildren:");
+    if(children != null)
+    {
+      for(int j = 0; j < children.length; j++)
+      {
+        System.out.print(" "+ children[j].getCategoryID());
+      }
+    }
+    else
+    {
+      System.out.print("-");
+    }
+
+    //Print category coverage
+    System.out.println("\t" + vertexCoverage);
+  }//end: print()
 
  /**
-  * Determines if the given node is a leaf of the category.
+  * Determines if the given {@link CategoryNode} is a descendant of the current node.
   * 
-  * @return boolean value based on if the leaf is found
+  * @param cn {@link CategoryNode} to find.
+  * @return Whether the given category is a descendant.
   */
- public boolean isImmediateLeaf(int node)
- {
-   if(IMfinalized)
-   {
-     if(immediateLeaves != null)
-       return (Arrays.binarySearch(immediateLeaves, node) >= 0);
-     else
-       return false;
-   }
-   else
-   {
-     return IMleaves.contains(node);
-   }
- }//end: isImmediateLeaf
-	
+  public boolean isDescendant(CategoryNode cn) 
+  {
+    return checkIfDescendant(this, cn);
+  }
+
  /**
-  * Determines if the given node is a leaf of the category.
+  * Determines if a given {@link CategoryNode} is a descendant of another category.
   * 
-  * @return boolean value based on if the leaf is found
+  * @param category Current {@link CategoryNode} to search.
+  * @param findMe {@link CategoryNode} to find.
+  * @return Boolean as the the decendant nature of the given {@link CategoryNode}.
   */
- public boolean isLeaf(int node)
- {
-   if(ALLfinalized)
-   {
-     if(allLeaves != null)
-       return (Arrays.binarySearch(allLeaves, node) >= 0);
-     else
-       return false;
-   }
-   else
-   {
-     return ALLleaves.contains(node);
-   }
- }//end: isLeaf(int)
-	
- /**
-  * Accessor for the list of children
-  * 
-  * @return {@link CategoryNode} array
-  */
- public CategoryNode[] getChildren()
- {
-   return children;
- }
+  public boolean checkIfDescendant(CategoryNode category, CategoryNode findMe)
+  {
+    /* BASE CASES */
+    if(category.equals(findMe))
+    {//Found!
+      return true;
+    }
+    else if(category.children == null)
+    {//No more children
+      return false;
+    }
 
- /**
-  * Accessor for the list of parents
-  * 
-  * @return {@link CategoryNode} array
-  */
- public CategoryNode[] getParents()
- {
-   return parents;
- }
-
- /**
-  * Prints the contents of the node.
-  */
- public void print() {
-   //Print name of the node
-   System.out.print(nodeName);
-
-   //Print parents of the node
-   System.out.print("\tParents:");
-   if(parents != null) {
-     for(int j=0; j<parents.length; j++) {
-       System.out.print(" "+ parents[j].getName());
-     }
-   } else {
-     System.out.print("-");
-   }
-
-   //Print children of the node
-   System.out.print("\tChildren:");
-   if(children != null) {
-     for(int j=0; j<children.length; j++) {
-       System.out.print(" "+ children[j].getName());
-     }
-   } else {
-     System.out.print("-");
-   }
-
-   //Print category coverage
-   System.out.println("\t" + coverage);
- }
-
- /**
-  * Used to convert the {@link CategoryNode} links to their integer positions for writing.
-  * 
-  * @param arr Array of {@link CategoryNodes} representing the category graph.
-  */
- public void convertEdgesBeforeWrite(CategoryNode[] arr) {
-   if(parents != null) {
-     parentsIndex = new int[parents.length];
-     for(int i=0; i<parents.length; i++) {
-       parentsIndex[i] = Arrays.binarySearch(arr, parents[i]);
-     }
-   } else {
-     parentsIndex = null;
-   }
-
-   if(children != null) {
-     childrenIndex = new int[children.length];
-     for(int i=0; i<children.length; i++) {
-       childrenIndex[i] = Arrays.binarySearch(arr, children[i]);
-     }
-   } else {
-     childrenIndex = null;
-   }
- }
-
- /**
-  * Used to convert the {@link CategoryNode} integer positions to their memory locations for use.
-  * 
-  * @param arr Array of {@link CategoryNodes} representing the category graph.
-  */
- public void convertEdgesAfterRead(CategoryNode[] arr) {
-   if(parentsIndex != null) {
-     parents = new CategoryNode[parentsIndex.length];
-     for(int i=0; i<parents.length; i++) {
-       parents[i] = arr[parentsIndex[i]];
-     }
-   } else {
-     parents = null;
-   }
-
-   if(childrenIndex != null) {
-     children = new CategoryNode[childrenIndex.length];
-     for(int i=0; i<children.length; i++) {
-       children[i] = arr[childrenIndex[i]];
-     }
-   } else {
-     children = null;
-   }
- }
-
- public boolean isDescendant(CategoryNode cn) 
- {
-   return checkIfDescendant(this, cn);
- }
-
- public boolean checkIfDescendant(CategoryNode parent, CategoryNode findMe)
- {
-   if(parent.equals(findMe))
-   {
-     return true;
-   }
-   else if(parent.children == null)
-   {
-     return false;
-   }
-
-   boolean found = false;
-   for(int i = 0; !found && i < parent.children.length; i++)
-   {
-     found = checkIfDescendant(parent.children[i], findMe);
-   }//end: for(i)
-   return found;
- }
+    // Recursively search descendants
+    boolean found = false;
+    for(int i = 0; !found && i < category.children.length; i++)
+    {
+      found = checkIfDescendant(category.children[i], findMe);
+    }//end: for(i)
+    
+    return found;
+  }//end: checkIfDescendant(CategoryNode, CategoryNode)
 
  /**
   * Writes a {@link CategoryNode} to the file.
   * 
-  * @param out Output file stream
+  * @param out {@link ObjectOutputStream} to write to.
   * @throws IOException
   */
- private void writeObject(ObjectOutputStream out) throws IOException {
-   //System.out.println(nodeName);		
-   out.writeObject(nodeName);
-   out.writeObject(parentsIndex);
-   out.writeObject(childrenIndex);
-   out.writeInt(coverage);
+  private void writeObject(ObjectOutputStream out) throws IOException
+  {
+    /* Write node information */
+    out.writeInt(catID);
+    out.writeObject(parentsIndex);
+    out.writeObject(childrenIndex);
+    
+    /* Write various counts */
+    out.writeInt(vertexCoverage);
+    out.writeInt(inboundEdgeCoverage);
+    out.writeInt(outboundEdgeCoverage);
 
-   /* Write the list of all leaves as an         *
-    * array or an IntAVLTreeSet                  */
-   out.writeBoolean(ALLfinalized);
-   if(ALLfinalized && allLeaves != null)
-     out.writeObject(allLeaves);
-   else if( ALLleaves != null)
-     out.writeObject(ALLleaves.toIntArray());
-   else
-     out.writeObject(new int[0]);
+    /* Write the count status */
+    out.writeBoolean(AllChildrenVerticesFinalized);
+    out.writeBoolean(inboundEdgeCountsFinalized);
+    out.writeBoolean(outboundEdgeCountsFinalized);
+    
+    /* Write the list of all vertices */
+    if(allVertices != null)
+      out.writeObject(allVertices);
+    else
+      out.writeObject(new int[0]);
 
-   /* Write the list of immediate leaves as an   *
-    * array or an IntAVLTreeSet                  */
-   out.writeBoolean(IMfinalized);
-   if(IMfinalized && immediateLeaves != null) {
-     out.writeObject(immediateLeaves);
-   }
-   if(IMleaves != null)
-     out.writeObject(IMleaves.toIntArray());
-   else
-     out.writeObject(new int[0]);
- }
+    /* Write the list of immediate vertices */
+    if(immediateVertices != null)
+    {
+      out.writeObject(immediateVertices);
+    } 
+    else
+    {
+      out.writeObject(new int[0]);
+    }
+  }//end: writeObject(ObjectOutputStream)
 
- /**
-  * Reads a {@link CategoryNode} from a file.
-  * 
-  * @param in Input file stream
-  * @throws IOException
-  * @throws ClassNotFoundException
-  */
- private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-   nodeName      = (String)     in.readObject();
-   parentsIndex  = (int[]) in.readObject();
-   childrenIndex = (int[]) in.readObject();
-   coverage      = in.readInt();
+  /**
+   * Used to convert the {@link CategoryNode} links to their integer positions for writing.
+   * 
+   * @param arr Array of {@link CategoryNodes} representing the category graph.
+   */
+  public void convertEdgesBeforeWrite(CategoryNode[] arr)
+  {
+    if(parents != null)
+    {
+      parentsIndex = new int[parents.length];
+      for(int i=0; i<parents.length; i++)
+      {
+        parentsIndex[i] = Arrays.binarySearch(arr, parents[i]);
+      }
+    }
+    else
+    {
+      parentsIndex = null;
+    }
 
-   ALLfinalized  = in.readBoolean();
-   int[] tmp = (int[]) in.readObject();
-   if(ALLfinalized) {
-     if(tmp.length == 0) {
-       allLeaves = null;
-     } else {
-       allLeaves = tmp;
-     }			
-   } else {
-     if(tmp.length == 0) {
-       ALLleaves = null;
-     } else {
-       ALLleaves = new IntAVLTreeSet(tmp);
-     }
-   }
+    if(children != null)
+    {
+      childrenIndex = new int[children.length];
+      for(int i=0; i<children.length; i++)
+      {
+        childrenIndex[i] = Arrays.binarySearch(arr, children[i]);
+      }
+    }
+    else
+    {
+      childrenIndex = null;
+    }
+  } 
+  
+  /**
+   * Reads a {@link CategoryNode} from a file.
+   * 
+   * @param in {@link ObjectInputStream} to read from.
+   * @throws IOException
+   * @throws ClassNotFoundException
+   */
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException
+  {
+    /* Read node information */
+    catID                = in.readInt();
+    parentsIndex         = (int[]) in.readObject();
+    childrenIndex        = (int[]) in.readObject();
+    
+    /* Read count information */
+    vertexCoverage       = in.readInt();
+    inboundEdgeCoverage  = in.readInt();
+    outboundEdgeCoverage = in.readInt();
 
-   IMfinalized  = in.readBoolean();
-   tmp = (int[]) in.readObject();
-   if(IMfinalized) {
-     if(tmp.length == 0) {
-       immediateLeaves = null;
-     } else {
-       immediateLeaves = tmp;
-     }			
-   } else {
-     if(tmp.length == 0) {
-       IMleaves = null;
-     } else {
-       IMleaves = new IntAVLTreeSet(tmp);
-     }
-   }
- }
+    /* Read status information */
+    AllChildrenVerticesFinalized  = in.readBoolean();
+    inboundEdgeCountsFinalized  = in.readBoolean();
+    outboundEdgeCountsFinalized  = in.readBoolean();
+    
+    /* Read all vertex coverage information */
+    int[] tmp = (int[]) in.readObject();
+    if(tmp.length == 0)
+    { //Not Defined
+      allVertices = null;
+    }
+    else
+    { //Already Defined
+      allVertices = tmp;
+    }			
+ 
+    /* Read immediate vertex coverage information */
+    tmp = (int[]) in.readObject();
+    if(tmp.length == 0)
+    { //Not Defined
+      immediateVertices = null;
+    }
+    else
+    { //Already Defined
+      immediateVertices = tmp;
+    }			
+  }//end: readObject(ObjectInputStream)
 
- /**
-  * Comparator based on node name.
-  */
- public int compareTo(Object cn) {
-   return this.nodeName.compareTo(((CategoryNode)cn).nodeName);
- }
+  /**
+   * Used to convert the {@link CategoryNode} integer positions to their memory locations for use.
+   * 
+   * @param arr Array of {@link CategoryNodes} representing the category graph.
+   */
+  public void convertEdgesAfterRead(CategoryNode[] arr)
+  {
+    if(parentsIndex != null)
+    {
+      parents = new CategoryNode[parentsIndex.length];
+      for(int i = 0; i < parents.length; i++)
+      {
+        parents[i] = arr[parentsIndex[i]];
+      }//end: for(i)
+    }
+    else
+    {
+      parents = null;
+    }
 
- /**
-  * Comparator based on node name.
-  * 
-  * @param o1 {@link CategoryNode}
-  * @param o2 {@link CategoryNode}
-  * @return comparison of the two objects based on node name.
-  */
- public int compare(Object o1, Object o2) {
-   return ((CategoryNode)o1).nodeName.compareTo(((CategoryNode)o2).nodeName);
- }
+    if(childrenIndex != null)
+    {
+      children = new CategoryNode[childrenIndex.length];
+      for(int i = 0; i < children.length; i++)
+      {
+        children[i] = arr[childrenIndex[i]];
+      }//end: for(i)
+    }
+    else
+    {
+      children = null;
+    }
+  }//end: convertEdgesAfterRead(CategoryNode[])
+  
+  /**
+   * Comparator based on node IDs.
+   */
+  public int compareTo(Object cn)
+  {
+    return this.catID - ((CategoryNode)cn).catID;
+  }//end: compareTo(Object)
+
+  /**
+   * Comparator based on node IDs.
+   * 
+   * @param o1 {@link CategoryNode}
+   * @param o2 {@link CategoryNode}
+   * @return comparison of the two objects based on node name.
+   */
+  public int compare(Object o1, Object o2)
+  {
+    return ((CategoryNode)o1).catID - ((CategoryNode)o2).catID;
+  }//end: compare(Object, Object)
 }

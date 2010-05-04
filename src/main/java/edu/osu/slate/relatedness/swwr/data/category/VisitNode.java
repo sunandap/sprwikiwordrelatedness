@@ -7,7 +7,8 @@ import java.util.LinkedList;
 import edu.osu.slate.relatedness.swwr.data.category.CategoryGraph;
 
 /**
- * Breadth/Depth-first search nodes.<br>
+ * Breadth/Depth-first search nodes.
+ * <p>
  * Used in the {@link CategoryGraph} class.
  * 
  * @author weale
@@ -16,16 +17,17 @@ import edu.osu.slate.relatedness.swwr.data.category.CategoryGraph;
 public class VisitNode
 {
 
-  /* Array of parents of the node */
+  /* Array of category IDs of the parents of the node */
   private int[] parents;
 
-  /* Current visited node */
+  /* Current category ID */
   private int currNode;
 
+  /* Current child position */
   private int currChild;
 
   /**
-   * Creates a new {@link VisitNode} with given parents and the current {@link CategoryNode}.
+   * Creates a new {@link VisitNode} with given parents and the current {@link CategoryTitleNode}.
    * 
    * @param cn Current category ID
    * @param p IDs of the parents of the current category
@@ -44,7 +46,7 @@ public class VisitNode
   * 
   * @return ID of the current category.
   */
-  public int getCurrentNode()
+  public int getCurrentCategoryID()
   {
     return currNode;
   }
@@ -57,13 +59,13 @@ public class VisitNode
   */
   public boolean hasNextChild(CategoryNode[] arr)
   {
-    if(arr[currNode].getChildren() == null)
+    if(arr[currNode].getChildrenCategories() == null)
     {
       return false;
     }
     else
     {
-      return (currChild < arr[currNode].getChildren().length);
+      return (currChild < arr[currNode].getChildrenCategories().length);
     }
   }//end: hasNextChild(CategoryNode[])
 
@@ -78,18 +80,18 @@ public class VisitNode
   public VisitNode getNextChild(CategoryNode[] arr)
   {
     /* Get all children in of the current node */
-    CategoryNode tmp = arr[currNode].getChildren()[currChild];
+    CategoryNode tmp = arr[currNode].getChildrenCategories()[currChild];
     currChild++;
 
     // Get the next child
-    String childName = tmp.getName();
+    int childID = tmp.getCategoryID();
 
     // Check if a cycle would be created by expanding this child
     boolean validChild = true;
     for(int j = 0; parents != null && j < parents.length; j++)
     {
       /* If we've already visited the child, we have a cycle */
-      if(arr[parents[j]].getName().equals(childName))
+      if(arr[parents[j]].getCategoryID() == childID)
       {
         validChild = false; // Cycle detected!
       }
@@ -111,7 +113,7 @@ public class VisitNode
     else
     {
       // Current edge causes a cycle. Remove it.
-      arr[currNode].removeChild(childName);
+      arr[currNode].removeChild(childID);
       return null;
     }
 
@@ -128,20 +130,20 @@ public class VisitNode
   public VisitNode[] makeChildrenVisitNodes(CategoryNode[] arr)
   {
     /* Get all children in of the current node */
-    CategoryNode[] tmp = arr[currNode].getChildren();
+    CategoryNode[] tmp = arr[currNode].getChildrenCategories();
     LinkedList<VisitNode> ll = new LinkedList<VisitNode>();
 
     for(int i = 0; tmp != null && i < tmp.length; i++)
     {
       // Get the next child
-      String childName = tmp[i].getName();
+      int childID = tmp[i].getCategoryID();
 
       // Check if a cycle would be created by expanding this child
       boolean validChild = true;
       for(int j = 0; parents != null && j < parents.length; j++)
       {
         /* If we've already visited the child, we have a cycle */
-        if(arr[parents[j]].getName().equals(childName))
+        if(arr[parents[j]].getCategoryID() == childID )
         {
           validChild = false; // Cycle detected!
         }
@@ -164,7 +166,7 @@ public class VisitNode
       else
       {
         // Current edge causes a cycle. Remove it.
-        arr[currNode].removeChild(childName);
+        arr[currNode].removeChild(childID);
       }
     }//end: for(i)
 

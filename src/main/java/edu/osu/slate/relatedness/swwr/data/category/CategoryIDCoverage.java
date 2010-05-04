@@ -24,18 +24,49 @@ package edu.osu.slate.relatedness.swwr.data.category;
 public class CategoryIDCoverage {
 
   private int catID;
+  private int catCount;
   private float coverage;
   
  /**
   * Constructor.
   *  
   * @param id Category ID.
-  * @param cov Category coverage.
   */
-  public CategoryIDCoverage(int id, float cov) {
+  public CategoryIDCoverage(int id)
+  {
     catID = id;
-    coverage = cov;
+    catCount = 0;
+    coverage = 0;
   }//end: CategoryIDCoverage(int,float)
+  
+ /**
+  * Calculates the category coverage.
+  *  
+  * @param total Total number of vertices.
+  */
+  public void calculateCoverage(int total)
+  {
+    coverage = catCount;
+    coverage = coverage / total;
+  }
+  
+ /**
+  * Adds the given vertex count to the previous category count.
+  * <p>
+  * <b>NOTE:</b> There is NO guarantee that vertices added will be unique.
+  * In order to guarantee uniqueness, use another class (forthcoming).
+  * 
+  * @param vertexCount Count of vertices to add.
+  */
+  public void addToCategoryCount(int vertexCount)
+  {
+    catCount += vertexCount;
+  }
+  
+  public int getRawCategoryCount()
+  {
+    return catCount;
+  }
   
  /**
   * Sets the category coverage.

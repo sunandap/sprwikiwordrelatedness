@@ -12,22 +12,22 @@ import edu.osu.slate.relatedness.swwr.data.category.CategoryGraph;
  * @author weale
  *
  */
-public class CategoryIDNode implements Serializable, Comparable<Object> {
+public class CategoryTitleNode implements Serializable, Comparable<Object> {
 
   /* Serialization variable */
   private static final long serialVersionUID = 1L;
 
   /* Page/Category Name */
-  private int catID;
+  private String nodeName;
 
   /* CategoryNode array of positions of parents in acyclic graph */
-  private CategoryIDNode[] parents;
+  private CategoryTitleNode[] parents;
 
   /* Integer array of positions of parents in acyclic graph */
   private int[] parentsIndex;
 
   /* CategoryNode array of positions of children in acyclic graph */
-  private CategoryIDNode[] children;
+  private CategoryTitleNode[] children;
 
   /* int array of positions of children in acyclic graph */
   private int[] childrenIndex;
@@ -58,9 +58,9 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
   * 
   * @param name Category name.
   */
-  public CategoryIDNode(int id)
+  public CategoryTitleNode(String name)
   {
-    catID = id;
+    nodeName = name;
     parents = null;
     children = null;
     IMleaves = null;
@@ -74,20 +74,20 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
   * <p>
   * Only adds the ID if the parent is not already listed.
   * 
-  * @param parent {@link CategoryIDNode} of the parent.
+  * @param parent {@link CategoryTitleNode} of the parent.
   */
-  public void addParent(CategoryIDNode parent)
+  public void addParent(CategoryTitleNode parent)
   {
     if(parents == null)
     { //No existing parents
-      parents = new CategoryIDNode[1];
+      parents = new CategoryTitleNode[1];
       parents[0] = parent;
     }
     else if(Arrays.binarySearch(parents, parent) < 0)
     { // Parent not found in existing parents
       
       // Create new array, copy parent into new array
-      CategoryIDNode[] tmp = new CategoryIDNode[parents.length+1];
+      CategoryTitleNode[] tmp = new CategoryTitleNode[parents.length+1];
       System.arraycopy(parents, 0, tmp, 0, parents.length);
       tmp[parents.length] = parent;
       parents = tmp;
@@ -99,9 +99,9 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
  /**
   * Adds a child ID to the current node.  Only adds the ID if the child is not already listed.
   * 
-  * @param child {@link CategoryIDNode} of the child.
+  * @param child {@link CategoryTitleNode} of the child.
   */
-  public void addChild(CategoryIDNode child)
+  public void addChild(CategoryTitleNode child)
   {
     int size = 0;
     if(children != null)
@@ -118,7 +118,7 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
     size++;
     
     //Create Child
-    CategoryIDNode[] tmp = new CategoryIDNode[size];
+    CategoryTitleNode[] tmp = new CategoryTitleNode[size];
     System.arraycopy(children, 0, tmp, 0, size-1);
     tmp[size-1] = child;
     children = tmp;
@@ -133,13 +133,13 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
   * 
   * @param name Name of the child to remove.
   */
-  public void removeChild(int id)
+  public void removeChild(String name)
   {
-    CategoryIDNode[] tmp = new CategoryIDNode[children.length-1];
+    CategoryTitleNode[] tmp = new CategoryTitleNode[children.length-1];
     int currIndex=0, newIndex=0;
     while(newIndex<tmp.length)
     {
-      if(children[currIndex].catID != id)
+      if(!children[currIndex].nodeName.equals(name))
       {
         tmp[newIndex] = children[currIndex];
         newIndex++;
@@ -157,14 +157,13 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
   * 
   * @param name Name of the parent to remove.
   */
-  public void removeParent(int id)
+  public void removeParent(String name)
   {
-    CategoryIDNode[] tmp = new CategoryIDNode[parents.length-1];
+    CategoryTitleNode[] tmp = new CategoryTitleNode[parents.length-1];
     int currIndex=0, newIndex=0;
     while(newIndex<tmp.length)
     {
-      if( parents[currIndex].catID  != id )
-      {
+      if(!parents[currIndex].nodeName.equals(name)) {
         tmp[newIndex] = parents[currIndex];
         newIndex++;
       }
@@ -179,9 +178,9 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
   * 
   * @return String containing the name of the node
   */
-  public int getCategoryID()
+  public String getName()
   {
-    return catID;
+    return nodeName;
   }
 	
  /**
@@ -190,9 +189,9 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
   * @param name Category name being searched for.
   * @return Boolean value of whether or not the searched name is the name of the node.
   */
-  public boolean isCategoryID(int id)
+  public boolean isNodeName(String name)
   {
-    return (catID == id);
+    return name.equals(nodeName);
   }
 	
  /**
@@ -396,9 +395,9 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
  /**
   * Accessor for the list of children
   * 
-  * @return {@link CategoryIDNode} array
+  * @return {@link CategoryTitleNode} array
   */
- public CategoryIDNode[] getChildren()
+ public CategoryTitleNode[] getChildren()
  {
    return children;
  }
@@ -406,9 +405,9 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
  /**
   * Accessor for the list of parents
   * 
-  * @return {@link CategoryIDNode} array
+  * @return {@link CategoryTitleNode} array
   */
- public CategoryIDNode[] getParents()
+ public CategoryTitleNode[] getParents()
  {
    return parents;
  }
@@ -418,13 +417,13 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
   */
  public void print() {
    //Print name of the node
-   System.out.print(catID);
+   System.out.print(nodeName);
 
    //Print parents of the node
    System.out.print("\tParents:");
    if(parents != null) {
      for(int j=0; j<parents.length; j++) {
-       System.out.print(" "+ parents[j].getCategoryID());
+       System.out.print(" "+ parents[j].getName());
      }
    } else {
      System.out.print("-");
@@ -434,7 +433,7 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
    System.out.print("\tChildren:");
    if(children != null) {
      for(int j=0; j<children.length; j++) {
-       System.out.print(" "+ children[j].getCategoryID());
+       System.out.print(" "+ children[j].getName());
      }
    } else {
      System.out.print("-");
@@ -445,11 +444,11 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
  }
 
  /**
-  * Used to convert the {@link CategoryIDNode} links to their integer positions for writing.
+  * Used to convert the {@link CategoryTitleNode} links to their integer positions for writing.
   * 
   * @param arr Array of {@link CategoryNodes} representing the category graph.
   */
- public void convertEdgesBeforeWrite(CategoryIDNode[] arr) {
+ public void convertEdgesBeforeWrite(CategoryTitleNode[] arr) {
    if(parents != null) {
      parentsIndex = new int[parents.length];
      for(int i=0; i<parents.length; i++) {
@@ -470,13 +469,13 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
  }
 
  /**
-  * Used to convert the {@link CategoryIDNode} integer positions to their memory locations for use.
+  * Used to convert the {@link CategoryTitleNode} integer positions to their memory locations for use.
   * 
   * @param arr Array of {@link CategoryNodes} representing the category graph.
   */
- public void convertEdgesAfterRead(CategoryIDNode[] arr) {
+ public void convertEdgesAfterRead(CategoryTitleNode[] arr) {
    if(parentsIndex != null) {
-     parents = new CategoryIDNode[parentsIndex.length];
+     parents = new CategoryTitleNode[parentsIndex.length];
      for(int i=0; i<parents.length; i++) {
        parents[i] = arr[parentsIndex[i]];
      }
@@ -485,7 +484,7 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
    }
 
    if(childrenIndex != null) {
-     children = new CategoryIDNode[childrenIndex.length];
+     children = new CategoryTitleNode[childrenIndex.length];
      for(int i=0; i<children.length; i++) {
        children[i] = arr[childrenIndex[i]];
      }
@@ -494,12 +493,12 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
    }
  }
 
- public boolean isDescendant(CategoryIDNode cn) 
+ public boolean isDescendant(CategoryTitleNode cn) 
  {
    return checkIfDescendant(this, cn);
  }
 
- public boolean checkIfDescendant(CategoryIDNode parent, CategoryIDNode findMe)
+ public boolean checkIfDescendant(CategoryTitleNode parent, CategoryTitleNode findMe)
  {
    if(parent.equals(findMe))
    {
@@ -519,14 +518,14 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
  }
 
  /**
-  * Writes a {@link CategoryIDNode} to the file.
+  * Writes a {@link CategoryTitleNode} to the file.
   * 
   * @param out Output file stream
   * @throws IOException
   */
  private void writeObject(ObjectOutputStream out) throws IOException {
    //System.out.println(nodeName);		
-   out.writeInt(catID);
+   out.writeObject(nodeName);
    out.writeObject(parentsIndex);
    out.writeObject(childrenIndex);
    out.writeInt(coverage);
@@ -554,14 +553,14 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
  }
 
  /**
-  * Reads a {@link CategoryIDNode} from a file.
+  * Reads a {@link CategoryTitleNode} from a file.
   * 
   * @param in Input file stream
   * @throws IOException
   * @throws ClassNotFoundException
   */
  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-   catID         = in.readInt();
+   nodeName      = (String)     in.readObject();
    parentsIndex  = (int[]) in.readObject();
    childrenIndex = (int[]) in.readObject();
    coverage      = in.readInt();
@@ -603,17 +602,17 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
   * Comparator based on node name.
   */
  public int compareTo(Object cn) {
-   return this.catID - ((CategoryIDNode)cn).catID;
+   return this.nodeName.compareTo(((CategoryTitleNode)cn).nodeName);
  }
 
  /**
   * Comparator based on node name.
   * 
-  * @param o1 {@link CategoryIDNode}
-  * @param o2 {@link CategoryIDNode}
+  * @param o1 {@link CategoryTitleNode}
+  * @param o2 {@link CategoryTitleNode}
   * @return comparison of the two objects based on node name.
   */
  public int compare(Object o1, Object o2) {
-   return ((CategoryIDNode)o1).catID - ((CategoryIDNode)o2).catID;
+   return ((CategoryTitleNode)o1).nodeName.compareTo(((CategoryTitleNode)o2).nodeName);
  }
 }
