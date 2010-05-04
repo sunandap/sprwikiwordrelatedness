@@ -15,22 +15,33 @@
 
 package edu.osu.slate.relatedness;
 
-
+/**
+ * Interface for determining relatedness from input word(s).
+ * 
+ * @author weale
+ * @version 0.9
+ * 
+ */
 public interface WordRelatedness {
 
-	/**
-	 * 
-	 * @param w1 Initial word to compare
-	 * @param w2 Secondary word to compare
-	 * @return
-	 */
-	public double getRelatedness(String w1, String w2);
-	
-	/**
-	 * 
-	 * @param w Word for comparison
-	 * @return Array of relatedness values
-	 */
-	public double[] getRelatedness(String w);
-	
+ /**
+  * Calculate the relatedness between a pair of words.
+  * <p>
+  * Relatedness value returned is in the range [0..1]
+  * 
+  * @param w1 Initial word to compare
+  * @param w2 Secondary word to compare
+  * @return Relatedness value
+  */
+  public double getRelatedness(String w1, String w2);
+
+ /**
+  * Calculate the relatedness value between a word and all other words for the data source.
+  * <p>
+  * Returns the values as {@link RelatednessTerm} elements.
+  * 
+  * @param w Word for comparison
+  * @return Array of RelatednessTerms
+  */
+  public RelatednessTerm[] getRelatedness(String w);
 }

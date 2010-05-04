@@ -21,6 +21,7 @@ import java.util.List;
 import de.tudarmstadt.ukp.wiktionary.api.RelationType;
 import de.tudarmstadt.ukp.wiktionary.api.Wiktionary;
 import de.tudarmstadt.ukp.wiktionary.api.WordEntry;
+import edu.osu.slate.relatedness.RelatednessTerm;
 import edu.osu.slate.relatedness.WordRelatedness;
 
 /**
@@ -76,7 +77,7 @@ public class WiktionaryCVRelatedness implements WordRelatedness {
 		return 0.0;
 	}
 
-	public double[] getRelatedness(String w) {
+	public RelatednessTerm[] getRelatedness(String w) {
 		// TODO Auto-generated method stub
 		return null;
 	}

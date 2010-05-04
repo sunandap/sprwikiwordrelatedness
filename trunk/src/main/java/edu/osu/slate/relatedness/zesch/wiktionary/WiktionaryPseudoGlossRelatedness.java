@@ -16,12 +16,14 @@
 package edu.osu.slate.relatedness.zesch.wiktionary;
 
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import de.tudarmstadt.ukp.wiktionary.api.RelationType;
 import de.tudarmstadt.ukp.wiktionary.api.Wiktionary;
 import de.tudarmstadt.ukp.wiktionary.api.WordEntry;
 
+import edu.osu.slate.relatedness.RelatednessTerm;
 import edu.osu.slate.relatedness.WordRelatedness;
 
 /**
@@ -46,7 +48,7 @@ public class WiktionaryPseudoGlossRelatedness implements WordRelatedness {
         // Grab the gloss
         // Create gloss multi-set
         WordEntry we1 = weit1.next();
-        we1.getAssignedRelatedWords(arg0, arg1)
+        //we1.getAssignedRelatedWords(arg0, arg1)
 	  }
 	  
 	  return null;
@@ -107,7 +109,7 @@ public class WiktionaryPseudoGlossRelatedness implements WordRelatedness {
 		return 0.0;
 	}
 
-	public double[] getRelatedness(String w) {
+	public RelatednessTerm[] getRelatedness(String w) {
 		// TODO Auto-generated method stub
 		return null;
 	}

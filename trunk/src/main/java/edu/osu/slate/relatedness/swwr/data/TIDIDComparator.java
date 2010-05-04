@@ -13,25 +13,23 @@
  * limitations under the License.
  */
 
-package edu.osu.slate.relatedness;
+package edu.osu.slate.relatedness.swwr.data;
 
-import java.util.PriorityQueue;
+import java.util.*;
 
 /**
- * Interface for query expansion.
+ * Comparator for the {@link TitleID} class.
+ * <p>
+ * Comparisons are done based on the ids of each object.<br>
+ * (int comparison) 
  * 
  * @author weale
- * @version 1.0
+ *
  */
-public interface TopNRelatedness {
-	
-	/**
-	 * Returns the top N {@link RelatednessTerm} elements.
-	 * 
-	 * @param w Word for relatedness
-	 * @param n Number of terms to generate
-	 * @return {@link PriorityQueue} of {@link RelatednessTerm} elements
-	 */
-	public PriorityQueue<RelatednessTerm> getTopNRelatedness(String w, int n);
-	
+public class TIDIDComparator implements Comparator<TitleID>
+{
+	public int compare(TitleID tid1, TitleID tid2)
+	{
+		return tid1.getID() - tid2.getID();
+	}
 }

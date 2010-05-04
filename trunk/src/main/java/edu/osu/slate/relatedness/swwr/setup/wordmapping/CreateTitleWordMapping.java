@@ -20,11 +20,13 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 import edu.osu.slate.relatedness.swwr.data.*;
+import edu.osu.slate.relatedness.swwr.data.graph.IDVertexRedirect;
+import edu.osu.slate.relatedness.swwr.data.graph.IDVertexTranslation;
 
 /**
  * Creates a simple word-to-vertex mapping for the Wiki graph using the Page title.
  * 
- * Requires initialized {@link ValidIDs} and {@link RedirectList} classes.  All output text is lowercase.
+ * Requires initialized {@link IDVertexTranslation} and {@link IDVertexRedirect} classes.  All output text is lowercase.
  * 
  * Configuration File Requirements
  * <ul>
@@ -118,10 +120,10 @@ public class CreateTitleWordMapping {
     parseConfigurationFile("/scratch/weale/data/config/enwiki/CreateTitleWordMapping.xml");
     
     System.out.println("Initializing Valid ID List.");
-    ValidIDs vid = new ValidIDs(baseDir + "/" + binaryDir + "/" + type+ "/" + date + "/" + type + "-"+ date + "-" + graph + ".vid");
+    IDVertexTranslation vid = new IDVertexTranslation(baseDir + "/" + binaryDir + "/" + type+ "/" + date + "/" + type + "-"+ date + "-" + graph + ".vid");
     
     System.out.println("Initializing Redirect List.");
-    RedirectList rdl = new RedirectList(baseDir + "/" + binaryDir + "/" + type+ "/" + date + "/" + type + "-"+ date + "-" + graph + ".rdr");
+    IDVertexRedirect rdl = new IDVertexRedirect(baseDir + "/" + binaryDir + "/" + type+ "/" + date + "/" + type + "-"+ date + "-" + graph + ".rdr");
     
     System.out.println("Opening page.sql File");
     Scanner in = new Scanner(new FileReader(baseDir + "/" + sourceDir + "/" + type+ "/" + date + "/" + type + "-"+ date + "-" + "page.sql"));
@@ -170,11 +172,13 @@ public class CreateTitleWordMapping {
           int pageID = Integer.parseInt(page);
               
           // Add the ID if it's in the needed namespace and not a redirect
-          if(namespace.equals("0") && redirect.equals("0") && vid.isValidID(pageID))
+          if(namespace.equals("0") && redirect.equals("0") && vid.isValidWikiID(pageID))
           {
             title = addAmbiguity(title, p);
             out.writeObject(title);
-            out.writeInt(pageID);
+            
+            // Write the vertex number to the file
+            out.writeInt( vid.getVertex(pageID) );
           }//end: if()
               
           // Add the ID after redirect
@@ -182,9 +186,12 @@ public class CreateTitleWordMapping {
                   rdl.isRedirectID(pageID))
           {
             title = addAmbiguity(title, p);
-            pageID = rdl.redirect(pageID);
+            
+            //TODO: Is this to ID or Vertex number?
+            int vertex = rdl.redirectIDToVertex(pageID);
+            
             out.writeObject(title);
-            out.writeInt(pageID);
+            out.writeInt(vertex);
           }//end: else if()
               
         }//end: if(info.length)

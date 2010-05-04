@@ -19,7 +19,6 @@ import java.io.*;
 import java.util.*;
 
 import edu.osu.slate.relatedness.Configuration;
-import edu.osu.slate.relatedness.XMLParser;
 import edu.osu.slate.relatedness.swwr.data.category.CategoryGraph;
 import edu.osu.slate.relatedness.swwr.data.category.CategoryTitleToIDTranslation;
 import edu.osu.slate.relatedness.swwr.data.category.IDToCategoryTitleTranslation;
@@ -65,10 +64,10 @@ public class CreateCategoryAcyclicGraph {
     //Read Configuration File
     if(args.length == 1)
     {
-      XMLParser.parseConfigurationFile(args[0]);
+      Configuration.parseConfigurationFile(args[0]);
     }
     else {
-      XMLParser.parseConfigurationFile("/scratch/weale/data/config/enwiktionary/CreateMappings.xml");
+      Configuration.parseConfigurationFile("/scratch/weale/data/config/enwiktionary/CreateMappings.xml");
     }
     
     /* Set file names */

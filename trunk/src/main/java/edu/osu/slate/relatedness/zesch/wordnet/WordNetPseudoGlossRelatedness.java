@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import edu.osu.slate.relatedness.RelatednessTerm;
 import edu.osu.slate.relatedness.WordRelatedness;
 
 import net.didion.jwnl.JWNL;
@@ -179,7 +180,7 @@ public class WordNetPseudoGlossRelatedness implements WordRelatedness {
     return overlap;
   }
 	
-  public double[] getRelatedness(String w) {
+  public RelatednessTerm[] getRelatedness(String w) {
     // TODO Auto-generated method stub
     return null;
   }
