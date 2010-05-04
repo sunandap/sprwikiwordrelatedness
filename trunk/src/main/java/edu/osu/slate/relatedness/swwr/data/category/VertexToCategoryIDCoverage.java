@@ -26,7 +26,9 @@ import java.util.Arrays;
  *
  */
 public class VertexToCategoryIDCoverage {
+  
   private int vertex;
+  
   private CategoryIDCoverage[] cats;
 
  /**
@@ -40,7 +42,8 @@ public class VertexToCategoryIDCoverage {
   {
     vertex = v;
     cats = new CategoryIDCoverage[0];
-  }
+  }//end: VertexToCategoryIDCoverage(int)
+  
  /**
   * Adds a new {@link CategoryIDCoverage} object to the array.
   * <p>

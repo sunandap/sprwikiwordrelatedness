@@ -19,6 +19,7 @@ import it.unimi.dsi.fastutil.ints.*;
 import java.io.*;
 import java.util.*;
 
+import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
 import edu.osu.slate.relatedness.swwr.data.graph.WikiInvGraph;
 
 /**
@@ -38,10 +39,10 @@ public class CategoryGraph implements Serializable {
   private CategoryNode[] graph;
 	
   /* Temporary TreeSet for initial growth */
-  private TreeSet<CategoryNode> ts;
+  //private TreeSet<CategoryNode> ts;
 	
   /* Name of the root CategoryNode */
-  private String root;
+  private int root;
 	
  /**
   * Constructor.
@@ -50,14 +51,14 @@ public class CategoryGraph implements Serializable {
   * 
   * @param root Name of the root category
   */
-  public CategoryGraph(String root)
+  public CategoryGraph(int rootID)
   {
-    this.root = root;
+    this.root = rootID;
 		
     CategoryNode cn = new CategoryNode(root);
-    ts = new TreeSet<CategoryNode>();
-    ts.add(cn);		
-  }//end: CategoryGraph(String)
+    graph = new CategoryNode[1];
+    graph[0] = cn;	
+  }//end: CategoryGraph(int)
 
  /**
   *  
@@ -67,7 +68,7 @@ public class CategoryGraph implements Serializable {
   {
     CategoryNode cn = new CategoryNode(root);
     int pos = Arrays.binarySearch(graph, cn);
-    return graph[pos].getAllLeaves().length;
+    return graph[pos].getAllVertices().length;
   }
 	
  /**
@@ -77,52 +78,38 @@ public class CategoryGraph implements Serializable {
   * 
   * @param page Name of the page to add.
   */
-  public void addNode(String page)
+  public void addNode(int catID)
   {
-    CategoryNode cn = new CategoryNode(page);
-		
-    if(ts.contains(cn))
+    CategoryNode cn = new CategoryNode(catID);
+
+    if(Arrays.binarySearch(graph, cn) < 0)
     {
-      return;
-    }
-		
-    ts.add(cn);
+      CategoryNode[] tempGraph = new CategoryNode[graph.length+1];
+      System.arraycopy(graph, 0, tempGraph, 0, graph.length);
+      tempGraph[graph.length] = cn;
+      graph = tempGraph;
+      
+      Arrays.sort(graph);
+      tempGraph = null;
+    }//end: if()
   }//end: addNode(String)
-	
+		
  /**
-  * Finalizes the list of graph nodes before edges are added.  Also reduces the memory size of the CategoryGraph stucture.
+  * Add a link from the parent to child in the graph.
   * <p>
-  * <b>Must</b> be called before addEdge().
+  * Graph nodes <b>must</b> be finalized before starting to add edges.
   * 
+  * @param parent Category ID of the parent.
+  * @param child Category ID of the child.
   */
-  public void finalizeGraphNodes() {
-    graph = new CategoryNode[ts.size()];
-    Iterator<CategoryNode> set = ts.iterator();
-    
-    for(int i = 0; i < graph.length; i++)
-    {
-      graph[i] = set.next();
-    }
-    ts = null;
-    Arrays.sort(graph);
-    System.gc();
-  }
-	
- /**
-  * Adds a link from the parent to child in the graph.
-  * <p>
-  * finalizeGraphNodes() <b>must</b> be called before starting to add edges.
-  * 
-  * @param parent Name of the parent.
-  * @param child Name of the child.
-  */
-  public void addEdge(String parent, String child)
+  public void addEdge(int parent, int child)
   {
     CategoryNode p = new CategoryNode(parent);
     CategoryNode c = new CategoryNode(child);
     
     int parentIndex = Arrays.binarySearch(graph, p);
     int childIndex = Arrays.binarySearch(graph, c);
+    
     if(parentIndex > -1 && childIndex > -1)
     {			
       graph[parentIndex].addChild(graph[childIndex]);
@@ -139,66 +126,60 @@ public class CategoryGraph implements Serializable {
         System.err.println("Problem with (" + child + ")");
       }
     }
-  }//end: addEdge(String, String)
+  }//end: addEdge(int, int)
 	
  /**
-  * Adds leaf values to the category graph.
-  * <p>
+  * Adds graph vertex numbers to the category graph.
   * 
-  * 
-  * @param parent Name of the category
-  * @param leafNum PageID of the leaf to add.
+  * @param parentID Category ID.
+  * @param vertexNum Graph vertex number.
   */
-  public void addLeaf(String parent, int leafNum)
+  public void addLeaf(int parentID, int vertexNum)
   {
-    int parentPos = Arrays.binarySearch(graph, new CategoryNode(parent));
+    int parentPos = Arrays.binarySearch(graph, new CategoryNode(parentID));
     if(parentPos >= 0)
     {
-      graph[parentPos].addImmediateLeaf(leafNum);
+      graph[parentPos].addImmediateLeaf(vertexNum);
     }
-  }//end: addLeaf(String, int)
+  }//end: addLeaf(int, int)
 	
  /**
-  * Propagates leaf counts around the tree.
+  * Creates coverage based on the in-bound edge count.
+  * 
+  * @param wg {@link WikiInvGraph} containing the vertex graph edges.
   */
-  public void propagateInboundEdgeCounts(WikiInvGraph wg)
+  public void setInboundEdgeCounts(WikiInvGraph wg)
   {
-    finalizeImmediateLeaves();
-		
     CategoryNode tmp = new CategoryNode(root);
     int index = Arrays.binarySearch(graph, tmp);
-    IntAVLTreeSet ts = propogateLeaves(graph[index]);
-		
-    for(int i = 0; i < graph.length; i++)
-    {
-      graph[i].setEdgeCoverage(wg);
-    }
-  }
+    
+    graph[index].finalizeAllVertices();
+    graph[index].setInboundVertexEdgeCount(wg);
+  }//end: useInboundEdgeCounts(WikiInvGraph)
 	
+ /**
+  * Creates coverage based on the out-bound edge count.
+  * 
+  * @param wg {@link WikiGraph} containing the vertex graph edges.
+  */
+  public void setOutboundEdgeCounts(WikiGraph wg)
+  {
+    CategoryNode tmp = new CategoryNode(root);
+    int index = Arrays.binarySearch(graph, tmp);
+     
+    graph[index].finalizeAllVertices();
+    graph[index].setOutboundVertexEdgeCount(wg);
+  }//end: setOutboundEdgeCounts(WikiInvGraph)
+  
  /**
   * Propagates leaf counts around the tree.
   */
-  public void propagateVertexCounts(){
-    finalizeImmediateLeaves();
-		
+  public void setVertexCounts()
+  {
     CategoryNode tmp = new CategoryNode(root);
     int index = Arrays.binarySearch(graph, tmp);
-		
-    IntAVLTreeSet ts = propogateLeaves(graph[index]);
-    
-    for(int i = 0; i < graph.length; i++)
-    {
-      graph[i].setVertexCoverage();
-//	    int[] test = graph[i].getAllLeaves();
-//		if(graph[i].getName().indexOf("Topics") != -1) {
-//		System.out.print(graph[i].getName() + " ");
-//		if(test == null) {
-//			System.out.println("null");
-//		} else {
-//			System.out.println(test.length);
-//		}
-//		}
-    }//end: for(i)
+	
+    graph[index].finalizeAllVertices();
   }//end: propogateVertexCounts()
 	
  /**
@@ -207,7 +188,7 @@ public class CategoryGraph implements Serializable {
   * @param cn CategoryNode
   * @return Set of leaf IDs
   */
-  private IntAVLTreeSet propogateLeaves(CategoryNode cn) {
+  private IntAVLTreeSet propogateLeaves(CategoryTitleNode cn) {
 		
     /* Base Case: No Children */
     if(cn.getChildren() == null) {
@@ -235,16 +216,16 @@ public class CategoryGraph implements Serializable {
     return tmp;
   }
 	
- /**
+ /*
   * 
   */
-  private void finalizeImmediateLeaves()
-  {
-    for(int i = 0; i < graph.length; i++)
-    {
-      graph[i].finalizeImmediateLeaves();
-    }
-  }//end: finalizeImmediateLeaves()
+//  private void finalizeImmediateLeaves()
+//  {
+//    for(int i = 0; i < graph.length; i++)
+//    {
+//      graph[i].finalizeImmediateLeaves();
+//    }
+//  }//end: finalizeImmediateLeaves()
 	
  /**
   * Removes any cycles to create an acyclic category tree.
@@ -282,46 +263,43 @@ public class CategoryGraph implements Serializable {
     
   }//end: removeCycles()
 
- /**
+ /*
   * Removes excess categories.
   * <p>
   * Excess categories are those that do not connect to the graph root.
   */
-  public void trimGraphToRoot()
-  {
-    ts = new TreeSet<CategoryNode>();
-		
-    CategoryNode tmp = new CategoryNode(root);
-    LinkedList<VisitNode> ll = new LinkedList<VisitNode>();
-    int index = Arrays.binarySearch(graph, tmp);
-    ll.add(new VisitNode(graph[index], new CategoryNode[0]));
-		
-    while(!ll.isEmpty())
-    {
-      VisitNode vn = ll.removeFirst();
-			
-      ts.add((CategoryNode) vn.getCurrentNode());
-      VisitNode[] arr = vn.makeChildrenVisitNodes();
-      for(int i = 0; arr != null && i < arr.length; i++)
-      {
-        ll.addFirst(arr[i]);
-      }//end: for(i)
-    }//end: while(!ll.isEmpty)
-		
-    //System.out.println(ts.size());
-    finalizeGraphNodes();
-		
-    for(int i=0; i<graph.length; i++)
-    {
-      CategoryNode[] cn2arr = graph[i].getParents();
-      for(int j = 0; cn2arr != null && j < cn2arr.length; j++)
-      {
-        if(Arrays.binarySearch(graph, cn2arr[j]) < 0) {
-          graph[i].removeParent(cn2arr[j].getName());
-        }
-      }//end: for(j)
-    }//end: for(i)
-  }//end: trimGraphToRoot()
+//  public void trimGraphToRoot()
+//  {
+//    TreeSet<Integer> ts = new TreeSet<Integer>();
+//		
+//    CategoryNode tmp = new CategoryNode(root);
+//    LinkedList<VisitNode> ll = new LinkedList<VisitNode>();
+//    int index = Arrays.binarySearch(graph, tmp);
+//    ll.add(new VisitNode(graph[index].getCategoryID(), new int[0]));
+//		
+//    while(!ll.isEmpty())
+//    {
+//      VisitNode vn = ll.removeFirst();
+//			
+//      ts.add(vn.getCurrentCategoryID());
+//      VisitNode[] arr = vn.makeChildrenVisitNodes(arr);
+//      for(int i = 0; arr != null && i < arr.length; i++)
+//      {
+//        ll.addFirst(arr[i]);
+//      }//end: for(i)
+//    }//end: while(!ll.isEmpty)
+//		
+//    for(int i=0; i<graph.length; i++)
+//    {
+//      CategoryTitleNode[] cn2arr = graph[i].getParents();
+//      for(int j = 0; cn2arr != null && j < cn2arr.length; j++)
+//      {
+//        if(Arrays.binarySearch(graph, cn2arr[j]) < 0) {
+//          graph[i].removeParent(cn2arr[j].getName());
+//        }
+//      }//end: for(j)
+//    }//end: for(i)
+//  }//end: trimGraphToRoot()
 	
  /**
   * Prints the graph in ascending order by category name.
@@ -341,11 +319,11 @@ public class CategoryGraph implements Serializable {
   * @param name Name of the category
   * @return true/false based on if the category name is found in the graph.
   */
-  public boolean isMember(String name)
+  public boolean isMember(int categoryID)
   {
     for(int i = 0; i < graph.length; i++)
     {
-      if(graph[i].isNodeName(name))
+      if(graph[i].isCategoryID(categoryID))
       {
         return true;
       }//end: if(graph[i]
@@ -355,21 +333,22 @@ public class CategoryGraph implements Serializable {
   }//end: isMember(String)
 	
  /**
-  * Gets the number of categories in the graph
+  * Gets the number of categories in the graph.
   * 
-  * @return size of the graph
+  * @return Size of the category graph.
   */
-  public int numVertices()
+  public int numCategories()
   {
     return graph.length;
-  }
+  }//end: numCategories()
 	
  /**
+  * Finds all immediate categories of a given vertex.
   * 
-  * @param leaf
-  * @return
+  * @param vertex Vertex number.
+  * @return Array of {@link CategoryNode} objects.
   */
-  public TreeSet<CategoryNode> getParents(int leaf)
+  public CategoryNode[] getParents(int vertex)
   {
     TreeSet<CategoryNode> ts = new TreeSet<CategoryNode>();
 
@@ -377,13 +356,21 @@ public class CategoryGraph implements Serializable {
     {
       //IntAVLTreeSet iats = graph[i].getArrLeaves();
       //if(iats != null && iats.contains(leaf)) {
-      if(graph[i].isImmediateLeaf(leaf))
+      if(graph[i].isImmediateVertex(vertex))
       {
         ts.add(graph[i]);
       }
     }//end: for(i)
-
-    return ts;
+    
+    CategoryNode[] cn = new CategoryNode[ts.size()];
+    Iterator<CategoryNode> it = ts.iterator();
+    int i = 0;
+    while(it.hasNext()) {
+      cn[i] = it.next();
+      i++;
+    }
+    ts = null;
+    return cn;
   }
 	
 	
@@ -408,7 +395,7 @@ public class CategoryGraph implements Serializable {
   }//end: writeObject()
 	
  /**
-  * Reads a graph from a file
+  * Reads a graph from a file.
   * <p>
   * Recreates the full graph structure from the stored graph links.
   * 
@@ -419,7 +406,7 @@ public class CategoryGraph implements Serializable {
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException
   {
     graph = (CategoryNode[]) in.readObject();
-    root = (String) in.readObject();
+    root = in.readInt();
 		
     /* Convert graph from ints to CategoryNodes */
     for(int i = 0; i < graph.length; i++)
