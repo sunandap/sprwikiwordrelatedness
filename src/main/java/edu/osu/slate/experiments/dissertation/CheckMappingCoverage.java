@@ -146,7 +146,6 @@ public class CheckMappingCoverage {
         }
       }//end: for(i)  
     }//end while(hasNext())
-    
   }//end: main(String)
 
 }
