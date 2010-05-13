@@ -19,6 +19,7 @@ import java.io.*;
 import java.util.*;
 import com.aliasi.tokenizer.PorterStemmerTokenizerFactory;
 
+import edu.osu.slate.relatedness.Configuration;
 import edu.osu.slate.relatedness.swwr.data.mapping.*;
 
 /**
@@ -47,78 +48,78 @@ import edu.osu.slate.relatedness.swwr.data.mapping.*;
  */
 public class CreateMappings {
 
-  private static String baseDir, sourceDir, binaryDir, tempDir;
-  private static String type, date, graph, stemChar;
+//  private static String baseDir, sourceDir, binaryDir, tempDir;
+//  private static String type, date, graph, stemChar;
   private static boolean stem;
-  private static PorterStemmerTokenizerFactory porter;
+//  private static PorterStemmerTokenizerFactory porter;
 
  /**
   * Parse the configuration file.
   *  
   * @param filename Configuration file name.
   */ 
-  private static void parseConfigurationFile(String filename) {
-    try {
-      Scanner config = new Scanner(new FileReader(filename));
-      
-      // Defaults
-      sourceDir = "source";
-      binaryDir = "binary";
-      tempDir = "tmp";
-      stem = false;
-      stemChar = "f";
-      
-      while(config.hasNext()) {
-        String s = config.nextLine();
-        
-        if(s.contains("<basedir>"))
-        {
-          baseDir = s.substring(s.indexOf("<basedir>") + 9,
-                                s.indexOf("</basedir>"));
-        }
-        else if(s.contains("<sourcedir>"))
-        {
-          sourceDir = s.substring(s.indexOf("<sourcedir>") + 11,
-                                  s.indexOf("</sourcedir>"));          
-        }
-        else if(s.contains("<binarydir>"))
-        {
-          binaryDir = s.substring(s.indexOf("<binarydir>") + 11,
-                                  s.indexOf("</binarydir>"));
-        }
-        else if(s.contains("<tempdir>"))
-        {
-          tempDir = s.substring(s.indexOf("<tempdir>") + 9,
-                                s.indexOf("</tempdir>"));
-        }
-        else if(s.contains("<type>"))
-        {
-          type = s.substring(s.indexOf("<type>") + 6,
-                             s.indexOf("</type>"));
-        }
-        else if(s.contains("<date>"))
-        {
-          date = s.substring(s.indexOf("<date>") + 6,
-                             s.indexOf("</date>"));
-        }
-        else if(s.contains("<graph>"))
-        {
-          graph = s.substring(s.indexOf("<graph>") + 7,
-                              s.indexOf("</graph>"));
-        }
-        else if(s.contains("<stem>"))
-        {
-          stem = s.substring(s.indexOf("<stem>") + 6,
-                             s.indexOf("</stem>")).equals("true");
-        }
-      }//end: while(config)
-    }//end: try{}
-    catch (IOException e)
-    {
-      System.err.println("Problem reading from file: " + filename);
-      System.exit(1);
-    }
-  }//end: parseConfigurationFile()
+//  private static void parseConfigurationFile(String filename) {
+//    try {
+//      Scanner config = new Scanner(new FileReader(filename));
+//      
+//      // Defaults
+//      sourceDir = "source";
+//      binaryDir = "binary";
+//      tempDir = "tmp";
+//      stem = false;
+//      stemChar = "f";
+//      
+//      while(config.hasNext()) {
+//        String s = config.nextLine();
+//        
+//        if(s.contains("<basedir>"))
+//        {
+//          baseDir = s.substring(s.indexOf("<basedir>") + 9,
+//                                s.indexOf("</basedir>"));
+//        }
+//        else if(s.contains("<sourcedir>"))
+//        {
+//          sourceDir = s.substring(s.indexOf("<sourcedir>") + 11,
+//                                  s.indexOf("</sourcedir>"));          
+//        }
+//        else if(s.contains("<binarydir>"))
+//        {
+//          binaryDir = s.substring(s.indexOf("<binarydir>") + 11,
+//                                  s.indexOf("</binarydir>"));
+//        }
+//        else if(s.contains("<tempdir>"))
+//        {
+//          tempDir = s.substring(s.indexOf("<tempdir>") + 9,
+//                                s.indexOf("</tempdir>"));
+//        }
+//        else if(s.contains("<type>"))
+//        {
+//          type = s.substring(s.indexOf("<type>") + 6,
+//                             s.indexOf("</type>"));
+//        }
+//        else if(s.contains("<date>"))
+//        {
+//          date = s.substring(s.indexOf("<date>") + 6,
+//                             s.indexOf("</date>"));
+//        }
+//        else if(s.contains("<graph>"))
+//        {
+//          graph = s.substring(s.indexOf("<graph>") + 7,
+//                              s.indexOf("</graph>"));
+//        }
+//        else if(s.contains("<stem>"))
+//        {
+//          stem = s.substring(s.indexOf("<stem>") + 6,
+//                             s.indexOf("</stem>")).equals("true");
+//        }
+//      }//end: while(config)
+//    }//end: try{}
+//    catch (IOException e)
+//    {
+//      System.err.println("Problem reading from file: " + filename);
+//      System.exit(1);
+//    }
+//  }//end: parseConfigurationFile()
   
   /**
    * Creates a final word-to-vertex mapping from the (word, vertex) pairs from a wiki data source.
@@ -130,16 +131,18 @@ public class CreateMappings {
    */
   public static void main(String[] args) throws FileNotFoundException, IOException, ClassNotFoundException {
     
-    parseConfigurationFile("/scratch/weale/data/config/enwiktionary/CreateMappings.xml");
-
-    System.out.println("Opening Temporary File for Reading");
-    ObjectInputStream in = new ObjectInputStream(new FileInputStream(baseDir + "/" + tempDir + "/" + type + "-"+ date + "-" + graph + ".titlewordmap"));
-    
-    if(stem) {
-      //porter = new PorterStemmerTokenizerFactory(tokens);
-      stemChar = "t";
+    if(args.length == 1)
+    {
+      Configuration.parseConfigurationFile(args[0]);
+    }
+    else
+    {
+      Configuration.parseConfigurationFile("/scratch/weale/data/config/enwiktionary/CreateMappings.xml");
     }
     
+    System.out.println("Opening Temporary File for Reading");
+    ObjectInputStream in = new ObjectInputStream(new FileInputStream(Configuration.baseDir + "/" + Configuration.tempDir + "/" + Configuration.type + "-"+ Configuration.date + "-" + Configuration.graph + ".titlewordmap"));
+        
    /* STEP 1
     * 
     * Create the word set in order to know how many words
@@ -186,7 +189,7 @@ public class CreateMappings {
     * Add IDs to our WordToIDCount objects.
     */
     System.out.println("Creating Vertex Mappings");
-    in = new ObjectInputStream(new FileInputStream(baseDir + "/" + tempDir + "/" + type + "-"+ date + "-" + graph + ".titlewordmap"));
+    in = new ObjectInputStream(new FileInputStream(Configuration.baseDir + "/" + Configuration.tempDir + "/" + Configuration.type + "-"+ Configuration.date + "-" + Configuration.graph + ".titlewordmap"));
     try {
       while(true) {
         
@@ -212,13 +215,16 @@ public class CreateMappings {
     
    /* STEP 4
     * 
-    * Write objects to the .wic file
+    * Write objects to the .wvc file
     */
-    ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(baseDir + "/" + binaryDir + "/" + type+ "/" + date + "/" + type + "-"+ date + "-" + graph + "-" + stemChar + ".wic"));
-    out.writeInt(words.length);
-    for(int x = 0; x < words.length; x++) {
-      out.writeObject(words[x]);
-    }
+    System.out.println("Writing Mappings To File");
+    WordToVertexMapping wvm = new WordToVertexMapping(words);
+    ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(Configuration.baseDir + "/" + Configuration.binaryDir + "/" + Configuration.type+ "/" + Configuration.date + "/" + Configuration.type + "-"+ Configuration.date + "-" + Configuration.graph + "-" + Configuration.stemming + ".wvc"));
+//    out.writeInt(words.length);
+//    for(int x = 0; x < words.length; x++) {
+//      out.writeObject(words[x]);
+//    }
+    out.writeObject(wvm);
     out.close();
     words = null; // Free Up Memory (?)
     
@@ -227,7 +233,7 @@ public class CreateMappings {
      * Create the vertex set in order to know how many verticies
      * are in our initial file.
      */
-    in = new ObjectInputStream(new FileInputStream(baseDir + "/" + tempDir + "/" + type + "-"+ date + "-" + graph + ".titlewordmap"));
+    in = new ObjectInputStream(new FileInputStream(Configuration.baseDir + "/" + Configuration.tempDir + "/" + Configuration.type + "-"+ Configuration.date + "-" + Configuration.graph + ".titlewordmap"));
 
     System.out.println("Creating Integer Array");
     TreeSet<Integer> vertexSet = new TreeSet<Integer>();
@@ -241,7 +247,7 @@ public class CreateMappings {
 
    /* STEP 6
     * 
-    * Create the IDToWordCount array of the appropriate size
+    * Create the VertexToWordCount array of the appropriate size
     * and initialize objects.
     * 
     * We use arrays for space efficiency -- these can get large.
@@ -262,7 +268,7 @@ public class CreateMappings {
     * Add words to our IDToWordCount objects.
     */
     System.out.println("Creating Word Mappings");
-    in = new ObjectInputStream(new FileInputStream(baseDir + "/" + tempDir + "/" + type + "-"+ date + "-" + graph + ".titlewordmap"));
+    in = new ObjectInputStream(new FileInputStream(Configuration.baseDir + "/" + Configuration.tempDir + "/" + Configuration.type + "-"+ Configuration.date + "-" + Configuration.graph + ".titlewordmap"));
     try {
       while(true) {
         String word = (String) in.readObject();
@@ -282,13 +288,16 @@ public class CreateMappings {
     
     /* STEP 8
      * 
-     * Write objects to the .iwc file
+     * Write objects to the .vwc file
      */
-    out = new ObjectOutputStream(new FileOutputStream(baseDir + "/" + binaryDir + "/" + type+ "/" + date + "/" + type + "-"+ date + "-" + graph + "-" + stemChar + ".iwc"));
-    out.writeInt(verticies.length);
-    for(int x = 0; x < verticies.length; x++) {
-      out.writeObject(verticies[x]);
-    }
+    System.out.println("Writing Mappings to File");
+    VertexToWordMapping vwm = new VertexToWordMapping(verticies);
+    out = new ObjectOutputStream(new FileOutputStream(Configuration.baseDir + "/" + Configuration.binaryDir + "/" + Configuration.type+ "/" + Configuration.date + "/" + Configuration.type + "-"+ Configuration.date + "-" + Configuration.graph + "-" + Configuration.stemming + ".vwc"));
+    //out.writeInt(verticies.length);
+    //for(int x = 0; x < verticies.length; x++) {
+    //  out.writeObject(verticies[x]);
+    //}
+    out.writeObject(vwm);
     out.close();
     verticies = null; // Free Up Memory (?)
     

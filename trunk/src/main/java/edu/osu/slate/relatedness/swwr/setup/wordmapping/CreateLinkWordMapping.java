@@ -20,13 +20,13 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 import edu.osu.slate.relatedness.swwr.data.*;
-import edu.osu.slate.relatedness.swwr.data.graph.IDVertexRedirect;
+import edu.osu.slate.relatedness.swwr.data.graph.IDIDRedirect;
 import edu.osu.slate.relatedness.swwr.data.graph.IDVertexTranslation;
 
 /**
  * Creates a more complicated word-to-vertex mapping for the Wiki graph using the Page-Page link text from the xml file.
  * 
- * Requires initialized {@link IDVertexTranslation}, {@link IDVertexRedirect} and {@link TitleToIDTranslation} classes.
+ * Requires initialized {@link IDVertexTranslation}, {@link IDIDRedirect} and {@link ConvertTitleToID} classes.
  * 
  * Configuration File Requirements:
  * <ul>
@@ -98,7 +98,7 @@ public class CreateLinkWordMapping {
     IDVertexTranslation vid = new IDVertexTranslation(baseDir + "/" + binaryDir + "/" + type+ "/" + date + "/" + type + "-"+ date + "-" + graph + ".vid");
     
     System.out.println("Initializing Redirect List.");
-    IDVertexRedirect rdl = new IDVertexRedirect(baseDir + "/" + binaryDir + "/" + type+ "/" + date + "/" + type + "-"+ date + "-" + graph + ".rdr");
+    IDIDRedirect rdl = new IDIDRedirect(baseDir + "/" + binaryDir + "/" + type+ "/" + date + "/" + type + "-"+ date + "-" + graph + ".rdr");
     
     System.out.println("Opening .xml File");
     Scanner in = new Scanner(new FileReader(baseDir + "/" + sourceDir + "/" + type+ "/" + date + "/" + type + "-"+ "20080312" + "-" + "pages-articles.xml"));
