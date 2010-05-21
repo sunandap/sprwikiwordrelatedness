@@ -17,53 +17,58 @@ package edu.osu.slate.relatedness.swwr.data.mapping;
 
 import java.io.*;
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.TreeSet;
+
+import com.aliasi.tokenizer.PorterStemmerTokenizerFactory;
 
 /**
- * Simplified lookup class for the {@link VertexToWordCount} class.
+ * Simplified lookup class for the {@link TermToVertexCount} class.
  * 
  * @author weale
  * @version 1.01
  */
-public class VertexToWordMapping implements Serializable
-{  
-  /**
-   * 
-   */
-  private static final long serialVersionUID = -4574771377730886056L;
+public class TermToVertexMapping implements Serializable
+{
+  private static final long serialVersionUID = 5395182204888235246L;
 
-  private VertexToWordCount[] vertices;
+  /* Array of lookup terms */
+  private TermToVertexCount[] terms;
   
-  public VertexToWordMapping(VertexToWordCount[] vc)
+  public boolean stem;
+ /**
+  *  
+  * @param wvc
+  */
+  public TermToVertexMapping(TermToVertexCount[] wvc)
   {
-    vertices = new VertexToWordCount[vc.length];
-    for(int i = 0; i < vc.length; i++)
+    terms = new TermToVertexCount[wvc.length];
+    
+    for(int i = 0; i < wvc.length; i++)
     {
-      vertices[i] = vc[i];
+      terms[i] = wvc[i];
     }
   }
   
-  /**
-   * Constructor.
-   * <p>
-   * Reads the {@link VertexToWordCount} array from the given <i>.iwc file</i>.
-   * 
+ /**
+  * Constructor.
+  * <p>
+  * Reads the {@link TermToVertexCount} array from the given <i>.wic file</i>.
+  * 
   * @param filename Input file name.
   */
-  public VertexToWordMapping(String filename)
+  public TermToVertexMapping(String filename)
   {
-    try {
+    try
+    {
       ObjectInputStream in = new ObjectInputStream(new FileInputStream(filename));
       
       // Read array length
       int len = in.readInt();
       
       // Create and initialize array
-      vertices = new VertexToWordCount[len];
+      terms = new TermToVertexCount[len];
       for(int i = 0; i < len; i++)
       {
-        vertices[i] = (VertexToWordCount) in.readObject();
+        terms[i] = (TermToVertexCount) in.readObject();
       }//end: for(i)
       
       in.close();
@@ -80,72 +85,83 @@ public class VertexToWordMapping implements Serializable
       e.printStackTrace();
       System.exit(1);
     }
-  }//end: IDToWordMapping()
+  }//end: WordToIDMapping()
   
  /**
-  * Gets the words mapped to a given vertex.
+  * Gets the IDs mapped to a given word.
   * <p>
-  * Returns null if vertex is not found.
+  * Returns null if the word is not found in the mapping function.
   *  
-  * @param v Vertex to be mapped.
-  * @return An array of {@link WordCount} objects.
+  * @param word Word to be mapped.
+  * @return An array of {@link VertexCount} objects.
   */
-  public WordCount[] getWordMappings(int v) {
-    int pos = Arrays.binarySearch(vertices, new VertexToWordCount(v), new VertexToWordCountComparator());
+  public VertexCount[] getVertexMappings(String term)
+  {
+    if(stem)
+    {
+      term = PorterStemmerTokenizerFactory.stem(term);
+    }
+    
+    int pos = Arrays.binarySearch(terms, new TermToVertexCount(term),
+                                  new TermToVertexCountComparator());
 
     if(pos >= 0)
     { // FOUND!
-      return vertices[pos].getWordCounts();
+      return terms[pos].getVertexCounts();
     }
-    
+     
     return null;
   }//end: getWordMappings(int)
   
-  public void joinMappings(VertexToWordMapping vwm)
+ /**
+  *  
+  * @param wvm
+  */
+  public void joinMappings(TermToVertexMapping wvm)
   {
     int numToAdd = 0;
-    boolean[] addMe = new boolean[vwm.vertices.length];
+    boolean[] addMe = new boolean[wvm.terms.length];
     
-    for(int i = 0; i < vwm.vertices.length; i++)
+    for(int i = 0; i < wvm.terms.length; i++)
     {
-      int pos = Arrays.binarySearch(vertices, vwm.vertices[i], new VertexToWordCountComparator());
-
+      
+      int pos = Arrays.binarySearch(terms, wvm.terms[i], new TermToVertexCountComparator());
+      
       if(pos >= 0)
       {
-        // Add to old Object
-        vertices[pos].addObject(vwm.vertices[i]);
+        terms[pos].addObject(wvm.terms[i]);
         addMe[i] = false;
       }
       else
-      {
+      { // Not in Set
         numToAdd++;
         addMe[i] = true;
       }
     }//end: for(i)
-    VertexToWordCount[] temp = new VertexToWordCount[vertices.length + numToAdd];
-
-    System.arraycopy(vertices, 0, temp, 0, vertices.length);
-    int addPos = vertices.length;
     
-    for(int i = 0; i < vwm.vertices.length; i++)
+    TermToVertexCount[] temp = new TermToVertexCount[terms.length + numToAdd];
+    System.arraycopy(terms, 0, temp, 0, terms.length);
+    int addPos = terms.length;
+    for(int i = 0; i < wvm.terms.length; i++)
     {
       if(addMe[i])
       {
-        temp[addPos] = vwm.vertices[i];
+        temp[addPos] = wvm.terms[i];
         addPos++;
       }
     }//end: for(i)
     
-    vertices = temp;
+    terms = temp;
     temp = null;
-
-    Arrays.sort(vertices, new VertexToWordCountComparator());
-  }//end: joinMappings(VertexToWordMapping)
+    
+    Arrays.sort(terms, new TermToVertexCountComparator());
+    
+  }//end: stemMappings()
   
   /**
-   * Write a {@link VertexToWordMapping} class to a file.
+   * Write a {@link TermToVertexMapping} class to a file.
    * <p>
-   * Writes the number of {@link VertexToWordCount} objects. Then, writes each object in the array to the file.
+   * Writes the number of {@link TermToVertexCount} objects. Then, writes each object in the array to the file.
    * 
    * @param out {@link ObjectOutputStream} to write to.
    * @throws IOException
@@ -153,19 +169,19 @@ public class VertexToWordMapping implements Serializable
    private void writeObject(java.io.ObjectOutputStream out) throws IOException
    {
      // Write array length
-     out.writeInt(vertices.length);
+     out.writeInt(terms.length);
      
      // Write array of WordToVertexCount objects
-     for(int i = 0; i < vertices.length; i++)
+     for(int i = 0; i < terms.length; i++)
      {
-       out.writeObject(vertices[i]);
+       out.writeObject(terms[i]);
      }
    }//end: writeObject(ObjectOutputStream)
    
    /**
-    * Reads an {@link VertexToWordMapping} class from a file.
+    * Reads an {@link TermToVertexMapping} class from a file.
     * <p>
-    * Reads the length of {@link VertexToWordCount} objects. Then, creates and populates an appropriate array of objects.
+    * Reads the length of {@link TermToVertexCount} objects. Then, creates and populates an appropriate array of objects.
     * 
     * @param in {@link ObjectInputStream} to read from.
     * @throws IOException
@@ -177,10 +193,10 @@ public class VertexToWordMapping implements Serializable
       int len = in.readInt();
       
       // Create and populate array
-      vertices = new VertexToWordCount[len];
+      terms = new TermToVertexCount[len];
       for(int i = 0; i < len; i++)
       {
-        vertices[i] = (VertexToWordCount) in.readObject();
+        terms[i] = (TermToVertexCount) in.readObject();
       }//end: for(i)
     }//end: readObject(ObjectInputStream)
 }
