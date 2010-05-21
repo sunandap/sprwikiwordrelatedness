@@ -51,7 +51,8 @@ public class WordToVertexCount implements Serializable {
   *  
   * @param w Word to Map to {@link VertexCount} pairs.
   */
-  public WordToVertexCount(String w) {
+  public WordToVertexCount(String w)
+  {
     word = w;
     vertexCounts = new VertexCount[0];
   }
@@ -61,7 +62,8 @@ public class WordToVertexCount implements Serializable {
   * 
   * @return Word contained in this mapping
   */
-  public String getWord() {
+  public String getWord()
+  {
     return word;
   }
   
@@ -70,7 +72,8 @@ public class WordToVertexCount implements Serializable {
   * 
   * @return {@link VertexCount} array contained in this mapping
   */
-  public VertexCount[] getVertexCounts() {
+  public VertexCount[] getVertexCounts()
+  {
     return vertexCounts;
   }
   
@@ -82,7 +85,8 @@ public class WordToVertexCount implements Serializable {
   * 
   * @param id New ID for the given word
   */
-  public void addVertex(int v) {
+  public void addVertex(int v)
+  {
     int pos = Arrays.binarySearch(vertexCounts, new VertexCount(v,1), new VertexCountComparator());
     if(pos >= 0)
     {
@@ -99,15 +103,55 @@ public class WordToVertexCount implements Serializable {
       vertexCounts = tmp;
       Arrays.sort(vertexCounts, new VertexCountComparator());
     }
-  }//end: addID
+  }//end: addID(int)
   
+  
+  /**
+   * Adds a new vertex for the given word.
+   * 
+   * If the vertex is found, we increment the existing count.
+   * If the vertex is not found, we extend the given {@link VertexCount} array.
+   * 
+   * @param id New ID for the given word
+   */
+   public void addVertex(int v, int c)
+   {
+     int pos = Arrays.binarySearch(vertexCounts, new VertexCount(v,1), new VertexCountComparator());
+     if(pos >= 0)
+     {
+       //IDCount found!
+       int count = vertexCounts[pos].getCount();
+       vertexCounts[pos].setCount(count+c);
+     }
+     else
+     {
+       //Add new IDCount
+       VertexCount[] tmp = new VertexCount[vertexCounts.length + 1];
+       System.arraycopy(vertexCounts, 0, tmp, 0, vertexCounts.length);
+       tmp[vertexCounts.length] = new VertexCount(v, c);
+       vertexCounts = tmp;
+       Arrays.sort(vertexCounts, new VertexCountComparator());
+     }
+   }//end: addID(int)
+   
+   public void addObject(WordToVertexCount wvc)
+   {
+     for(int i = 0; i < wvc.vertexCounts.length; i++)
+     {
+       int v = wvc.vertexCounts[i].getVertex();
+       int c = wvc.vertexCounts[i].getCount();
+       this.addVertex(v, c);
+     }//end: for(i)
+   }//end: addObject()
+   
  /**
   * Compares two {@link WordToVertexCount} objects.
   *  
   * @param wc2 Input {@link WordToVertexCount} object.
   * @return Comparison between the two objects.
   */
-  public int compareTo(WordToVertexCount wc2) {
+  public int compareTo(WordToVertexCount wc2)
+  {
     return this.word.compareTo(wc2.word);
   }
   
@@ -119,8 +163,8 @@ public class WordToVertexCount implements Serializable {
   * @param out {@link ObjectOutputStream} to write to.
   * @throws IOException
   */
-  private void writeObject(java.io.ObjectOutputStream out) throws IOException {
-    
+  private void writeObject(java.io.ObjectOutputStream out) throws IOException
+  {
     // Write String
     out.writeObject(word);
     
@@ -141,8 +185,8 @@ public class WordToVertexCount implements Serializable {
   * @throws IOException
   * @throws ClassNotFoundException
   */
-  private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
-    
+  private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException
+  {
     // Read String
     word = (String) in.readObject();
     

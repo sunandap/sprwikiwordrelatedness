@@ -28,7 +28,8 @@ import java.util.Arrays;
  * @author weale
  * @version 1.0
  */
-public class VertexToWordCount implements Serializable {
+public class VertexToWordCount implements Serializable
+{
   
  /**
    * 
@@ -101,6 +102,35 @@ public class VertexToWordCount implements Serializable {
       Arrays.sort(wordcounts, new WordCountComparator());
     }
   }//end: addID
+  
+  public void addWord(String w, int c) {
+    int pos = Arrays.binarySearch(wordcounts, new WordCount(w,1), new WordCountComparator());
+    if(pos >= 0)
+    {
+      //IDCount found!
+      int count = wordcounts[pos].getCount();
+      wordcounts[pos].setCount(count+c);
+    }
+    else
+    {
+      //Add new IDCount
+      WordCount[] tmp = new WordCount[wordcounts.length + 1];
+      System.arraycopy(wordcounts, 0, tmp, 0, wordcounts.length);
+      tmp[wordcounts.length] = new WordCount(w, c);
+      wordcounts = tmp;
+      Arrays.sort(wordcounts, new WordCountComparator());
+    }
+  }//end: addID
+  
+  public void addObject(VertexToWordCount vwc)
+  {
+    for(int i = 0; i < vwc.wordcounts.length; i++)
+    {
+      String w = vwc.wordcounts[i].getWord();
+      int c = vwc.wordcounts[i].getCount();
+      this.addWord(w, c);
+    }//end: for(i)
+  }//end: addObject(VertexToWordCount)
   
  /**
   * Compares the two {@link VertexToWordCount} objects.

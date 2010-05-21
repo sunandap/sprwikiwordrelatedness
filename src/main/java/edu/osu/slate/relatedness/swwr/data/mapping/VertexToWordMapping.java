@@ -17,16 +17,32 @@ package edu.osu.slate.relatedness.swwr.data.mapping;
 
 import java.io.*;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.TreeSet;
 
 /**
  * Simplified lookup class for the {@link VertexToWordCount} class.
  * 
  * @author weale
- * @version 1.0
+ * @version 1.01
  */
-public class VertexToWordMapping {
+public class VertexToWordMapping implements Serializable
+{  
+  /**
+   * 
+   */
+  private static final long serialVersionUID = -4574771377730886056L;
+
+  private VertexToWordCount[] vertices;
   
-  VertexToWordCount[] vertices;
+  public VertexToWordMapping(VertexToWordCount[] vc)
+  {
+    vertices = new VertexToWordCount[vc.length];
+    for(int i = 0; i < vc.length; i++)
+    {
+      vertices[i] = vc[i];
+    }
+  }
   
   /**
    * Constructor.
@@ -84,4 +100,87 @@ public class VertexToWordMapping {
     
     return null;
   }//end: getWordMappings(int)
+  
+  public void joinMappings(VertexToWordMapping vwm)
+  {
+    int numToAdd = 0;
+    boolean[] addMe = new boolean[vwm.vertices.length];
+    
+    for(int i = 0; i < vwm.vertices.length; i++)
+    {
+      int pos = Arrays.binarySearch(vertices, vwm.vertices[i], new VertexToWordCountComparator());
+
+      if(pos >= 0)
+      {
+        // Add to old Object
+        vertices[pos].addObject(vwm.vertices[i]);
+        addMe[i] = false;
+      }
+      else
+      {
+        numToAdd++;
+        addMe[i] = true;
+      }
+    }//end: for(i)
+    VertexToWordCount[] temp = new VertexToWordCount[vertices.length + numToAdd];
+
+    System.arraycopy(vertices, 0, temp, 0, vertices.length);
+    int addPos = vertices.length;
+    
+    for(int i = 0; i < vwm.vertices.length; i++)
+    {
+      if(addMe[i])
+      {
+        temp[addPos] = vwm.vertices[i];
+        addPos++;
+      }
+    }//end: for(i)
+    
+    vertices = temp;
+    temp = null;
+
+    Arrays.sort(vertices, new VertexToWordCountComparator());
+  }//end: joinMappings(VertexToWordMapping)
+  
+  /**
+   * Write a {@link VertexToWordMapping} class to a file.
+   * <p>
+   * Writes the number of {@link VertexToWordCount} objects. Then, writes each object in the array to the file.
+   * 
+   * @param out {@link ObjectOutputStream} to write to.
+   * @throws IOException
+   */
+   private void writeObject(java.io.ObjectOutputStream out) throws IOException
+   {
+     // Write array length
+     out.writeInt(vertices.length);
+     
+     // Write array of WordToVertexCount objects
+     for(int i = 0; i < vertices.length; i++)
+     {
+       out.writeObject(vertices[i]);
+     }
+   }//end: writeObject(ObjectOutputStream)
+   
+   /**
+    * Reads an {@link VertexToWordMapping} class from a file.
+    * <p>
+    * Reads the length of {@link VertexToWordCount} objects. Then, creates and populates an appropriate array of objects.
+    * 
+    * @param in {@link ObjectInputStream} to read from.
+    * @throws IOException
+    * @throws ClassNotFoundException
+    */
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException
+    {
+      // Read array length
+      int len = in.readInt();
+      
+      // Create and populate array
+      vertices = new VertexToWordCount[len];
+      for(int i = 0; i < len; i++)
+      {
+        vertices[i] = (VertexToWordCount) in.readObject();
+      }//end: for(i)
+    }//end: readObject(ObjectInputStream)
 }
