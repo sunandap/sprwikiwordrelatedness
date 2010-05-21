@@ -50,7 +50,8 @@ public class VertexCount implements Serializable{
   * 
   * @return Vertex contained in this pair.
   */
-  public int getVertex() {
+  public int getVertex()
+  {
     return vertex;
   }
   
