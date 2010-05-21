@@ -18,46 +18,40 @@ package edu.osu.slate.relatedness.swwr.data.mapping;
 import java.io.Serializable;
 
 /**
- * Container for (word, count) pairs.
+ * Container for (term, count) pairs.
  * 
  * @author weale
  * @version 1.0
  */
-public class WordCount implements Serializable {
+public class TermCount implements Serializable
+{
   
- /**
-  * 
-  */
-  private static final long serialVersionUID = 1L;
-  
- /**
-  * 
-  */
+  private static final long serialVersionUID = 1L;  
   private int count;
-  private String word;
+  private String term;
   
  /**
   * Constructor.
   * 
-  * @param w Word to count.
-  * @param c Initial count for word.
+  * @param t Term to count.
+  * @param c Initial count for term.
   */
-  public WordCount(String w, int c) {
-    word = w;
+  public TermCount(String t, int c) {
+    term = t;
     count = c;
   }
   
  /**
-  * Gets the word for the (word, count) pair.
+  * Gets the term for the (term, count) pair.
   * 
-  * @return Word contained in this pair.
+  * @return Term contained in this pair.
   */
-  public String getWord() {
-    return word;
+  public String getTerm() {
+    return term;
   }
   
  /**
-  * Gets the count for (word, count) pair.
+  * Gets the count for (term, count) pair.
   * 
   * @return Count contained in this pair.
   */
@@ -66,21 +60,21 @@ public class WordCount implements Serializable {
   }
   
  /**
-  * Sets a new count for the word.
+  * Sets a new count for the term.
   * 
-  * @param c New word count
+  * @param c New term count
   */
   public void setCount(int c) {
     count = c;
   }
   
  /**
-  * Compares two {@link WordCount} objects.
+  * Compares two {@link TermCount} objects.
   * 
-  * @param wc2 Input {@link WordCount} object.
+  * @param wc2 Input {@link TermCount} object.
   * @return Comparison of the two objects.
   */
-  public int compareTo(WordCount wc2) {
-    return this.word.compareTo(wc2.word);
+  public int compareTo(TermCount wc2) {
+    return this.term.compareTo(wc2.term);
   }
 }

@@ -29,11 +29,9 @@ import java.util.Comparator;
  * @author weale
  *
  */
-public class WordToVertexCount implements Serializable {
+public class TermToVertexCount implements Serializable
+{
   
- /**
-   * 
-   */
   private static final long serialVersionUID = 7700956091903015001L;
 
  /**
@@ -42,33 +40,33 @@ public class WordToVertexCount implements Serializable {
   private VertexCount[] vertexCounts;
   
  /**
-  * Word for Mapping 
+  * Term for Mapping 
   */
-  private String word;
+  private String term;
   
  /**
   * Constructor.
   *  
-  * @param w Word to Map to {@link VertexCount} pairs.
+  * @param t Term to map to {@link VertexCount} pairs.
   */
-  public WordToVertexCount(String w)
+  public TermToVertexCount(String t)
   {
-    word = w;
+    term = t;
     vertexCounts = new VertexCount[0];
   }
   
  /**
-  * Gets the Word for this mapping.
+  * Gets the Term for this mapping.
   * 
-  * @return Word contained in this mapping
+  * @return Term contained in this mapping
   */
-  public String getWord()
+  public String getTerm()
   {
-    return word;
+    return term;
   }
   
  /**
-  * Gets the array of {@link VertexCount} pairs for the given word.
+  * Gets the array of {@link VertexCount} pairs for the given term.
   * 
   * @return {@link VertexCount} array contained in this mapping
   */
@@ -78,7 +76,7 @@ public class WordToVertexCount implements Serializable {
   }
   
  /**
-  * Adds a new vertex for the given word.
+  * Adds a new vertex for the given term.
   * 
   * If the vertex is found, we increment the existing count.
   * If the vertex is not found, we extend the given {@link VertexCount} array.
@@ -107,7 +105,7 @@ public class WordToVertexCount implements Serializable {
   
   
   /**
-   * Adds a new vertex for the given word.
+   * Adds a new vertex for the given term.
    * 
    * If the vertex is found, we increment the existing count.
    * If the vertex is not found, we extend the given {@link VertexCount} array.
@@ -134,29 +132,36 @@ public class WordToVertexCount implements Serializable {
      }
    }//end: addID(int)
    
-   public void addObject(WordToVertexCount wvc)
+   /**
+    * Adds all {@link VertexCount} for a given term to this object.
+    * <p>
+    * If the terms are not identical, nothing is added.
+    * 
+    * @param tvc {@link TermToVertexCount} object.
+    */
+   public void addObject(TermToVertexCount tvc)
    {
-     for(int i = 0; i < wvc.vertexCounts.length; i++)
+     for(int i = 0; tvc.term.equals(term) && i < tvc.vertexCounts.length; i++)
      {
-       int v = wvc.vertexCounts[i].getVertex();
-       int c = wvc.vertexCounts[i].getCount();
+       int v = tvc.vertexCounts[i].getVertex();
+       int c = tvc.vertexCounts[i].getCount();
        this.addVertex(v, c);
      }//end: for(i)
    }//end: addObject()
    
  /**
-  * Compares two {@link WordToVertexCount} objects.
+  * Compares two {@link TermToVertexCount} objects.
   *  
-  * @param wc2 Input {@link WordToVertexCount} object.
+  * @param wc2 Input {@link TermToVertexCount} object.
   * @return Comparison between the two objects.
   */
-  public int compareTo(WordToVertexCount wc2)
+  public int compareTo(TermToVertexCount wc2)
   {
-    return this.word.compareTo(wc2.word);
+    return this.term.compareTo(wc2.term);
   }
   
  /**
-  * Write a {@link WordToVertexCount} class to a file.
+  * Write a {@link TermToVertexCount} class to a file.
   * <p>
   * Writes the number of {@link VertexCount} objects. Then, writes each object in the array to the file.
   * 
@@ -166,7 +171,7 @@ public class WordToVertexCount implements Serializable {
   private void writeObject(java.io.ObjectOutputStream out) throws IOException
   {
     // Write String
-    out.writeObject(word);
+    out.writeObject(term);
     
     // Write array of IDCounts
     out.writeInt(vertexCounts.length);
@@ -177,7 +182,7 @@ public class WordToVertexCount implements Serializable {
   }
   
  /**
-  * Reads a {@link WordToVertexCount} class from a file.
+  * Reads a {@link TermToVertexCount} class from a file.
   * <p>
   * Reads the length of {@link VertexCount} objects. Then, creates and populates an appropriate array of objects.
   * 
@@ -188,7 +193,7 @@ public class WordToVertexCount implements Serializable {
   private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException
   {
     // Read String
-    word = (String) in.readObject();
+    term = (String) in.readObject();
     
     // Read array of IDCounts
     int len = in.readInt();

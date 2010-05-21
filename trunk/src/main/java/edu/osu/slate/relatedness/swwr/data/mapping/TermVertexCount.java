@@ -19,12 +19,12 @@ import java.io.IOException;
 import java.io.Serializable;
 
 /**
- * Triple of (word, vertex, count).
+ * Triple of (term, vertex, count).
  * 
  * @author weale
  * @version 1.0
  */
-public class WordVertexCount implements Serializable {
+public class TermVertexCount implements Serializable {
   
  /**
    * 
@@ -36,45 +36,48 @@ public class WordVertexCount implements Serializable {
   */
   private int vertex, count;
   
-  private String word;
+  private String term;
   
  /**
   * Constructor.
   * 
-  * @param w Word for triple.
+  * @param t Term for triple.
   * @param v Vertex for triple.
   * @param c Initial triple count.
   */
-  public WordVertexCount(String w, int v, int c) {
-    word = w;
+  public TermVertexCount(String t, int v, int c) {
+    term = t;
     vertex = v;
     count = c;
   }
   
  /**
-  * Gets the word for the (word, vertex, count) triple.
+  * Gets the term for the (term, vertex, count) triple.
   * 
-  * @return Word contained in this triple.
+  * @return Term contained in this triple.
   */
-  public String getWord() {
-    return word;
+  public String getTerm()
+  {
+    return term;
   }
   
  /**
-  * Gets the ID for the (word, vertex, count) triple.
+  * Gets the vertex for the (term, vertex, count) triple.
   * 
-  * @return ID contained in this triple.
+  * @return Vertex contained in this triple.
   */
-  public int getVertex() {
+  public int getVertex()
+  {
     return vertex;
   }
   
  /**
-  * Gets the count for the (word, vertex, count) triple.
+  * Gets the count for the (term, vertex, count) triple.
   * 
   * @return Count contained in this triple.
   */
-  public int getCount() {
+  public int getCount()
+  {
     return count;
   }
   
@@ -83,7 +86,8 @@ public class WordVertexCount implements Serializable {
   * 
   * @param c New count.
   */
-  public void setCount(int c) {
+  public void setCount(int c)
+  {
     count = c;
   }
   
@@ -94,7 +98,7 @@ public class WordVertexCount implements Serializable {
   * @throws IOException
   */
   private void writeObject(java.io.ObjectOutputStream out) throws IOException {
-    out.writeObject(word);
+    out.writeObject(term);
     out.writeInt(vertex);
     out.writeInt(count);
   }
@@ -107,7 +111,7 @@ public class WordVertexCount implements Serializable {
   * @throws ClassNotFoundException
   */
   private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
-    word = (String) in.readObject();
+    term = (String) in.readObject();
     vertex = in.readInt();
     count = in.readInt();
   }

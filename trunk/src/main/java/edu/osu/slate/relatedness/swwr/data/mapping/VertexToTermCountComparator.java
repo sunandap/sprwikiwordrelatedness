@@ -18,15 +18,17 @@ package edu.osu.slate.relatedness.swwr.data.mapping;
 import java.util.*;
 
 /**
- * Comparator class for {@link VertexToWordCount} objects.
+ * Comparator class for {@link VertexToTermCount} objects.
  * <p>
  * Used for array searching/sorting.
  * 
  * @author weale
  * @version 1.0
  */
-public class VertexToWordCountComparator implements Comparator<VertexToWordCount> {
-	public int compare(VertexToWordCount wc1, VertexToWordCount wc2) {
-		return wc1.compareTo(wc2);
-	}
+public class VertexToTermCountComparator implements Comparator<VertexToTermCount>
+{
+  public int compare(VertexToTermCount wc1, VertexToTermCount wc2)
+  {
+    return wc1.compareTo(wc2);
+  }
 }

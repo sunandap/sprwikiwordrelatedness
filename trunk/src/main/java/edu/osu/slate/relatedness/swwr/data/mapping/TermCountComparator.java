@@ -18,15 +18,17 @@ package edu.osu.slate.relatedness.swwr.data.mapping;
 import java.util.*;
 
 /**
- * Comparator class for {@link WordCount} objects.
+ * Comparator class for {@link TermCount} objects.
  * <p>
  * Used for array searching/sorting.
  * 
  * @author weale
  * @version 1.0
  */
-public class WordCountComparator implements Comparator<WordCount> {
-	public int compare(WordCount wc1, WordCount wc2) {
-		return wc1.compareTo(wc2);
-	}
+public class TermCountComparator implements Comparator<TermCount>
+{
+  public int compare(TermCount wc1, TermCount wc2)
+  {
+    return wc1.compareTo(wc2);
+  }
 }
