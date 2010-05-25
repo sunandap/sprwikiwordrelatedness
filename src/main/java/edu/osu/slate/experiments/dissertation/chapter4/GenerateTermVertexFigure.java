@@ -199,7 +199,7 @@ public class GenerateTermVertexFigure {
       PrintWriter pw = new PrintWriter(matlabMapCountFileName);
       pw.println("A = [" + valsF + "];");
       pw.println("B = [" + valsT + "];");
-      pw.println("h1 = loglog(A, 'Color', 'blue');");
+      pw.println("h1 = loglog(A, 'Color', 'blue', 'LineStyle', '--');");
       pw.println("hold on");
       pw.println("h2 = loglog(B, 'Color', 'red');");
       pw.println("title('Term-to-Vertex Mapping Distribution Using " +

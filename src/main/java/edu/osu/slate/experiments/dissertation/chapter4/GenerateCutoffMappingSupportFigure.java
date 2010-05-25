@@ -11,7 +11,7 @@ import java.util.TreeMap;
 import edu.osu.slate.relatedness.Configuration;
 import edu.osu.slate.relatedness.swwr.data.mapping.algorithm.TermToVertexMapping;
 
-public class GenerateMappingSupportFigure {
+public class GenerateCutoffMappingSupportFigure {
 
   /* */
   private static String wordVertexMapFile;
@@ -103,7 +103,7 @@ public class GenerateMappingSupportFigure {
       System.exit(1);
     }
     
-    TreeMap<Integer,Integer> tm = word2VertexF.generateCoverageSupportHistogram();
+    TreeMap<Integer,Integer> tm = word2VertexF.generateTrimmedCoverageSupportHistogram(0.01);
     Set<Map.Entry<Integer,Integer>> set = tm.entrySet();
     Iterator<Map.Entry<Integer,Integer>> it = set.iterator();
     double[] coverage = new double[101];
@@ -132,7 +132,7 @@ public class GenerateMappingSupportFigure {
 
     valsF = valsF.deleteCharAt(valsF.length()-1);
     
-    tm = word2VertexT.generateCoverageSupportHistogram();
+    tm = word2VertexT.generateTrimmedCoverageSupportHistogram(0.01);
     set = tm.entrySet();
     it = set.iterator();
     coverage = new double[101];
