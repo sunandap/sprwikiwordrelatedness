@@ -21,11 +21,12 @@ import com.aliasi.tokenizer.PorterStemmerTokenizerFactory;
 
 import edu.osu.slate.relatedness.Configuration;
 import edu.osu.slate.relatedness.swwr.data.mapping.*;
+import edu.osu.slate.relatedness.swwr.data.mapping.algorithm.TermToVertexMapping;
 
 /**
  * Turns temporary (String, ID) file into Word-ID and ID-Word Mappings.
  * <p>
- * Requires the output of {@link CreateTitleWordMapping} or {@link CreateLinkWordMapping}.  It also requires that <a href="http://alias-i.com/lingpipe/">LingPipe</a> be installed and the jar file accessible to the java environment.
+ * Requires the output of {@link CreateTitleWordMapping} or {@link CreateLinkTermMapping}.  It also requires that <a href="http://alias-i.com/lingpipe/">LingPipe</a> be installed and the jar file accessible to the java environment.
  * <p>
  * If desired, stemming for more robust mapping functions may be applied to the words here.
  * <p>
@@ -41,7 +42,7 @@ import edu.osu.slate.relatedness.swwr.data.mapping.*;
  * <li><b>stem</b> -- Allow Porter Stemming? (default: false)</li>
  * </ul>
  * 
- * The output of this program is a <i>.wic file</i> and an <i>.iwc file</i> placed in the binary directory.  These files will be used a input files for the {@link VertexToWordMapping} and {@link WordToVertexMapping} classes.
+ * The output of this program is a <i>.wic file</i> and an <i>.iwc file</i> placed in the binary directory.  These files will be used a input files for the {@link VertexToTermMapping} and {@link TermToVertexMapping} classes.
  * 
  * @author weale
  *
@@ -51,75 +52,6 @@ public class CreateMappings {
 //  private static String baseDir, sourceDir, binaryDir, tempDir;
 //  private static String type, date, graph, stemChar;
   private static boolean stem;
-//  private static PorterStemmerTokenizerFactory porter;
-
- /**
-  * Parse the configuration file.
-  *  
-  * @param filename Configuration file name.
-  */ 
-//  private static void parseConfigurationFile(String filename) {
-//    try {
-//      Scanner config = new Scanner(new FileReader(filename));
-//      
-//      // Defaults
-//      sourceDir = "source";
-//      binaryDir = "binary";
-//      tempDir = "tmp";
-//      stem = false;
-//      stemChar = "f";
-//      
-//      while(config.hasNext()) {
-//        String s = config.nextLine();
-//        
-//        if(s.contains("<basedir>"))
-//        {
-//          baseDir = s.substring(s.indexOf("<basedir>") + 9,
-//                                s.indexOf("</basedir>"));
-//        }
-//        else if(s.contains("<sourcedir>"))
-//        {
-//          sourceDir = s.substring(s.indexOf("<sourcedir>") + 11,
-//                                  s.indexOf("</sourcedir>"));          
-//        }
-//        else if(s.contains("<binarydir>"))
-//        {
-//          binaryDir = s.substring(s.indexOf("<binarydir>") + 11,
-//                                  s.indexOf("</binarydir>"));
-//        }
-//        else if(s.contains("<tempdir>"))
-//        {
-//          tempDir = s.substring(s.indexOf("<tempdir>") + 9,
-//                                s.indexOf("</tempdir>"));
-//        }
-//        else if(s.contains("<type>"))
-//        {
-//          type = s.substring(s.indexOf("<type>") + 6,
-//                             s.indexOf("</type>"));
-//        }
-//        else if(s.contains("<date>"))
-//        {
-//          date = s.substring(s.indexOf("<date>") + 6,
-//                             s.indexOf("</date>"));
-//        }
-//        else if(s.contains("<graph>"))
-//        {
-//          graph = s.substring(s.indexOf("<graph>") + 7,
-//                              s.indexOf("</graph>"));
-//        }
-//        else if(s.contains("<stem>"))
-//        {
-//          stem = s.substring(s.indexOf("<stem>") + 6,
-//                             s.indexOf("</stem>")).equals("true");
-//        }
-//      }//end: while(config)
-//    }//end: try{}
-//    catch (IOException e)
-//    {
-//      System.err.println("Problem reading from file: " + filename);
-//      System.exit(1);
-//    }
-//  }//end: parseConfigurationFile()
   
   /**
    * Creates a final word-to-vertex mapping from the (word, vertex) pairs from a wiki data source.
@@ -141,8 +73,16 @@ public class CreateMappings {
     }
     
     System.out.println("Opening Temporary File for Reading");
-    ObjectInputStream in = new ObjectInputStream(new FileInputStream(Configuration.baseDir + "/" + Configuration.tempDir + "/" + Configuration.type + "-"+ Configuration.date + "-" + Configuration.graph + ".titlewordmap"));
-        
+    ObjectInputStream in = new ObjectInputStream(new FileInputStream(
+                           Configuration.baseDir + "/" +
+                           Configuration.tempDir + "/" +
+                           Configuration.type + "-"+
+                           Configuration.date + "-" +
+                           Configuration.graph + ".titlewordmap"));
+    stem = Configuration.stemming.equals("true");
+    
+    System.out.println("Creating Mappings:" + Configuration.mapsource + "-" + Configuration.stemming);
+    
    /* STEP 1
     * 
     * Create the word set in order to know how many words
@@ -150,10 +90,13 @@ public class CreateMappings {
     */
     System.out.println("Creating Word Array");
     TreeSet<String> ts = new TreeSet<String>();
-    try {
-      while(true) {
+    try
+    {
+      while(true)
+      {
         String s = (String) in.readObject();
-        if(stem) {
+        if(stem)
+        {
           ts.add(PorterStemmerTokenizerFactory.stem(s));
         }
         else
@@ -173,14 +116,15 @@ public class CreateMappings {
     * 
     * We use arrays for space efficiency -- these can get large.
     */
-    WordToVertexCount[] words = new WordToVertexCount[ts.size()];
+    TermToVertexCount[] words = new TermToVertexCount[ts.size()];
     Iterator<String> set = ts.iterator();
     int i=0;
-    while(set.hasNext()){
-      words[i] = new WordToVertexCount(set.next());
+    while(set.hasNext())
+    {
+      words[i] = new TermToVertexCount(set.next());
       i++;
     }//end: while(set)
-    Arrays.sort(words, new WordToVertexCountComparator());
+    Arrays.sort(words, new TermToVertexCountComparator());
     ts = null; // Free Up Memory (?)
     in.close();
     
@@ -189,23 +133,39 @@ public class CreateMappings {
     * Add IDs to our WordToIDCount objects.
     */
     System.out.println("Creating Vertex Mappings");
-    in = new ObjectInputStream(new FileInputStream(Configuration.baseDir + "/" + Configuration.tempDir + "/" + Configuration.type + "-"+ Configuration.date + "-" + Configuration.graph + ".titlewordmap"));
-    try {
-      while(true) {
-        
+    in = new ObjectInputStream(new FileInputStream(
+        Configuration.baseDir + "/" +
+        Configuration.tempDir + "/" +
+        Configuration.type + "-"+
+        Configuration.date + "-" +
+        Configuration.graph + ".titlewordmap"));
+    
+    try
+    {
+      while(true)
+      {
         // Read word and vertex pair
-        String word = (String) in.readObject();
+        String term = (String) in.readObject();
         int vertex = in.readInt();
         
-        if(stem) {
-           word = PorterStemmerTokenizerFactory.stem(word);
+        if(stem)
+        {
+          term = PorterStemmerTokenizerFactory.stem(term);
         }
         
-        int pos = Arrays.binarySearch(words, new WordToVertexCount(word), new WordToVertexCountComparator());
-        if(pos >= 0) {
+        if(vertex < 0)
+        {
+          System.err.println("PROBLEM: " + term);
+        }
+                
+        int pos = Arrays.binarySearch(words, new TermToVertexCount(term), new TermToVertexCountComparator());
+        if(pos >= 0)
+        {
           words[pos].addVertex(vertex);
-        } else {
-          System.err.println("Invalid Word Found: "+ word);
+        }
+        else
+        {
+          System.err.println("Invalid Word Found: "+ term);
         }
       }//end: while(true)
     }//end: try {}
@@ -218,12 +178,19 @@ public class CreateMappings {
     * Write objects to the .wvc file
     */
     System.out.println("Writing Mappings To File");
-    WordToVertexMapping wvm = new WordToVertexMapping(words);
-    ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(Configuration.baseDir + "/" + Configuration.binaryDir + "/" + Configuration.type+ "/" + Configuration.date + "/" + Configuration.type + "-"+ Configuration.date + "-" + Configuration.graph + "-" + Configuration.stemming + ".wvc"));
-//    out.writeInt(words.length);
-//    for(int x = 0; x < words.length; x++) {
-//      out.writeObject(words[x]);
-//    }
+    TermToVertexMapping wvm = new TermToVertexMapping(words);
+    ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(
+                             Configuration.baseDir + "/" +
+                             Configuration.binaryDir + "/" +
+                             Configuration.type+ "/" +
+                             Configuration.date + "/" +
+                             Configuration.type + "-"+
+                             Configuration.date + "-" +
+                             Configuration.graph + "-" +
+                             Configuration.mapsource + "-" +
+                             Configuration.stemming + 
+                             ".tvc"));
+    
     out.writeObject(wvm);
     out.close();
     words = null; // Free Up Memory (?)
@@ -233,16 +200,24 @@ public class CreateMappings {
      * Create the vertex set in order to know how many verticies
      * are in our initial file.
      */
-    in = new ObjectInputStream(new FileInputStream(Configuration.baseDir + "/" + Configuration.tempDir + "/" + Configuration.type + "-"+ Configuration.date + "-" + Configuration.graph + ".titlewordmap"));
+    in = new ObjectInputStream(new FileInputStream(
+                               Configuration.baseDir + "/" + 
+                               Configuration.tempDir + "/" + 
+                               Configuration.type + "-"+ 
+                               Configuration.date + "-" + 
+                               Configuration.graph + 
+                               ".titlewordmap"));
 
     System.out.println("Creating Integer Array");
     TreeSet<Integer> vertexSet = new TreeSet<Integer>();
-    try {
-      while(true) {
+    try
+    {
+      while(true)
+      {
         in.readObject();
         vertexSet.add(in.readInt());
       }//end: while(true)
-    }
+    }//end: try {}
     catch(IOException e) {} //EOF found
 
    /* STEP 6
@@ -252,14 +227,15 @@ public class CreateMappings {
     * 
     * We use arrays for space efficiency -- these can get large.
     */ 
-    VertexToWordCount[] verticies = new VertexToWordCount[vertexSet.size()];
+    VertexToTermCount[] verticies = new VertexToTermCount[vertexSet.size()];
     Iterator<Integer> it = vertexSet.iterator();
     i=0;
-    while(it.hasNext()){
-      verticies[i] = new VertexToWordCount(it.next());
+    while(it.hasNext())
+    {
+      verticies[i] = new VertexToTermCount(it.next());
       i++;
     }//end: while(set)
-    Arrays.sort(verticies, new VertexToWordCountComparator());
+    Arrays.sort(verticies, new VertexToTermCountComparator());
     vertexSet = null; // Free Up Memory (?)
     in.close();
     
@@ -268,20 +244,34 @@ public class CreateMappings {
     * Add words to our IDToWordCount objects.
     */
     System.out.println("Creating Word Mappings");
-    in = new ObjectInputStream(new FileInputStream(Configuration.baseDir + "/" + Configuration.tempDir + "/" + Configuration.type + "-"+ Configuration.date + "-" + Configuration.graph + ".titlewordmap"));
+    in = new ObjectInputStream(new FileInputStream(
+                               Configuration.baseDir + "/" + 
+                               Configuration.tempDir + "/" + 
+                               Configuration.type + "-"+ 
+                               Configuration.date + "-" + 
+                               Configuration.graph + ".titlewordmap"));
     try {
-      while(true) {
+      while(true)
+      {
         String word = (String) in.readObject();
         int vertex = in.readInt();
         
-        int pos = Arrays.binarySearch(verticies, new VertexToWordCount(vertex), new VertexToWordCountComparator());
-        if(pos >= 0) {
-          verticies[pos].addWord(word);
-        } else {
+        if(stem)
+        {
+          word = PorterStemmerTokenizerFactory.stem(word);
+        }
+        
+        int pos = Arrays.binarySearch(verticies, new VertexToTermCount(vertex), new VertexToTermCountComparator());
+        if(pos >= 0)
+        {
+          verticies[pos].addTerm(word);
+        }
+        else
+        {
           System.err.println("Invalid ID Found: "+ vertex);
         }
       }//end: while(true)
-    }
+    } //end: try {}
     catch(IOException e) {} //EOF found
     
     in.close();
@@ -291,12 +281,18 @@ public class CreateMappings {
      * Write objects to the .vwc file
      */
     System.out.println("Writing Mappings to File");
-    VertexToWordMapping vwm = new VertexToWordMapping(verticies);
-    out = new ObjectOutputStream(new FileOutputStream(Configuration.baseDir + "/" + Configuration.binaryDir + "/" + Configuration.type+ "/" + Configuration.date + "/" + Configuration.type + "-"+ Configuration.date + "-" + Configuration.graph + "-" + Configuration.stemming + ".vwc"));
-    //out.writeInt(verticies.length);
-    //for(int x = 0; x < verticies.length; x++) {
-    //  out.writeObject(verticies[x]);
-    //}
+    VertexToTermMapping vwm = new VertexToTermMapping(verticies);
+    out = new ObjectOutputStream(new FileOutputStream(
+          Configuration.baseDir + "/" +
+          Configuration.binaryDir + "/" +
+          Configuration.type+ "/" +
+          Configuration.date + "/" +
+          Configuration.type + "-"+
+          Configuration.date + "-" +
+          Configuration.graph + "-" +
+          Configuration.mapsource + "-" +
+          Configuration.stemming + ".vtc"));
+    
     out.writeObject(vwm);
     out.close();
     verticies = null; // Free Up Memory (?)
