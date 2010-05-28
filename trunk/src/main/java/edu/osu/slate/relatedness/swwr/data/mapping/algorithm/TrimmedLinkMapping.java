@@ -16,6 +16,8 @@
 package edu.osu.slate.relatedness.swwr.data.mapping.algorithm;
 
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 import com.aliasi.tokenizer.PorterStemmerTokenizerFactory;
 
@@ -24,50 +26,46 @@ import edu.osu.slate.relatedness.swwr.data.mapping.TermToVertexCountComparator;
 import edu.osu.slate.relatedness.swwr.data.mapping.VertexCount;
 
 /**
- * Lookup algorithm for Title-based term-to-vertex mappings.
- * <p>
- * This mapping class first checks to see if there's an exact
- * match with the given terms (stemmed or not).  If so,
- * that vertex mapping is returned.
- * <p>
- * If not, it backs off to the individual words in the given
- * term (if the term is a multi-word expression).
- * <p>
- * If no match is found, null is returned.
+ * Simplified lookup class for the {@link TermToVertexCount} class.
  * 
  * @author weale
  * @version 1.01
  */
-public class ApproximateTitleMapping extends TermToVertexMapping
+public class TrimmedLinkMapping extends TermToVertexMapping
 {
   private static final long serialVersionUID = 5395182204888235246L;
 
- /**
-  * Constructor.
-  * 
-  * @param tvc Array of {@link TermToVertexCount} objects.
-  */
-  public ApproximateTitleMapping(TermToVertexCount[] tvc)
-  {
-    super(tvc);
-  }//end: ApproximateTitleMapping(TermToVertexCount[])
-  
- /**
-  * Constructor.
-  * <p>
-  * Reads the {@link TermToVertexCount} array from the given <i>.tvc file</i>.
-  * 
-  * @param filename Input file name.
-  */
-  public ApproximateTitleMapping(String filename)
-  {
-    super(filename);
-  }//end: ApproximateTitleMapping(String)
+  private double cutoff;
   
   /**
-   * Check the vertex mappings for the given term.
+   * Constructor.
+   * 
+   * @param tvc Array of {@link TermToVertexCount} objects.
+   */
+  public TrimmedLinkMapping(TermToVertexCount[] tvc)
+  {
+    super(tvc);
+  }//end: ApproximateLinkMapping(TermToVertexCount[])
+
+  /**
+   * Constructor.
    * <p>
-   * Performs Porter stemming on the term if required.
+   * Reads the {@link TermToVertexCount} array from the given <i>.wic file</i>.
+   * 
+   * @param filename Input file name.
+   */
+  public TrimmedLinkMapping(String filename)
+  {
+    super(filename);
+  }//end: ApproximateLinkMapping(String)
+
+  /**
+   * Gets the vertices mapped to a given term.
+   * <p>
+   * Returns null if the term is not found in the mapping function.
+   *  
+   * @param term Term to be mapped.
+   * @return An array of {@link VertexCount} objects.
    */
   public VertexCount[] getVertexMappings(String term)
   {
@@ -75,26 +73,59 @@ public class ApproximateTitleMapping extends TermToVertexMapping
     {
       term = PorterStemmerTokenizerFactory.stem(term);
     }
-    
+
     int pos = Arrays.binarySearch(terms, new TermToVertexCount(term),
-                                  new TermToVertexCountComparator());
+        new TermToVertexCountComparator());
 
     if(pos >= 0)
     { // FOUND!
-      return terms[pos].getVertexCounts();
+      VertexCount[] vc = terms[pos].getVertexCounts();
+      
+      double totalCounts = 0;
+      for(int i=0; i<vc.length; i++)
+      {
+        totalCounts += vc[i].getCount();
+      }//end: for(i)
+      
+      LinkedList<VertexCount> list = new LinkedList<VertexCount>();
+      for(int i = 0; i < vc.length; i++)
+      {
+        if((vc[i].getCount() / totalCounts) > cutoff)
+        {
+          list.add(vc[i]);
+        }
+      }//end: for(i)
+      
+      VertexCount[] vcReturn = new VertexCount[list.size()];
+      Iterator<VertexCount> it = list.iterator();
+      int i = 0;
+      while(it.hasNext())
+      {
+        vcReturn[i] = it.next();
+        i++;
+      }//end: while(it)
+      
+      return vcReturn;
     }
     else
     {
       return null;
     }
-  }//end: getVertexMappings
+  }
   
- /**
-  * Gets the set of terms that the given term may be mapped to.
-  * <p>
-  * Assumes that the given term could not be found on its own
-  * in the mapping.  All the returned terms are substrings of the overall term. 
-  */
+  /**
+   * Gets the vertices mapped to the derived terms.
+   * <p>
+   * The original term was found to be not directly mappable,
+   * therefore, this function breaks it into the individual words
+   * (if a multi-word expression) and returns the mappings
+   * for all the individual words.
+   * <p>
+   * If no appropriate mappings are found, null is returned.
+   *  
+   * @param term Term to be mapped.
+   * @return An array of {@link TermToVertexCount} objects.
+   */
   public TermToVertexCount[] getSubTermVertexMappings(String term)
   {
     /* String is not valid as-is.
@@ -177,35 +208,27 @@ public class ApproximateTitleMapping extends TermToVertexMapping
     int size = 0;
     for(int i = 0; i < arr.length; i++)
     {
-      if(!arr[i].equals("") && stem)
-      { // Stem if required
-        arr[i] = PorterStemmerTokenizerFactory.stem(arr[i]);
-      }
-      
       // Check for valid term
       if(!arr[i].equals("") && getVertexMappings(arr[i]) != null)
       {
         size++;
       }
     }//end: for(i)
-    
+
     if(size == 0)
-    { /* No valid terms found */
+    {
       return null;
     }
-    
+
     /* At least one valid term was found */
     TermToVertexCount[] words = new TermToVertexCount[size];
     int pos = 0;
-    
     for(int i = 0; i < arr.length; i++)
     {
       // Check for valid term
       if(!arr[i].equals(""))
       {
-        // Get mappings for sub-term
         VertexCount[] temp = getVertexMappings(arr[i]);
-        
         if(temp != null)
         {
           // Term maps to vertices
@@ -215,15 +238,13 @@ public class ApproximateTitleMapping extends TermToVertexMapping
           {
             tvc.addVertex(temp[j].getVertex(), temp[j].getCount());
           }//end: for(j)
-          
+
           // Add to the returned object
           words[pos] = tvc;
           pos++;
         }//end: if(temp)
-        
       }//end: if(!arr[i])
     }//end: for(i)
-    
     return words;    
   }//end: getSubTermVertexMappings(String)
 }

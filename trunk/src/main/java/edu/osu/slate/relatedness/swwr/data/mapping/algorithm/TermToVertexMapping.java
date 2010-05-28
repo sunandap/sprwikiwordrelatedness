@@ -16,14 +16,10 @@
 package edu.osu.slate.relatedness.swwr.data.mapping.algorithm;
 
 import java.io.*;
-import java.text.DecimalFormat;
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.TreeMap;
 
 import com.aliasi.tokenizer.PorterStemmerTokenizerFactory;
-
 
 import edu.osu.slate.relatedness.swwr.data.mapping.TermToVertexCount;
 import edu.osu.slate.relatedness.swwr.data.mapping.TermToVertexCountComparator;
@@ -35,55 +31,55 @@ import edu.osu.slate.relatedness.swwr.data.mapping.VertexCount;
  * @author weale
  * @version 1.01
  */
-public class TermToVertexMapping implements Serializable
+public class TermToVertexMapping implements Serializable, MappingInterface
 {
   private static final long serialVersionUID = 5395182204888235246L;
 
   /* Array of lookup terms */
   protected TermToVertexCount[] terms;
-  
+
   protected boolean stem;
-  
- /**
-  * Constructor.
-  * <p>
-  * Initializes the class using the given array of {@link TermToVertexCount} objects.
-  * 
-  * @param tvc Array of {@link TermToVertexCount} objects.
-  */
+
+  /**
+   * Constructor.
+   * <p>
+   * Initializes the class using the given array of {@link TermToVertexCount} objects.
+   * 
+   * @param tvc Array of {@link TermToVertexCount} objects.
+   */
   public TermToVertexMapping(TermToVertexCount[] tvc)
   {
     terms = new TermToVertexCount[tvc.length];
-    
+
     for(int i = 0; i < tvc.length; i++)
     {
       terms[i] = tvc[i];
     }
   }
-  
- /**
-  * Constructor.
-  * <p>
-  * Reads the {@link TermToVertexCount} array from the given <i>.tvc file</i>.
-  * 
-  * @param filename Input file name.
-  */
+
+  /**
+   * Constructor.
+   * <p>
+   * Reads the {@link TermToVertexCount} array from the given <i>.tvc file</i>.
+   * 
+   * @param filename Input file name.
+   */
   public TermToVertexMapping(String filename)
   {
     try
     {
       ObjectInputStream in = new ObjectInputStream(new FileInputStream(filename));
-      
+
       // Read array length
       int len = in.readInt();
-      
+
       // Create and initialize array
       terms = new TermToVertexCount[len];
       for(int i = 0; i < len; i++)
       {
         terms[i] = (TermToVertexCount) in.readObject();
       }//end: for(i)
-      
+
       in.close();
     }//end: try{}
     catch(IOException e)
@@ -99,43 +95,42 @@ public class TermToVertexMapping implements Serializable
       System.exit(1);
     }
   }//end: WordToIDMapping()
-  
+ /**
+  * Returns the number of terms in the mapping.
+  * 
+  * @return Number of Mapping Terms.
+  */
   public int getNumTerms()
   {
     return terms.length;
   }
-  
+
+ /**
+  * Sets the stemming flag for the given mapping.
+  *  
+  * @param s Boolean value for the stem flag.
+  */
   public void setStemming(boolean s)
   {
     stem = s;
   }
-  
- /**
-  * Gets the vertices mapped to a given term.
-  * <p>
-  * Returns null if the term is not found in the mapping function.
-  *  
-  * @param term Term to be mapped.
-  * @return An array of {@link VertexCount} objects.
-  */
+
+  /**
+   * Empty Mapping
+   */
   public VertexCount[] getVertexMappings(String term)
   {
-    if(stem)
-    {
-      term = PorterStemmerTokenizerFactory.stem(term);
-    }
-    
-    int pos = Arrays.binarySearch(terms, new TermToVertexCount(term),
-                                  new TermToVertexCountComparator());
-
-    if(pos >= 0)
-    { // FOUND!
-      return terms[pos].getVertexCounts();
-    }
-     
     return null;
   }//end: getVertexMappings(String)
   
+ /**
+  * Empty Mapping 
+  */
+  public TermToVertexCount[] getSubTermVertexMappings(String term)
+  {
+    return null;
+  }
+
   /**
    * Gets the vertices mapped to a given term.
    * <p>
@@ -163,11 +158,11 @@ public class TermToVertexMapping implements Serializable
       return null;
     }
   }
-  
- /**
-  * 
-  * @return
-  */
+
+  /**
+   * 
+   * @return
+   */
   public TreeMap<Integer,Integer> generateCoverageSupportHistogram()
   {
     TreeMap<Integer,Integer> hist = new TreeMap<Integer,Integer>();
@@ -180,24 +175,24 @@ public class TermToVertexMapping implements Serializable
       {
         totalSupport += counts[j].getCount();
       }//end: for(j)
-      
+
       for(int j = 0; j < counts.length; j++)
       {
         double mappingSupport = (counts[j].getCount() / totalSupport) * 100;
         int count = 1;
         mappingSupport = Math.round(mappingSupport);
         int iMS = (int) mappingSupport;
-        
+
         if(hist.containsKey(iMS))
         {
           count += hist.get(iMS);
         }
         hist.put(iMS, count);
-        
+
       }//end: for(j)
 
     }//end: for(i)
-    
+
     return hist;
   }
 
@@ -213,27 +208,27 @@ public class TermToVertexMapping implements Serializable
       {
         totalSupport += counts[j].getCount();
       }//end: for(j)
-      
+
       for(int j = 0; j < counts.length; j++)
       {
         double mappingSupport = (counts[j].getCount() / totalSupport) * 100;
         int count = 1;
         mappingSupport = Math.round(mappingSupport);
         int iMS = (int) mappingSupport;
-        
+
         if(hist.containsKey(iMS))
         {
           count += hist.get(iMS);
         }
         hist.put(iMS, count);
-        
+
       }//end: for(j)
 
     }//end: for(i)
-    
+
     return hist;
   }
-  
+
   public TreeMap<Integer,Integer> generateInverseCoverageSupportHistogram()
   {
     TreeMap<Integer,Integer> vertexCounts = new TreeMap<Integer,Integer>();
@@ -241,27 +236,27 @@ public class TermToVertexMapping implements Serializable
     for(int i = 0; i < terms.length; i++)
     {
       VertexCount[] counts = terms[i].getVertexCounts();
-      
+
       for(int j = 0; j < counts.length; j++)
       {
         int count = counts[j].getCount();
-        
+
         if(vertexCounts.containsKey(counts[j].getVertex()))
         {
           count += vertexCounts.get(counts[j].getVertex());
         }
         vertexCounts.put(counts[j].getVertex(), count);
-        
+
       }//end: for(j)
 
     }//end: for(i)
-    
+
     TreeMap<Integer,Integer> hist = new TreeMap<Integer,Integer>();
 
     for(int i = 0; i < terms.length; i++)
     {
       VertexCount[] counts = terms[i].getVertexCounts();
-      
+
       for(int j = 0; j < counts.length; j++)
       {
         int support = vertexCounts.get(counts[j].getVertex());
@@ -271,7 +266,7 @@ public class TermToVertexMapping implements Serializable
           int count = 1;
           mappingSupport = Math.round(mappingSupport);
           int iMS = (int) mappingSupport;
-          
+
           if(hist.containsKey(iMS))
           {
             count += hist.get(iMS);
@@ -281,87 +276,87 @@ public class TermToVertexMapping implements Serializable
       }//end: for(j)
 
     }//end: for(i)
-    
+
     return hist;
   }
-  
+
   /**
    * 
    * @return
    */
-   public TreeMap<Integer,Integer> generateTermVertexHistogram()
-   {
-     TreeMap<Integer,Integer> hist = new TreeMap<Integer,Integer>();
+  public TreeMap<Integer,Integer> generateTermVertexHistogram()
+  {
+    TreeMap<Integer,Integer> hist = new TreeMap<Integer,Integer>();
 
-     for(int i = 0; i < terms.length; i++)
-     {
-       VertexCount[] counts = terms[i].getVertexCounts();
-       int termVertexCount = counts.length;
-       
-       if(counts.length == 0)
-       {
-         System.out.println(terms[i].getTerm());
-       }
-       else
-       {
-         int count = 1;
-         if(hist.containsKey(termVertexCount))
-         {
-           count += hist.get(termVertexCount);
-         }
-         hist.put(termVertexCount, count);
-       }
-     }//end: for(i)
-     
-     return hist;
-   }
-   
-   /**
-    * 
-    * @return
-    */
-    public TreeMap<Integer,Integer> generateTrimmedTermVertexHistogram(double cutoff)
+    for(int i = 0; i < terms.length; i++)
     {
-      TreeMap<Integer,Integer> hist = new TreeMap<Integer,Integer>();
+      VertexCount[] counts = terms[i].getVertexCounts();
+      int termVertexCount = counts.length;
 
-      for(int i = 0; i < terms.length; i++)
+      if(counts.length == 0)
       {
-        VertexCount[] counts = terms[i].getTrimmedVertexCounts(cutoff);
-        
-        if(counts == null || counts.length == 0)
+        System.out.println(terms[i].getTerm());
+      }
+      else
+      {
+        int count = 1;
+        if(hist.containsKey(termVertexCount))
         {
-          //System.out.println(terms[i].getTerm());
+          count += hist.get(termVertexCount);
         }
-        else
-        {
-          int termVertexCount = counts.length;
-          int count = 1;
-          if(hist.containsKey(termVertexCount))
-          {
-            count += hist.get(termVertexCount);
-          }
-          hist.put(termVertexCount, count);
-        }
-      }//end: for(i)
-      
-      return hist;
-    }
+        hist.put(termVertexCount, count);
+      }
+    }//end: for(i)
 
- /**
-  * Adds the content of another {@link TermToVertexMapping} object.
-  *  
-  * @param tvm Initialized {@link TermToVertexMapping} object.
-  */
+    return hist;
+  }
+
+  /**
+   * 
+   * @return
+   */
+  public TreeMap<Integer,Integer> generateTrimmedTermVertexHistogram(double cutoff)
+  {
+    TreeMap<Integer,Integer> hist = new TreeMap<Integer,Integer>();
+
+    for(int i = 0; i < terms.length; i++)
+    {
+      VertexCount[] counts = terms[i].getTrimmedVertexCounts(cutoff);
+
+      if(counts == null || counts.length == 0)
+      {
+        //System.out.println(terms[i].getTerm());
+      }
+      else
+      {
+        int termVertexCount = counts.length;
+        int count = 1;
+        if(hist.containsKey(termVertexCount))
+        {
+          count += hist.get(termVertexCount);
+        }
+        hist.put(termVertexCount, count);
+      }
+    }//end: for(i)
+
+    return hist;
+  }
+
+  /**
+   * Adds the content of another {@link TermToVertexMapping} object.
+   *  
+   * @param tvm Initialized {@link TermToVertexMapping} object.
+   */
   public void joinMappings(TermToVertexMapping tvm)
   {
     int numToAdd = 0;
     boolean[] addMe = new boolean[tvm.terms.length];
-    
+
     for(int i = 0; i < tvm.terms.length; i++)
     {
-      
+
       int pos = Arrays.binarySearch(terms, tvm.terms[i], new TermToVertexCountComparator());
-      
+
       if(pos >= 0)
       {
         terms[pos].addObject(tvm.terms[i]);
@@ -373,7 +368,7 @@ public class TermToVertexMapping implements Serializable
         addMe[i] = true;
       }
     }//end: for(i)
-    
+
     TermToVertexCount[] temp = new TermToVertexCount[terms.length + numToAdd];
     System.arraycopy(terms, 0, temp, 0, terms.length);
     int addPos = terms.length;
@@ -385,14 +380,14 @@ public class TermToVertexMapping implements Serializable
         addPos++;
       }
     }//end: for(i)
-    
+
     terms = temp;
     temp = null;
-    
+
     Arrays.sort(terms, new TermToVertexCountComparator());
-    
+
   }//end: stemMappings()
-  
+
   /**
    * Write a {@link TermToVertexMapping} class to a file.
    * <p>
@@ -401,37 +396,37 @@ public class TermToVertexMapping implements Serializable
    * @param out {@link ObjectOutputStream} to write to.
    * @throws IOException
    */
-   private void writeObject(java.io.ObjectOutputStream out) throws IOException
-   {
-     // Write array length
-     out.writeInt(terms.length);
-     
-     // Write array of WordToVertexCount objects
-     for(int i = 0; i < terms.length; i++)
-     {
-       out.writeObject(terms[i]);
-     }
-   }//end: writeObject(ObjectOutputStream)
-   
-   /**
-    * Reads an {@link TermToVertexMapping} class from a file.
-    * <p>
-    * Reads the length of {@link TermToVertexCount} objects. Then, creates and populates an appropriate array of objects.
-    * 
-    * @param in {@link ObjectInputStream} to read from.
-    * @throws IOException
-    * @throws ClassNotFoundException
-    */
-    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException
+  private void writeObject(java.io.ObjectOutputStream out) throws IOException
+  {
+    // Write array length
+    out.writeInt(terms.length);
+
+    // Write array of WordToVertexCount objects
+    for(int i = 0; i < terms.length; i++)
     {
-      // Read array length
-      int len = in.readInt();
-      
-      // Create and populate array
-      terms = new TermToVertexCount[len];
-      for(int i = 0; i < len; i++)
-      {
-        terms[i] = (TermToVertexCount) in.readObject();
-      }//end: for(i)
-    }//end: readObject(ObjectInputStream)
+      out.writeObject(terms[i]);
+    }
+  }//end: writeObject(ObjectOutputStream)
+
+  /**
+   * Reads an {@link TermToVertexMapping} class from a file.
+   * <p>
+   * Reads the length of {@link TermToVertexCount} objects. Then, creates and populates an appropriate array of objects.
+   * 
+   * @param in {@link ObjectInputStream} to read from.
+   * @throws IOException
+   * @throws ClassNotFoundException
+   */
+  private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException
+  {
+    // Read array length
+    int len = in.readInt();
+
+    // Create and populate array
+    terms = new TermToVertexCount[len];
+    for(int i = 0; i < len; i++)
+    {
+      terms[i] = (TermToVertexCount) in.readObject();
+    }//end: for(i)
+  }//end: readObject(ObjectInputStream)
 }

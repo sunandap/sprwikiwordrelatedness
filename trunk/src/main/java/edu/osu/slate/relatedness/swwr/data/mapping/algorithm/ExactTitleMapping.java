@@ -15,7 +15,6 @@
 
 package edu.osu.slate.relatedness.swwr.data.mapping.algorithm;
 
-import java.io.*;
 import java.util.Arrays;
 
 import edu.osu.slate.relatedness.swwr.data.mapping.TermToVertexCount;
@@ -61,7 +60,7 @@ public class ExactTitleMapping extends TermToVertexMapping
  /**
   * Gets the vertices mapped to a given term.
   * <p>
-  * Returns term if the word is not found in the mapping function.
+  * Returns null if the word is not found in the mapping function.
   *  
   * @param term Term to be mapped.
   * @return An array of {@link VertexCount} objects.
@@ -75,7 +74,7 @@ public class ExactTitleMapping extends TermToVertexMapping
     { // FOUND!
       return terms[pos].getVertexCounts();
     }
-     
+    
     return null;
   }//end: getWordMappings(int)
 }
