@@ -38,7 +38,7 @@ import edu.osu.slate.relatedness.swwr.data.mapping.VertexCount;
  * @author weale
  * @version 1.01
  */
-public class ApproximateTitleMapping extends TermToVertexMapping
+public class TrimmedTitleMapping extends TermToVertexMapping
 {
   private static final long serialVersionUID = 5395182204888235246L;
 
@@ -47,7 +47,7 @@ public class ApproximateTitleMapping extends TermToVertexMapping
   * 
   * @param tvc Array of {@link TermToVertexCount} objects.
   */
-  public ApproximateTitleMapping(TermToVertexCount[] tvc)
+  public TrimmedTitleMapping(TermToVertexCount[] tvc)
   {
     super(tvc);
   }//end: ApproximateTitleMapping(TermToVertexCount[])
@@ -59,7 +59,7 @@ public class ApproximateTitleMapping extends TermToVertexMapping
   * 
   * @param filename Input file name.
   */
-  public ApproximateTitleMapping(String filename)
+  public TrimmedTitleMapping(String filename)
   {
     super(filename);
   }//end: ApproximateTitleMapping(String)

@@ -15,7 +15,6 @@
 
 package edu.osu.slate.relatedness.swwr.data.mapping.algorithm;
 
-import java.io.*;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
