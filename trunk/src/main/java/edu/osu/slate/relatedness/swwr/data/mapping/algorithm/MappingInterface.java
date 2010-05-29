@@ -34,7 +34,7 @@ public interface MappingInterface
   * @param term Term to be mapped.
   * @return An array of {@link VertexCount} objects.
   */
-  public VertexCount[] getVertexMappings(String term);
+  public TermToVertexCount[] getVertexMappings(String term);
   
  /** Gets the vertices mapped to the derived terms.
   * <p>
@@ -49,5 +49,7 @@ public interface MappingInterface
   * @return An array of {@link TermToVertexCount} objects.
   */
   public TermToVertexCount[] getSubTermVertexMappings(String term);
+
+  public void setStemming(boolean equals);
   
 }

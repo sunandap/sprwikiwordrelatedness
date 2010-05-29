@@ -21,6 +21,7 @@ import java.util.TreeMap;
 
 import com.aliasi.tokenizer.PorterStemmerTokenizerFactory;
 
+import edu.osu.slate.relatedness.Configuration;
 import edu.osu.slate.relatedness.swwr.data.mapping.TermToVertexCount;
 import edu.osu.slate.relatedness.swwr.data.mapping.TermToVertexCountComparator;
 import edu.osu.slate.relatedness.swwr.data.mapping.VertexCount;
@@ -118,7 +119,7 @@ public class TermToVertexMapping implements Serializable, MappingInterface
   /**
    * Empty Mapping
    */
-  public VertexCount[] getVertexMappings(String term)
+  public TermToVertexCount[] getVertexMappings(String term)
   {
     return null;
   }//end: getVertexMappings(String)
@@ -429,4 +430,56 @@ public class TermToVertexMapping implements Serializable, MappingInterface
       terms[i] = (TermToVertexCount) in.readObject();
     }//end: for(i)
   }//end: readObject(ObjectInputStream)
+  
+  public static TermToVertexMapping getMapping(String wordVertexMapFile)
+  {
+    try
+    {
+      // Open Basic Mapping
+      ObjectInputStream in = new ObjectInputStream(new FileInputStream(wordVertexMapFile));
+      TermToVertexMapping tmp = (TermToVertexMapping) in.readObject();
+      in.close();
+      
+      // Convert Mapping to Algorithm
+      if(Configuration.mapsource.equals("extitle"))
+      {
+        tmp = new ExactMapping(tmp);        
+      }
+      else if(Configuration.mapsource.equals("title"))
+      {
+        tmp = new ApproximateMapping(tmp);
+      }
+      else if(Configuration.mapsource.equals("link"))
+      {
+        tmp = new ApproximateMapping(tmp);
+      }
+      else if(Configuration.mapsource.equals("titlelink"))
+      {
+        tmp = new ApproximateMapping(tmp);
+      }
+      else if(Configuration.mapsource.equals("t-title"))
+      {
+        tmp = new TrimmedMapping(tmp);
+      }
+      else if(Configuration.mapsource.equals("t-link"))
+      {
+        tmp = new TrimmedMapping(tmp);
+      }
+      else if(Configuration.mapsource.equals("t-titlelink"))
+      {
+        tmp = new TrimmedMapping(tmp);
+      }
+      
+      // Set stemming
+      tmp.setStemming(Configuration.stemming.equals("t"));
+      return tmp;
+    }//end: try {}
+    catch(Exception e)
+    {
+      System.err.println("Problem with file: " + wordVertexMapFile);
+      e.printStackTrace();
+      System.exit(1);
+    }
+    return null;
+  }//end: getMapping
 }
