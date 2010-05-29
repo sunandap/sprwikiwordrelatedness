@@ -21,7 +21,6 @@ import com.aliasi.tokenizer.PorterStemmerTokenizerFactory;
 
 import edu.osu.slate.relatedness.swwr.data.mapping.TermToVertexCount;
 import edu.osu.slate.relatedness.swwr.data.mapping.TermToVertexCountComparator;
-import edu.osu.slate.relatedness.swwr.data.mapping.VertexCount;
 
 /**
  * Lookup algorithm for Title-based term-to-vertex mappings.
@@ -38,16 +37,16 @@ import edu.osu.slate.relatedness.swwr.data.mapping.VertexCount;
  * @author weale
  * @version 1.01
  */
-public class ApproximateTitleMapping extends TermToVertexMapping
+public class ApproximateMapping extends TermToVertexMapping
 {
   private static final long serialVersionUID = 5395182204888235246L;
-
+  
  /**
   * Constructor.
   * 
   * @param tvc Array of {@link TermToVertexCount} objects.
   */
-  public ApproximateTitleMapping(TermToVertexCount[] tvc)
+  public ApproximateMapping(TermToVertexCount[] tvc)
   {
     super(tvc);
   }//end: ApproximateTitleMapping(TermToVertexCount[])
@@ -59,20 +58,25 @@ public class ApproximateTitleMapping extends TermToVertexMapping
   * 
   * @param filename Input file name.
   */
-  public ApproximateTitleMapping(String filename)
+  public ApproximateMapping(String filename)
   {
     super(filename);
   }//end: ApproximateTitleMapping(String)
+  
+  public ApproximateMapping(TermToVertexMapping tvm)
+  {
+    super(tvm.terms);
+  }
   
   /**
    * Check the vertex mappings for the given term.
    * <p>
    * Performs Porter stemming on the term if required.
    */
-  public VertexCount[] getVertexMappings(String term)
+  public TermToVertexCount[] getVertexMappings(String term)
   {
     if(stem)
-    {
+    { // Stem if required
       term = PorterStemmerTokenizerFactory.stem(term);
     }
     
@@ -81,7 +85,9 @@ public class ApproximateTitleMapping extends TermToVertexMapping
 
     if(pos >= 0)
     { // FOUND!
-      return terms[pos].getVertexCounts();
+      TermToVertexCount[] arr = new TermToVertexCount[1];
+      arr[0] = new TermToVertexCount(term, terms[pos].getVertexCounts());
+      return arr;
     }
     else
     {
@@ -204,20 +210,11 @@ public class ApproximateTitleMapping extends TermToVertexMapping
       if(!arr[i].equals(""))
       {
         // Get mappings for sub-term
-        VertexCount[] temp = getVertexMappings(arr[i]);
+        TermToVertexCount[] temp = getVertexMappings(arr[i]);
         
         if(temp != null)
         {
-          // Term maps to vertices
-          // Create new TermToVertexCount w/ vertex mappings
-          TermToVertexCount tvc = new TermToVertexCount(arr[i]);
-          for(int j = 0; j < temp.length; j++)
-          {
-            tvc.addVertex(temp[j].getVertex(), temp[j].getCount());
-          }//end: for(j)
-          
-          // Add to the returned object
-          words[pos] = tvc;
+          words[pos] = temp[0];
           pos++;
         }//end: if(temp)
         

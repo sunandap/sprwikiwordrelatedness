@@ -26,65 +26,57 @@ import edu.osu.slate.relatedness.swwr.data.mapping.TermToVertexCountComparator;
 import edu.osu.slate.relatedness.swwr.data.mapping.VertexCount;
 
 /**
- * Simplified lookup class for the {@link TermToVertexCount} class.
+ * Trimmed term-to-vertex mappings for Titles, Links and Title+Links.
  * 
  * @author weale
  * @version 1.01
  */
-public class ApproximateLinkMapping extends TermToVertexMapping
+public class TrimmedMapping extends TermToVertexMapping
 {
   private static final long serialVersionUID = 5395182204888235246L;
 
+  private double cutoff;
+  
   /**
    * Constructor.
+   * <p>
+   * Sets trimming cutoff to 1% of mappings.
    * 
    * @param tvc Array of {@link TermToVertexCount} objects.
    */
-  public ApproximateLinkMapping(TermToVertexCount[] tvc)
+  public TrimmedMapping(TermToVertexCount[] tvc)
   {
     super(tvc);
+    cutoff = 0.01;
   }//end: ApproximateLinkMapping(TermToVertexCount[])
 
   /**
    * Constructor.
    * <p>
-   * Reads the {@link TermToVertexCount} array from the given <i>.wic file</i>.
+   * Reads the {@link TermToVertexCount} array from the given <i>.tvc file</i>.
+   * <p>
+   * Sets trimming cutoff to 1% of mappings.
    * 
    * @param filename Input file name.
    */
-  public ApproximateLinkMapping(String filename)
+  public TrimmedMapping(String filename)
   {
     super(filename);
+    cutoff = 0.01;
   }//end: ApproximateLinkMapping(String)
-
-  /**
-   * Gets the vertices mapped to a given term.
-   * <p>
-   * Returns null if the term is not found in the mapping function.
-   *  
-   * @param term Term to be mapped.
-   * @return An array of {@link VertexCount} objects.
-   */
-  public VertexCount[] getVertexMappings(String term)
+  
+  public TrimmedMapping(TermToVertexMapping tvm)
   {
-    if(stem)
-    {
-      term = PorterStemmerTokenizerFactory.stem(term);
-    }
-
-    int pos = Arrays.binarySearch(terms, new TermToVertexCount(term),
-        new TermToVertexCountComparator());
-
-    if(pos >= 0)
-    { // FOUND!
-      return terms[pos].getVertexCounts();
-    }
-    else
-    {
-      return null;
-    }
+    super(tvm.terms);
+    cutoff = 0.01;
   }
-
+  
+  public TrimmedMapping(TermToVertexMapping tvm, double val)
+  {
+    super(tvm.terms);
+    cutoff = val;
+  }
+  
   /**
    * Gets the vertices mapped to a given term.
    * <p>
@@ -93,10 +85,10 @@ public class ApproximateLinkMapping extends TermToVertexMapping
    * @param term Term to be mapped.
    * @return An array of {@link VertexCount} objects.
    */
-  public VertexCount[] getTrimmedVertexMappings(String term)
+  public TermToVertexCount[] getVertexMappings(String term)
   {
     if(stem)
-    {
+    { // Stem term if required
       term = PorterStemmerTokenizerFactory.stem(term);
     }
 
@@ -107,16 +99,18 @@ public class ApproximateLinkMapping extends TermToVertexMapping
     { // FOUND!
       VertexCount[] vc = terms[pos].getVertexCounts();
       
+      // Gather mapping counts
       double totalCounts = 0;
       for(int i=0; i<vc.length; i++)
       {
         totalCounts += vc[i].getCount();
       }//end: for(i)
       
+      // Create list of mappings w/ support % greater than the cutoff
       LinkedList<VertexCount> list = new LinkedList<VertexCount>();
       for(int i = 0; i < vc.length; i++)
       {
-        if((vc[i].getCount() / totalCounts) > .01)
+        if((vc[i].getCount() / totalCounts) > cutoff)
         {
           list.add(vc[i]);
         }
@@ -131,7 +125,9 @@ public class ApproximateLinkMapping extends TermToVertexMapping
         i++;
       }//end: while(it)
       
-      return vcReturn;
+      TermToVertexCount[] arr = new TermToVertexCount[1];
+      arr[0] = new TermToVertexCount(term, vcReturn);
+      return arr;
     }
     else
     {
@@ -234,6 +230,11 @@ public class ApproximateLinkMapping extends TermToVertexMapping
     int size = 0;
     for(int i = 0; i < arr.length; i++)
     {
+      if(!arr[i].equals("") && stem)
+      { // Stem if needed
+        arr[i] = PorterStemmerTokenizerFactory.stem(arr[i]);
+      }
+      
       // Check for valid term
       if(!arr[i].equals("") && getVertexMappings(arr[i]) != null)
       {
@@ -254,19 +255,11 @@ public class ApproximateLinkMapping extends TermToVertexMapping
       // Check for valid term
       if(!arr[i].equals(""))
       {
-        VertexCount[] temp = getVertexMappings(arr[i]);
+        TermToVertexCount[] temp = getVertexMappings(arr[i]);
         if(temp != null)
         {
-          // Term maps to vertices
-          // Create new TermToVertexCount w/ vertex mappings
-          TermToVertexCount tvc = new TermToVertexCount(arr[i]);
-          for(int j = 0; j < temp.length; j++)
-          {
-            tvc.addVertex(temp[j].getVertex(), temp[j].getCount());
-          }//end: for(j)
-
           // Add to the returned object
-          words[pos] = tvc;
+          words[pos] = temp[0];
           pos++;
         }//end: if(temp)
       }//end: if(!arr[i])

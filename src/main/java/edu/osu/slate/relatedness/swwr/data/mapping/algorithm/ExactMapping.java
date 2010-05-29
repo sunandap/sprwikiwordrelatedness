@@ -30,7 +30,7 @@ import edu.osu.slate.relatedness.swwr.data.mapping.VertexCount;
  * @author weale
  * @version 1.01
  */
-public class ExactTitleMapping extends TermToVertexMapping
+public class ExactMapping extends TermToVertexMapping
 {
   
   private static final long serialVersionUID = 7357697379024943638L;
@@ -40,23 +40,35 @@ public class ExactTitleMapping extends TermToVertexMapping
   * 
   * @param tvc Array of {@link TermToVertexCount} object.
   */
-  public ExactTitleMapping(TermToVertexCount[] tvc)
+  public ExactMapping(TermToVertexCount[] tvc)
   {
     super(tvc);
   }//end: ExactTitleMapping(TermtoVertexCount[])
-  
- /**
-  * Constructor.
-  * <p>
-  * Reads the {@link TermToVertexCount} array from the given <i>.tvc file</i>.
-  * 
-  * @param filename Input file name.
-  */
-  public ExactTitleMapping(String filename)
-  {
-    super(filename);
-  }//end: WordToIDMapping()
-  
+
+  /**
+   * Constructor.
+   * <p>
+   * Reads the {@link TermToVertexCount} array from the given <i>.tvc file</i>.
+   * 
+   * @param filename Input file name.
+   */
+   public ExactMapping(String filename)
+   {
+     super(filename);
+   }//end: WordToIDMapping()
+
+   /**
+    * Constructor.
+    * <p>
+    * Reads the {@link TermToVertexCount} array from the given <i>.tvc file</i>.
+    * 
+    * @param filename Input file name.
+    */
+    public ExactMapping(TermToVertexMapping tvm)
+    {
+      super(tvm.terms);
+    }//end: WordToIDMapping()
+   
  /**
   * Gets the vertices mapped to a given term.
   * <p>
@@ -65,16 +77,18 @@ public class ExactTitleMapping extends TermToVertexMapping
   * @param term Term to be mapped.
   * @return An array of {@link VertexCount} objects.
   */
-  public VertexCount[] getVertexMappings(String term)
+  public TermToVertexCount[] getVertexMappings(String term)
   {
     int pos = Arrays.binarySearch(terms, new TermToVertexCount(term),
                                   new TermToVertexCountComparator());
 
     if(pos >= 0)
     { // FOUND!
-      return terms[pos].getVertexCounts();
+      TermToVertexCount[] arr = new TermToVertexCount[1];
+      arr[0] = new TermToVertexCount(term, terms[pos].getVertexCounts());
+      return arr;
     }
     
     return null;
-  }//end: getWordMappings(int)
+  }//end: getWordMappings(String)
 }
