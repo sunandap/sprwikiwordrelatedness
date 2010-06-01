@@ -18,12 +18,12 @@ package edu.osu.slate.experiments.wordpair;
 import java.util.*;
 import java.io.*;
 
-import edu.osu.slate.experiments.Common;
-import edu.osu.slate.experiments.Spearman;
+import edu.osu.slate.relatedness.Configuration;
 import edu.osu.slate.relatedness.swwr.algorithm.SourcedPageRank;
-import edu.osu.slate.relatedness.swwr.data.AliasSFToID;
-import edu.osu.slate.relatedness.swwr.data.AliasStrings;
-import edu.osu.slate.relatedness.swwr.data.WikiGraph;
+import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
+import edu.osu.slate.relatedness.swwr.data.mapping.TermToVertexCount;
+import edu.osu.slate.relatedness.swwr.data.mapping.VertexCount;
+import edu.osu.slate.relatedness.swwr.data.mapping.algorithm.TermToVertexMapping;
 
 /**
  * Calculates the Pearson correlation coefficient between a given data set and the output of a given relatedness data set.
@@ -31,351 +31,298 @@ import edu.osu.slate.relatedness.swwr.data.WikiGraph;
  * @author weale
  *
  */
-public class GetSPRCorrelations {
+public class GetSPRCorrelations
+{
 
-	private static boolean verbose = true;
-	
-	private static String aliasStringFile;
-	private static String aliasSFIDFile;
-	private static String graphFile;
-	private static String taskFile;
-	
-	/**
-	 * 
-	 * @param args
-	 * @throws IOException
-	 * @throws ClassNotFoundException 
-	 */
-	public static void main(String [] args) throws IOException, ClassNotFoundException {
-		
-		/* Set parameters */
-		if(args.length == 0) {
-			Common.type = "enwiktionary";
-			//Common.type = "enwiki";
-			Common.date = "20090203";
-			//Common.date = "20080103";
-			Common.source = "M";
-			//Common.source = "english_language";
-			//Common.seed = "'*Topics'";
-			Common.seed = "";
-			//Common.countSource = "v";
-			Common.countSource = "";
-			Common.algorithm = "";
-			//Common.task = "MC30";
-			Common.task = "RG65";
-			//Common.task = "WS353";
-		} else {
-			setParameters(args);
-		}
-		setFiles();
-		
-		boolean report = true;
-		
-		if(verbose) {
-			System.out.println("Setting Synonym Task: " + Common.task);
-		}
-		Scanner s = new Scanner(new FileReader(taskFile));
+  private static String graphFile;
 
-		if(verbose) {
-			System.out.println("Opening Alias File");
-		}
-		AliasStrings as = new AliasStrings(aliasStringFile);
-		
-		if(verbose) {
-			System.out.println("Opening Alias -> ID File");
-		}
-		AliasSFToID sf2ID = new AliasSFToID(aliasSFIDFile);		
+  private static String taskFile;
 
-		// Set up Wiki graph and relatedness algorithm
-		if(verbose) {
-			System.out.println("Opening Wiki Graph");
-		}
-		WikiGraph wgp = new WikiGraph(graphFile);
-		SourcedPageRank green = new SourcedPageRank(wgp);
-		
-		// Relatedness value vectors
-		Vector<Double> X = new Vector<Double>();
-		Vector<Double> Y = new Vector<Double>();
-		int i=0;
-		
-		while(s.hasNext()) {
-			String str = s.nextLine();
-			String[] arr = str.split(",");
+  private static String resultAvgFile;
 
-			int[] SFIDS1 = Common.getCandidateSFIDS(as, arr[0]);
-			int[] SFIDS2 = Common.getCandidateSFIDS(as, arr[1]);
-			
-			boolean valid = (SFIDS1.length!=0 && SFIDS2.length!=0);
-			
-			double d = -10.0;
-			for(int i1=0; i1<SFIDS1.length; i1++) {
-				for(int i2=0; i2<SFIDS2.length; i2++) {
-					
-					int[] IDS1 = sf2ID.getIDs(SFIDS1[i1]);
-					int[] IDS2 = sf2ID.getIDs(SFIDS2[i2]);
-					
-					valid = valid && (IDS1.length!=0 && IDS2.length!=0);
-					
-					for(int j1=0; j1<IDS1.length; j1++) {
-						for(int j2=0; j2<IDS2.length; j2++) {
-							double[] val = green.getRelatedness(IDS1[j1]);
-//							Arrays.sort(val);
-//							PrintWriter pw = new PrintWriter("/u/weale/Desktop/temp.csv");
-//							for(int j=val.length-1; j>val.length-1001; j--) {
-//								pw.println(val[j]);
-//							}
-//							pw.close();
-//							System.exit(1);
-//							System.out.println(IDS1[j1] + " " + IDS2[j2] + " " + val[IDS2[j2]]);
-							d = Math.max(d, val[IDS2[j2]]);
-						}
-					}
+  private static String resultMaxFile;
 
-				}//end: for(j1)
-			}//end: for(i1)
-			
-			// if the word pair is found
-			if(valid) {
+  private static String resultAvgFileAll;
 
-				// Trim off the top and bottom of the range.
-				if(d<0.000000001) {
-					d=0.000000001;
-				} else if(d > 1) {
-					d = 1;
-				}
-				
-				if(report) {
-					System.out.println(str + "," + d);
-				}
-				
-				X.add(Double.parseDouble(arr[2]));
-				Y.add(d);
-			}
-			
-			i++;
-		}//end while(hasNext())
-		
-		// Calculate the relatedness correlation
-		System.out.println(Pearson(X,Y));
-		System.out.println(LogPearson(X,Y));
-		System.out.println(Spearman.GetCorrelation(X, Y));
-		
-	}//end: main
-	
-	/**
-	 * Calculate the Pearson correlation coefficient of X and Y
-	 * 
-	 * @param X original human relatedness values
-	 * @param Y metric relatedness values 
-	 * @return
-	 */
-	private static double Pearson(Vector<Double> X, Vector<Double> Y) {
-		double meanX=0.0, meanY=0.0;
-		for(int i=0; i<X.size(); i++) {
-			meanX+=X.elementAt(i);
-			meanY+=Y.elementAt(i);
-		}
-		meanX /= X.size();
-		meanY /= Y.size();
-		
-		double sumXY = 0.0, sumX2 = 0.0, sumY2 = 0.0;
-		for(int i=0; i<X.size(); i++) {
-			sumXY += ((X.elementAt(i)-meanX) * (Y.elementAt(i)-meanY));
-			sumX2 += Math.pow(X.elementAt(i)-meanX, 2.0);
-			sumY2 += Math.pow(Y.elementAt(i)-meanY, 2.0);
-		}
-		return (sumXY / (Math.sqrt(sumX2)*Math.sqrt(sumY2)));
-	}//end: Pearson2(X,Y)
-	
-	/**
-	 * Calculate the Pearson correlation coefficient of X and log(Y)
-	 * 
-	 * @param X original human relatedness values
-	 * @param Y non-log metric relatedness values 
-	 * @return
-	 */
-	private static double LogPearson(Vector<Double> X, Vector<Double> Y) {
-		
-		for(int i=0; i<Y.size(); i++) {
-			//System.out.println(Math.log10(Y.elementAt(i)));
-			Y.set(i, Math.log10(Y.elementAt(i)));
-		}
-		
-		double meanX=0.0, meanY=0.0;
-		for(int i=0; i<X.size(); i++) {
-			meanX+=X.elementAt(i);
-			meanY+=Y.elementAt(i);
-		}
-		meanX /= X.size();
-		meanY /= Y.size();
-		
-		double sumXY = 0.0, sumX2 = 0.0, sumY2 = 0.0;
-		for(int i=0; i<X.size(); i++) {
-			sumXY += ((X.elementAt(i)-meanX) * (Y.elementAt(i)-meanY));
-			sumX2 += Math.pow(X.elementAt(i)-meanX, 2.0);
-			sumY2 += Math.pow(Y.elementAt(i)-meanY, 2.0);
-		}
-		
-		return (sumXY / (Math.sqrt(sumX2)*Math.sqrt(sumY2)));
-	}//end: LogPearson2(X,Y)
-	
-	/**
-	 * 
-	 * @param X
-	 * @param Y
-	 * @return
-	 */
-	private static double WeightedPearson(Vector<Double> X, Vector<Double> Y) {
-		
-		double sumX=0.0, sumY=0.0;
-		for(int i=0; i<X.size(); i++) {
-			sumX+=X.elementAt(i);
-			sumY+=Y.elementAt(i);
-		}
-		
-		double wSumX = 0.0, wSumY = 0.0;
-		for(int i=0; i<X.size(); i++) {
-			wSumX += X.elementAt(i) * X.elementAt(i);
-			wSumY += X.elementAt(i) * Y.elementAt(i);
-		}
-		
-		double meanX = sumX / wSumX;
-		double meanY = sumY / wSumX;
-		
-		double sumXY = 0.0, sumX2 = 0.0, sumY2 = 0.0;
-		for(int i=0; i<X.size(); i++) {
-			sumXY += X.elementAt(i) * ((X.elementAt(i)-meanX) * (Y.elementAt(i)-meanY));
-			sumX2 += X.elementAt(i) * Math.pow(X.elementAt(i)-meanX, 2.0);
-			sumY2 += X.elementAt(i) * Math.pow(Y.elementAt(i)-meanY, 2.0);
-		}
-		
-		sumXY /= wSumX;
-		sumX2 /= wSumX;
-		sumY2 /= wSumX;
-		
-		return (sumXY / (Math.sqrt(sumX2)*Math.sqrt(sumY2)));
-	}
-	
-	/**
-	 * 
-	 * @param X
-	 * @param Y
-	 * @param alpha
-	 * @return
-	 */
-	private static double[] absolutePositive(Vector<Double> X, Vector<Double> Y, double alpha) {
-		double maxX=X.elementAt(0);
-		for(int i=0; i<X.size(); i++) {
-			maxX = Math.max(maxX, X.elementAt(i));
-		}
-		
-		double minValid = maxX * alpha;
-		double minYValid = 10.0;
-		for(int i=0; i<X.size(); i++) {
-			if(X.elementAt(i) > minValid) {
-				minYValid = Math.min(minYValid, Y.elementAt(i));
-			}
-		}
-		
-		int numPositive = 0;
-		int numNegative = 0;
-		
-		int truePositive = 0;
-		int falsePositive = 0;
-		int trueNegative = 0;
-		int falseNegative = 0;
-		
-		for(int i=0; i<X.size(); i++) {
-			
-			
-			if(X.elementAt(i) > minValid) {
-				numPositive++;
-				if(Y.elementAt(i) > minYValid) {
-					truePositive++;
-				} else {
-					falseNegative++;
-				}
-			} else {
-				numNegative++;
-				if(Y.elementAt(i) > minYValid) {
-					falsePositive++;
-				} else {
-					trueNegative++;
-				}
-			}
-		}
-		
-		double truePositiveRate=truePositive / ((double) numPositive);
-		double falsePositiveRate=falsePositive / ((double) numPositive);
-		double acc = (truePositive+trueNegative) / ((double) X.size());
-		
-		double[] ret = {truePositiveRate, falsePositiveRate, acc};
-		return ret;
-	}
-	
-	/**
-	 * Sets the following parameters:<br>
-	 * 
-	 * <ul>
-	 * <li>type (required): enwiki or enwiktionary</li>
-	 * <li>date (required)</li>
-	 * <li>source (required): M or english_language (wiktionary)</li>
-	 * <li>seed (optional): name of top-level category for category graph</li>
-	 * <li>countSource (optional): v or e</li>
-	 * <li>algorithm (optional)</li>
-	 * <li>task (required): name of the synonym task (RDWP300, TOEFL, ESL)</li>
-	 * </ul>
-	 * 
-	 * 
-	 * @param args Command-line argument
-	 */
-	private static void setParameters(String[] args) {
-		Common.type = args[0];
-		Common.date = args[1];
-		Common.source = args[2];
-		
-		if(args.length == 7) {
-			Common.seed = args[3];
-			Common.countSource = args[4];
-			Common.algorithm = args[5];
-			Common.task = args[6];
-		} else {
-			Common.seed = "";
-			Common.countSource = "";
-			Common.algorithm = "";
-			Common.task = args[3];
-		}
-	}
-	
-	/**
-	 * Sets the names of:<br>
-	 * 
-	 * <ul>
-	 * <li> {@link AliasStrings} file</li>
-	 * <li> {@link AliasSFToID} file</li>
-	 * <li> {@link WikiGraph} file</li>
-	 * <li> Synonym Task file</li>
-	 * </ul>
-	 */
-	private static void setFiles() {
-		/* Set directory, data source */
-		String dir = "/scratch/weale/data/binary/" +Common.type+ "/" +Common.date+ "/";
-		String data = Common.type + "-" + Common.date + "-" + Common.source;
-		String taskDir = "/u/weale/data/wordpair/";
-		String transitionSource = "";
-		
-		/* Set non-uniform transition data sources*/
-		if(!Common.seed.equals(""))
-			transitionSource = transitionSource + "-" + Common.seed;
-		if(!Common.countSource.equals(""))
-			transitionSource = transitionSource + "-" + Common.countSource;
-		if(!Common.algorithm.equals("")) {
-			transitionSource = transitionSource + "-" + Common.algorithm;
-		}
-		
-		aliasStringFile = dir + data + ".raf";
-		aliasSFIDFile = dir + data + ".alf";
-		graphFile = dir + data + transitionSource + ".wgp";
-		taskFile = taskDir + Common.task + ".csv";
-	}
+  private static String resultMaxFileAll;
+  
+  private static String resultVectFile;
+
+  /* */
+  private static String wordVertexMapFile;
+
+  /* */
+  private static TermToVertexMapping word2Vertex;
+
+  /**
+   * Sets the names of:<br>
+   * 
+   * <ul>
+   * <li> {@link AliasStrings} file</li>
+   * <li> {@link AliasSFToID} file</li>
+   * <li> {@link WikiGraph} file</li>
+   * <li> Synonym Task file</li>
+   * </ul>
+   */
+  private static void setFiles()
+  {
+    /* Set directory, data source */
+    String dir = Configuration.baseDir + "/" +
+                 Configuration.binaryDir + "/" +
+                 Configuration.type + "/" +
+                 Configuration.date + "/";
+
+    String data = Configuration.type + "-" +
+                  Configuration.date + "-" +
+                  Configuration.graph;
+    
+    graphFile = dir + data + ".wgp";
+    
+    wordVertexMapFile = dir + data + "-" +
+                        Configuration.mapsource + "-" + 
+                        Configuration.stemming + ".tvc";
+
+    taskFile = Configuration.taskDir + Configuration.task + ".txt";
+    
+    String resultFile = Configuration.resultDir +
+                        "/wordpair/" +
+                        Configuration.type + "/" +
+                        Configuration.type + "_" +
+                        Configuration.date + "_" +
+                        Configuration.graph + "_" +
+                        Configuration.mapsource + "_" + 
+                        Configuration.stemming;
+    
+    resultAvgFile = resultFile + "_avg_";
+    
+    resultMaxFile = resultFile + "_max_";
+
+    resultAvgFileAll = resultFile + "_avg_all_";
+    
+    resultMaxFileAll = resultFile + "_max_all_";
+
+    resultVectFile = resultFile + "_vect_";
+  }
+
+  /**
+   * 
+   * @param args
+   * @throws IOException
+   * @throws ClassNotFoundException 
+   */
+  public static void main(String [] args) throws IOException, ClassNotFoundException
+  {
+    if(args.length == 1)
+    {
+      Configuration.parseConfigurationFile(args[0]);
+    }
+    else
+    {
+      Configuration.parseConfigurationFile("/scratch/weale/data/config/enwiktionary/WordPair.xml");
+    }
+
+    setFiles();
+    System.out.println("Opening Word To Vertex Mapping: " + 
+        Configuration.mapsource + "-" + Configuration.stemming);    
+    word2Vertex = TermToVertexMapping.getMapping(wordVertexMapFile);
+    
+    // Set up Wiki graph and relatedness algorithm
+    System.out.println("Opening Wiki Graph");
+   
+    ObjectInputStream in = null;
+    WikiGraph wgp = null;
+    try
+    {
+      in = new ObjectInputStream(new FileInputStream(graphFile));
+      wgp = (WikiGraph) in.readObject();
+      in.close();
+    }
+    catch(Exception e)
+    {
+      e.printStackTrace();
+      System.exit(1);
+    }
+    
+    SourcedPageRank spr = new SourcedPageRank(wgp);
+
+
+    String[] tasks = {"MC30", "RG65", "WS1", "WS2", "YP130"};
+    for(int currTask = 0; currTask < tasks.length; currTask++)
+    {
+      Configuration.task = tasks[currTask];
+      setFiles();
+      
+      System.out.println("Setting Synonym Task: " + Configuration.task);
+      Scanner s = new Scanner(new FileReader(taskFile));
+      PrintWriter pwAvg = new PrintWriter(resultAvgFile + tasks[currTask] + ".m");
+      PrintWriter pwMax = new PrintWriter(resultMaxFile + tasks[currTask] + ".m");
+      
+      PrintWriter pwAvgAll = new PrintWriter(resultAvgFileAll + tasks[currTask] + ".m");
+      PrintWriter pwMaxAll = new PrintWriter(resultMaxFileAll + tasks[currTask] + ".m");
+      
+      int i=0;
+      
+      StringBuffer humanVals = new StringBuffer("human = [");
+      StringBuffer sprMaxVals = new StringBuffer("spr = [");
+      StringBuffer sprAvgVals = new StringBuffer("spr = [");
+
+      StringBuffer humanValsAll = new StringBuffer("human = [");
+      StringBuffer sprMaxValsAll = new StringBuffer("spr = [");
+      StringBuffer sprAvgValsAll = new StringBuffer("spr = [");
+
+      while(s.hasNext())
+      {
+        String str = s.nextLine();
+        String[] arr = str.split(",");
+
+        double d12 = -10.0;
+        VertexCount[] vc1 = getVertices(arr[0]);
+        VertexCount[] vc2 = getVertices(arr[1]);
+        
+        for(int x = 0; vc1 != null && x <vc1.length; x++)
+        {
+          int v1 = vc1[x].getVertex();
+          double[] relValues = spr.getRelatedness(v1);
+            
+          for(int y = 0; vc2 != null && y <vc2.length; y++)
+          {
+            int v2 = vc2[y].getVertex();
+            d12 = Math.max(d12, relValues[v2]);
+          }
+        }//end: for(x)
+        
+        double d21 = -10;
+        for(int x = 0; vc2 != null && x <vc2.length; x++)
+        {
+          int v2 = vc2[x].getVertex();
+          double[] relValues = spr.getRelatedness(v2);
+            
+          for(int y = 0; vc1 != null && y <vc1.length; y++)
+          {
+            int v1 = vc1[y].getVertex();
+            d21 = Math.max(d21, relValues[v1]);
+          }
+        }//end: for(x)
+        double max = Math.max(d12, d21);        
+
+        double avg = -10;
+        
+        // Set the average if both values are valid
+        if(d21 != -10 && d12 != -10)
+        {
+          avg = (d12 + d21) / 2.0;          
+        }
+        else
+        {// Set the average to the valid values
+          avg = max;
+        }
+        
+        if(max != -10)
+        {
+          sprMaxVals = sprMaxVals.append(max + ";");
+          sprAvgVals = sprAvgVals.append(avg + ";");
+          humanVals = humanVals.append(arr[2] + ";");
+        }
+        
+        sprMaxValsAll = sprMaxVals.append(max + ";");
+        sprAvgValsAll = sprAvgVals.append(avg + ";");
+        humanValsAll = humanVals.append(arr[2] + ";");
+  
+        i++;
+        System.out.print(".");
+        if(i%50 == 0)
+        {
+          System.out.println();
+        }
+      }//end while(hasNext())
+      System.out.println();
+      
+      sprMaxVals = sprMaxVals.deleteCharAt(sprMaxVals.length()-1);
+      sprAvgVals = sprAvgVals.deleteCharAt(sprAvgVals.length()-1);
+      humanVals = humanVals.deleteCharAt(humanVals.length()-1);
+      
+      sprMaxVals = sprMaxVals.append("];");
+      sprAvgVals = sprAvgVals.append("];");
+      humanVals = humanVals.append("];");
+      
+      pwAvg.println(sprAvgVals);
+      pwAvg.println(humanVals);
+      pwAvg.println("corr(human, spr, 'type', 'Pearson')");
+      pwAvg.println("corr(human, spr, 'type', 'Spearman')");
+      pwAvg.close();
+
+      pwMax.println(sprMaxVals);
+      pwMax.println(humanVals);
+      pwMax.println("corr(human, spr, 'type', 'Pearson')");
+      pwMax.println("corr(human, spr, 'type', 'Spearman')");
+      pwMax.close();
+      
+      sprMaxValsAll = sprMaxValsAll.deleteCharAt(sprMaxValsAll.length()-1);
+      sprAvgValsAll = sprAvgValsAll.deleteCharAt(sprAvgValsAll.length()-1);
+      humanValsAll = humanValsAll.deleteCharAt(humanValsAll.length()-1);
+      
+      sprMaxValsAll = sprMaxValsAll.append("];");
+      sprAvgValsAll = sprAvgValsAll.append("];");
+      humanValsAll = humanValsAll.append("];");
+      
+      pwAvgAll.println(sprAvgValsAll);
+      pwAvgAll.println(humanValsAll);
+      pwAvgAll.println("corr(human, spr, 'type', 'Pearson')");
+      pwAvgAll.println("corr(human, spr, 'type', 'Spearman')");
+      pwAvgAll.close();
+
+      pwMaxAll.println(sprMaxValsAll);
+      pwMaxAll.println(humanValsAll);
+      pwMaxAll.println("corr(human, spr, 'type', 'Pearson')");
+      pwMaxAll.println("corr(human, spr, 'type', 'Spearman')");
+      pwMaxAll.close();
+    }//end: for(currTask)
+    
+    // Calculate the relatedness correlation
+    //System.out.println(Pearson(X,Y));
+    //System.out.println(LogPearson(X,Y));
+    //System.out.println(Spearman.GetCorrelation(X, Y));
+  }//end: main
+  
+ /**
+  *  
+  * @param term
+  * @return
+  */
+  private static VertexCount[] getVertices(String term)
+  {
+    TermToVertexCount[] t1vc = word2Vertex.getVertexMappings(term);
+    if(t1vc == null)
+    {
+      t1vc = word2Vertex.getSubTermVertexMappings(term);
+    }
+    
+    TreeSet<VertexCount> ts = new TreeSet<VertexCount>();
+    for(int i = 0; t1vc != null && i < t1vc.length; i++)
+    {
+      VertexCount[] vc1 = t1vc[i].getVertexCounts();
+      for(int j = 0; vc1 != null && j < vc1.length; j++)
+      {
+        ts.add(vc1[j]);
+      }//end: for(j)
+    }//end: for(i)
+
+    if(ts.size() == 0)
+    {
+      return null;
+    }
+    
+    VertexCount[] vc = new VertexCount[ts.size()];
+    Iterator<VertexCount> it = ts.iterator();
+    int pos = 0;
+    while(it.hasNext())
+    {
+      vc[pos] = it.next();
+      pos++;
+    }//end: while(it)
+    
+    return vc;
+  }
+  
+
 }
