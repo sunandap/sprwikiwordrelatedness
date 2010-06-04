@@ -23,7 +23,6 @@ import edu.osu.slate.relatedness.Configuration;
 import edu.osu.slate.relatedness.swwr.algorithm.SourcedPageRank;
 import edu.osu.slate.relatedness.swwr.data.*;
 import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
-import edu.osu.slate.relatedness.swwr.data.mapping.TermToVertexCount;
 import edu.osu.slate.relatedness.swwr.data.mapping.VertexCount;
 import edu.osu.slate.relatedness.swwr.data.mapping.VertexToTermMapping;
 import edu.osu.slate.relatedness.swwr.data.mapping.algorithm.TermToVertexMapping;
@@ -51,14 +50,16 @@ import edu.osu.slate.relatedness.swwr.data.mapping.algorithm.TermToVertexMapping
  * @author weale
  *
  */
-public class SPRCompare {
+public class TestRDWP1K {
 
-  private static String termVertexMapFile;
+  private static String vertexWordMapFile;
+  private static String wordVertexMapFile;
   private static String graphFile;
   private static String taskFile;
   private static String resultFile;
   private static WikiGraph wgp;
-  private static TermToVertexMapping term2Vertex;
+  private static VertexToTermMapping vertex2Word;
+  private static TermToVertexMapping word2Vertex;
   
   /**
    * Sets the names of:<br>
@@ -88,9 +89,11 @@ public class SPRCompare {
       transitionSource = "-" + Configuration.transitions;
     }
 
-    termVertexMapFile = dir + data + "-" +
+    vertexWordMapFile = dir + data + "-f.vwc";
+    
+    wordVertexMapFile = dir + data + "-" +
                         Configuration.mapsource + "-" + 
-                        Configuration.stemming + ".tvc";
+                        Configuration.stemming + ".wvc";
     
     graphFile = dir + data + transitionSource + ".wgp";
     
@@ -124,7 +127,10 @@ public class SPRCompare {
       Configuration.parseConfigurationFile("/scratch/weale/data/config/enwiktionary/SynonymTask.xml");
     }
     
+    Configuration.task = "RDWP1K";
     setFiles();
+
+    boolean report = true;
 
     System.out.println("Setting Synonym Task: " + Configuration.task);
     Scanner s = new Scanner(new FileReader(taskFile));
@@ -133,9 +139,9 @@ public class SPRCompare {
     try
     {
       System.out.println("Opening Wiki Graph");
-      in = new ObjectInputStream(new FileInputStream(graphFile));
-      wgp = (WikiGraph) in.readObject();
-      in.close();
+      //in = new ObjectInputStream(new FileInputStream(graphFile));
+      //wgp = (WikiGraph) in.readObject();
+      //in.close();
     }
     catch(Exception e)
     {
@@ -146,167 +152,114 @@ public class SPRCompare {
     
     System.out.println("Opening Word To Vertex Mapping: " + 
         Configuration.mapsource + "-" + Configuration.stemming);
-    term2Vertex = TermToVertexMapping.getMapping(termVertexMapFile);
-//    try
-//    {
-//      in = new ObjectInputStream(new FileInputStream(wordVertexMapFile));
-//      word2Vertex = (TermToVertexMapping) in.readObject();
-//      in.close();
-//      word2Vertex.stem = Configuration.stemming.equals("t");
-//    }
-//    catch(Exception e)
-//    {
-//      System.err.println("Problem with file: " + wordVertexMapFile);
-//      System.exit(1);
-//    }
-    
-
-//    try
-//    {
-//      in = new ObjectInputStream(new FileInputStream(vertexWordMapFile));
-//      vertex2Word = (VertexToWordMapping) in.readObject();
-//      in.close();
-//      
-//    }
-//    catch(Exception e)
-//    {
-//      System.err.println("Problem with file: " + vertexWordMapFile);
-//      System.exit(1);      
-//    }
+    try
+    {
+      //in = new ObjectInputStream(new FileInputStream(wordVertexMapFile));
+      //word2Vertex = (WordToVertexMapping) in.readObject();
+      //in.close();
+      //word2Vertex.stem = Configuration.stemming.equals("t");
+    }
+    catch(Exception e)
+    {
+      System.err.println("Problem with file: " + wordVertexMapFile);
+      System.exit(1);
+    }
     
     PrintWriter pw = new PrintWriter(resultFile);
     
-    SourcedPageRank ngd = new SourcedPageRank(wgp);
+    //SourcedPageRank ngd = new SourcedPageRank(wgp);
 
     /* Run Synonym Task */
-    int corr=0, att=0;
+    int corr=0;
     int questionNum = 1;
 
     while(s.hasNext()) {
 
       /* Get Next Question */
       String str = s.nextLine();
-      
-      // Update progress bar(s)
-      System.out.print(".");
-      if(questionNum % 50 == 0)
-      {
-        System.out.println();
-      }
+
       questionNum++;
 
       /* Split the input string */			
       String[] arr = str.split("\\|");
-      for(int i=0;i<arr.length; i++) {
-        arr[i] = arr[i].trim();
-      }
-
-      /* Make placeholders for relatedness values */
-      double [] vals = new double[4];
-      for(int i = 0; i < vals.length; i++)
+      if(arr.length != 5)
       {
-        vals[i] = -10;
-      }
-
-      VertexCount[] vcSource = getVertices(arr[0]);
-      VertexCount[][] vcTerms = new VertexCount[4][];
-      vcTerms[0] = getVertices(arr[1]);
-      vcTerms[1] = getVertices(arr[2]);
-      vcTerms[2] = getVertices(arr[3]);
-      vcTerms[3] = getVertices(arr[4]);
-      
-      for(int x = 0; vcSource != null && x < vcSource.length; x++)
-      {
-          
-        /* Get relatedness distributions for the ID */
-        double [] sprValues = ngd.getRelatedness(vcSource[x].getVertex());
-  
-        /* For each potential confusion item */
-        for(int i = 0; sprValues != null && i < vcTerms.length; i++)
-        {
-          for(int y = 0; vcTerms[i] != null && y < vcTerms[i].length; y++)
-          {
-            int currentVertex = vcTerms[i][y].getVertex();
-                
-            if(currentVertex >= 0) {
-              /* For each potential ID for the surface form */
-              vals[i] = Math.max(vals[i], sprValues[currentVertex]);
-            }
-            else {
-              System.err.println("invalid: (" + i + ")\t" + currentVertex);
-            }
-          }//end: for(k)
-        }//end: for(j)
-      }//end: for(x)
-
-      /* Check results */
-  
-      /* First item in the array is the answer */
-      double answer = vals[0];
-  
-      /* Check it compared to the other items */
-      if (answer > vals[1] && answer > vals[2] && answer > vals[3])
-      {
-        corr++;
+        System.out.println(str);
       }
       
-      if(vals[0] != -10 || vals[1] != -10 ||
-         vals[2] != -10 || vals[3] != -10 )
-      {
-        att++;
-      }
-  
-      for(int i=0; i<vals.length; i++)
-      {
-        pw.print(" " + vals[i]);
-      }//end: for(i)
-      pw.println();
-      
+//      for(int i=0;i<arr.length; i++) {
+//        arr[i] = arr[i].trim();
+//      }
+//
+//      /* Make placeholders for relatedness values */
+//      double [] vals = new double[4];
+//      for(int i = 0; i < vals.length; i++)
+//      {
+//        vals[i] = -10;
+//      }
+//
+//      /* Find the Surface Form ID of the given word */
+//      String[] candidateSourceWords = Common.resolve(arr[0], word2Vertex);
+//      
+//      for(int x = 0; candidateSourceWords != null && x < candidateSourceWords.length; x++)
+//      {
+//        
+//        VertexCount[] originalVertex = word2Vertex.getVertexMappings(candidateSourceWords[x]);
+//        
+//        for(int y = 0; y < originalVertex.length; y++)
+//        {
+//          
+//          /* Get relatedness distributions for the ID */
+//          //double [] sprValues = ngd.getRelatedness(originalVertex[y].getVertex());
+//  
+//          /* For each potential confusion item */
+//          for(int i = 1; sprValues != null && i <= vals.length; i++)
+//          {
+//            /* Break string into all possible resolvable words */
+//            String[] candidateWords = Common.resolve(arr[i], word2Vertex);
+//  
+//            for(int j = 0; candidateWords != null && j < candidateWords.length; j++)
+//            {
+//              /* For each potential ID for the surface form */
+//              VertexCount[] candidateVertices = word2Vertex.getVertexMappings(candidateWords[j]);
+//              
+//              for(int k = 0; candidateVertices != null && k < candidateVertices.length; k++)
+//              {
+//                int currentVertex = candidateVertices[k].getVertex();
+//                
+//                if(currentVertex >= 0) {
+//                  /* For each potential ID for the surface form */
+//                  vals[i-1] = Math.max(vals[i-1], sprValues[currentVertex]);
+//                }
+//                else {
+//                  System.err.println("invalid: (" + i + ")\t" + currentVertex);
+//                }
+//              }//end: for(k)
+//            }//end: for(j)
+//          }//end: for(i)
+//        }//end: for(y)
+//      }//end: for(x)
+//
+//      /* Check results */
+//
+//      /* First item in the array is the answer */
+//      double answer = vals[0];
+//
+//      /* Check it compared to the other items */
+//      if (answer > vals[1] && answer > vals[2] && answer > vals[3])
+//      {
+//        corr++;
+//      } 
+//
+//      for(int i=0; i<vals.length; i++)
+//      {
+//        pw.print(" " + vals[i]);
+//      }//end: for(i)
+//      pw.println();
     }//end while(hasNext())
 
     /* Print Results */
-    System.out.println("* Correct   : " + corr);
-    System.out.println("* Attempted : " + att);
+    System.out.println("Correct : " + corr);
     pw.close();
   }//end: main
-  
- /**
-  *  
-  * @param term
-  * @return
-  */
-  private static VertexCount[] getVertices(String term)
-  {
-    TermToVertexCount[] t1vc = term2Vertex.getVertexMappings(term);
-    if(t1vc == null)
-    {
-      t1vc = term2Vertex.getSubTermVertexMappings(term);
-    }
-    
-    TreeSet<VertexCount> ts = new TreeSet<VertexCount>();
-    for(int i = 0; t1vc != null && i < t1vc.length; i++)
-    {
-      VertexCount[] vc1 = t1vc[i].getVertexCounts();
-      for(int j = 0; vc1 != null && j < vc1.length; j++)
-      {
-        ts.add(vc1[j]);
-      }//end: for(j)
-    }//end: for(i)
-
-    if(ts.size() == 0)
-    {
-      return null;
-    }
-    
-    VertexCount[] vc = new VertexCount[ts.size()];
-    Iterator<VertexCount> it = ts.iterator();
-    int pos = 0;
-    while(it.hasNext())
-    {
-      vc[pos] = it.next();
-      pos++;
-    }//end: while(it)
-    
-    return vc;
-  }
 }
