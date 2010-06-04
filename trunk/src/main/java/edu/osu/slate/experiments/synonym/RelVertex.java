@@ -17,13 +17,13 @@ package edu.osu.slate.experiments.synonym;
 
 import java.io.*;
 
-public class RelID implements Serializable {
+public class RelVertex implements Serializable {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 	private double rel;
-	private int ID;
+	private int v;
 	
 	public double getRel() {
 		return rel;
@@ -33,19 +33,19 @@ public class RelID implements Serializable {
 		rel = r;
 	}
 	
-	public int getID() {
-		return ID;
+	public int getVertex() {
+		return v;
 	}
 	
-	public RelID(double r, int i) {
+	public RelVertex(double r, int i) {
 		rel = r;
-		ID = i;
+		v = i;
 	}
 	
-	public int compareTo(RelID o) {
-		if( (this.rel-o.rel) < 0)
+	public int compareTo(RelVertex o) {
+		if( (this.rel-o.rel) > 0)
 			return -1;
-		else if( (this.rel-o.rel) > 0)
+		else if( (this.rel-o.rel) < 0)
 			return 1;
 		else
 			return 0;
@@ -53,12 +53,12 @@ public class RelID implements Serializable {
 	
 	 private void writeObject(ObjectOutputStream out) throws IOException {
 		out.writeDouble(rel);
-		out.writeInt(ID);
+		out.writeInt(v);
 	 }
 	 
 	 private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		 rel = in.readDouble();
-		 ID = in.readInt();
+		 v = in.readInt();
 	 }
 
 }

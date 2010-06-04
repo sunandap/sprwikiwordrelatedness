@@ -22,8 +22,8 @@ import java.util.*;
  * @author weale
  *
  */
-public class RelComparator implements Comparator<RelID> {
-	public int compare(RelID tid1, RelID tid2) {
+public class RelVertexComparator implements Comparator<RelVertex> {
+	public int compare(RelVertex tid1, RelVertex tid2) {
 		return tid1.compareTo(tid2);
 	}
 }
