@@ -15,15 +15,11 @@
 
 package edu.osu.slate.experiments.synonym;
 
-import java.util.*;
 import java.io.*;
 
 import edu.osu.slate.relatedness.Configuration;
-import edu.osu.slate.relatedness.swwr.algorithm.SourcedPageRank;
 import edu.osu.slate.relatedness.swwr.data.*;
 import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
-import edu.osu.slate.relatedness.swwr.data.mapping.TermToVertexCount;
-import edu.osu.slate.relatedness.swwr.data.mapping.VertexCount;
 import edu.osu.slate.relatedness.swwr.data.mapping.algorithm.TermToVertexMapping;
 
 /**
@@ -49,40 +45,39 @@ import edu.osu.slate.relatedness.swwr.data.mapping.algorithm.TermToVertexMapping
  * @author weale
  *
  */
-public class SPRThreadedCompare {
+public class SPRThreadedCompare
+{
 
+  // Names of the input mapping and graph files
   private static String termVertexMapFile;
   private static String graphFile;
-  
+
+  // ESL files
   private static String eslTaskFile;
   private static String eslResultFile;
   private static String eslVertexFile;
 
+  // TOEFL files
   private static String toeflTaskFile;
   private static String toeflResultFile;
   private static String toeflVertexFile;
 
+  // RDWP300 files
   private static String rdwp300TaskFile;
   private static String rdwp300ResultFile;
   private static String rdwp300VertexFile;  
 
+  // RDWP1K files
   private static String rdwp1kTaskFile;
   private static String rdwp1kResultFile;
   private static String rdwp1kVertexFile;
   
+  // Mapping and Graph Objects
   private static WikiGraph wgp;
   private static TermToVertexMapping term2Vertex;
-  private static SourcedPageRank ngd;
   
   /**
-   * Sets the names of:<br>
-   * 
-   * <ul>
-   * <li> {@link AliasStrings} file</li>
-   * <li> {@link AliasSFToID} file</li>
-   * <li> {@link WikiGraph} file</li>
-   * <li> Synonym Task file</li>
-   * </ul>
+   * Sets the names of the files used in this program.
    */
   private static void setFiles() {
     
@@ -201,6 +196,7 @@ public class SPRThreadedCompare {
     
     setFiles();
 
+    // Open Wiki Graph
     ObjectInputStream in = null;
     try
     {
@@ -208,7 +204,6 @@ public class SPRThreadedCompare {
       in = new ObjectInputStream(new FileInputStream(graphFile));
       wgp = (WikiGraph) in.readObject();
       in.close();
-      ngd = new SourcedPageRank(wgp);
     }
     catch(Exception e)
     {
@@ -217,10 +212,12 @@ public class SPRThreadedCompare {
       System.exit(1);
     }
     
+    // Open Mapping
     System.out.println("Opening Word To Vertex Mapping: " + 
         Configuration.mapsource + "-" + Configuration.stemming);
     term2Vertex = TermToVertexMapping.getMapping(termVertexMapFile);
     
+    // Start Task Threads
     (new Thread(new SPRThread(term2Vertex, wgp, eslTaskFile, eslResultFile, eslVertexFile))).start();
     (new Thread(new SPRThread(term2Vertex, wgp, toeflTaskFile, toeflResultFile, toeflVertexFile))).start();
     (new Thread(new SPRThread(term2Vertex, wgp, rdwp300TaskFile, rdwp300ResultFile, rdwp300VertexFile))).start();
