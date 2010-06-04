@@ -18,7 +18,6 @@ package edu.osu.slate.experiments.synonym;
 import java.util.*;
 import java.io.*;
 
-import edu.osu.slate.relatedness.Configuration;
 import edu.osu.slate.relatedness.swwr.algorithm.SourcedPageRank;
 import edu.osu.slate.relatedness.swwr.data.*;
 import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
@@ -49,14 +48,35 @@ import edu.osu.slate.relatedness.swwr.data.mapping.algorithm.TermToVertexMapping
  * @author weale
  *
  */
-public class SPRThread implements Runnable {
+public class SPRThread implements Runnable
+{
+  // Synonym Task File
+  private String taskFile;
 
-  private static String taskFile;
-  private static String resultFile;
-  private static String vertexFile;
+  // File for Resulting Relatedness Values
+  private String resultFile;
+
+  // File for Vertices Used to Determine Relatedness Values
+  private String vertexFile;
+  
+  // Term-to-Vertex mapping object
   private TermToVertexMapping term2Vertex;
+
+  // Relatedness Algorithm
   private SourcedPageRank ngd;
   
+ /**
+  * Constructor.
+  * <p>
+  * Initializes a {@link SourcedPageRank} object from the given graph
+  * and writes relatedness/vertex information to files.
+  * 
+  * @param t2v {@link TermToVertexMapping} containing mapping algorithm.
+  * @param spr {@link WikiGraph} with Wiki graph.
+  * @param tFile Task file name.
+  * @param rFile Results file name.
+  * @param vFile Vertex number file name.
+  */
   public SPRThread(TermToVertexMapping t2v, WikiGraph spr, String tFile, String rFile, String vFile)
   {
     term2Vertex = t2v;
@@ -65,11 +85,16 @@ public class SPRThread implements Runnable {
     resultFile = rFile;
     vertexFile = vFile;
   }
-
+  
+ /**
+  * Runs Sourced PageRank for the given task.
+  */
   @Override
   public void run()
   {
     System.out.println(taskFile);
+    
+    /* Open the files for Reading / Writing */
     Scanner s = null;
     PrintWriter pw = null;
     PrintWriter vPW = null;
@@ -85,7 +110,7 @@ public class SPRThread implements Runnable {
     /* Run Synonym Task */
     int corr=0, att=0;
     int questionNum = 1;
-    int sourceVertex = -1;
+    int[] sVertex = new int[4];
     int[] tVertex = new int[4];
     
     while(s.hasNext()) {
@@ -107,6 +132,7 @@ public class SPRThread implements Runnable {
         vals[i] = -10;
       }
 
+      /* Get vertices for the given terms */
       VertexCount[] vcSource = getVertices(arr[0]);
       VertexCount[][] vcTerms = new VertexCount[4][];
       vcTerms[0] = getVertices(arr[1]);
@@ -116,25 +142,27 @@ public class SPRThread implements Runnable {
       
       for(int x = 0; vcSource != null && x < vcSource.length; x++)
       {
-          
-        /* Get relatedness distributions for the ID */
+        /* Get relatedness distributions for the vertex */
         double [] sprValues = ngd.getRelatedness(vcSource[x].getVertex());
   
-        /* For each potential confusion item */
+        /* For each target word */
         for(int i = 0; sprValues != null && i < vcTerms.length; i++)
         {
           tVertex[i] = -1;
           
+          /* Check each vertex for the terms */
           for(int y = 0; vcTerms[i] != null && y < vcTerms[i].length; y++)
           {
             int currentVertex = vcTerms[i][y].getVertex();
                 
-            /* For each potential ID for the surface form */
+            /* if the vertex is valid */
             if(currentVertex >= 0)
             {
+              // Top value so far, update value and vertices.
               if(sprValues[currentVertex] > vals[i])
               {
                 tVertex[i] = currentVertex;
+                sVertex[i] = vcSource[x].getVertex();
               }
               
               vals[i] = Math.max(vals[i], sprValues[currentVertex]);
@@ -164,17 +192,19 @@ public class SPRThread implements Runnable {
         att++;
       }
   
+      // Print relatedness values to file
       for(int i=0; i<vals.length; i++)
       {
         pw.print(vals[i] + " ");
       }//end: for(i)
       pw.println();
       
+      // Print vertex numbers to file
       for(int i=0; i<tVertex.length; i++)
       {
-        pw.print(tVertex[i] + " ");
+        vPW.print(sVertex[i] + " " + tVertex[i] + " ");
       }//end: for(i)
-      pw.println();
+      vPW.println();
       
     }//end while(hasNext())
 
@@ -187,9 +217,10 @@ public class SPRThread implements Runnable {
   }
   
   /**
+   * Gets all vertices for the given task term. 
    *  
-   * @param term
-   * @return
+   * @param term Task term.
+   * @return Array of {@link VertexCount} objects.
    */
    private VertexCount[] getVertices(String term)
    {
