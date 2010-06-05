@@ -48,7 +48,7 @@ import edu.osu.slate.relatedness.swwr.data.mapping.algorithm.TermToVertexMapping
  * @author weale
  *
  */
-public class SPRThread implements Runnable
+public class SPRThread extends Thread
 {
   // Synonym Task File
   private String taskFile;
@@ -89,7 +89,6 @@ public class SPRThread implements Runnable
  /**
   * Runs Sourced PageRank for the given task.
   */
-  @Override
   public void run()
   {
     System.out.println(taskFile);
@@ -130,6 +129,8 @@ public class SPRThread implements Runnable
       for(int i = 0; i < vals.length; i++)
       {
         vals[i] = -10;
+        tVertex[i] = -1;
+        sVertex[i] = -1;
       }
 
       /* Get vertices for the given terms */
@@ -145,29 +146,26 @@ public class SPRThread implements Runnable
         /* Get relatedness distributions for the vertex */
         double [] sprValues = ngd.getRelatedness(vcSource[x].getVertex());
   
-        /* For each target word */
+        /* For each target term */
         for(int i = 0; sprValues != null && i < vcTerms.length; i++)
         {
-          tVertex[i] = -1;
-          
           /* Check each vertex for the terms */
           for(int y = 0; vcTerms[i] != null && y < vcTerms[i].length; y++)
           {
             int currentVertex = vcTerms[i][y].getVertex();
                 
-            /* if the vertex is valid */
-            if(currentVertex >= 0)
+            /* Check to see:
+             * - The vertex is valid
+             * - Relatedness value is largest seen for the term 
+             */
+            if(currentVertex >= 0 && sprValues[currentVertex] > vals[i])
             {
               // Top value so far, update value and vertices.
-              if(sprValues[currentVertex] > vals[i])
-              {
-                tVertex[i] = currentVertex;
-                sVertex[i] = vcSource[x].getVertex();
-              }
-              
-              vals[i] = Math.max(vals[i], sprValues[currentVertex]);
+              vals[i] = sprValues[currentVertex];
+              tVertex[i] = currentVertex;
+              sVertex[i] = vcSource[x].getVertex();
             }
-            else
+            else if(currentVertex < 0)
             {
               System.err.println("invalid: (" + i + ")\t" + currentVertex);
             }
