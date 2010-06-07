@@ -17,6 +17,9 @@ package edu.osu.slate.relatedness.swwr.data.category;
 
 import java.io.*;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.TreeSet;
+import java.util.Vector;
 
 import edu.osu.slate.relatedness.swwr.data.TIDIDComparator;
 import edu.osu.slate.relatedness.swwr.data.TitleID;
@@ -119,7 +122,7 @@ public class IDToCategoryTitleTranslation implements Serializable {
   */
   public boolean isLookupID(int id)
   {
-    return (getTitle(id) != null);
+    return (Arrays.binarySearch(ids, id) >= 0);
   }//end: isLookupID(int)
 
   /**
@@ -139,38 +142,47 @@ public class IDToCategoryTitleTranslation implements Serializable {
   */
   private void createArrays(TitleID[] titleID)
   {
-    TIDIDComparator icom = new TIDIDComparator();
-    Arrays.sort(titleID, icom);
+    //Arrays.sort(titleID, new TIDIDComparator());
+    TreeSet<Integer> vect = new TreeSet<Integer>();
 
-    ids = new int[titleID[titleID.length-1].getID()+1];
-    cats = new String[ids.length][];
-
-    for(int i = 0; i < cats.length; i++)
+    for(int i = 0; i < titleID.length; i++)
     {
-      cats[i] = null;
-      ids[i] = i;
+      vect.add(titleID[i].getID());
     }
+    
+    ids = new int[vect.size()];
+    cats = new String[vect.size()][];
+    
+    Iterator<Integer> it = vect.iterator();
+    for(int i = 0; i < ids.length; i++)
+    {
+      ids[i] = it.next();
+      cats[i] = null;
+    }
+    
+    vect = null;
+    Arrays.sort(ids);
 
     for(int i = 0; i < titleID.length; i++)
     {
       int id = titleID[i].getID();
+      String title = titleID[i].getTitle();
+      
+      int pos = Arrays.binarySearch(ids, id);
 
-      if(cats[id] == null)
+      if(cats[pos] == null)
       {
-        cats[id] = new String[1];
+        cats[pos] = new String[1];
+        cats[pos][0] = titleID[pos].getTitle();
       }
       else
       {
-        String[] tmp = new String[cats[id].length+1];
-        for(int j = 1; j < tmp.length; j++)
-        {
-          tmp[j] = cats[id][j-1];
-        }//end: for(j)
-        cats[id] = tmp;
+        String[] tmp = new String[cats[pos].length+1];
+        System.arraycopy(cats[pos], 0, tmp, 0, cats[pos].length);
+        tmp[cats[pos].length] = title;
+        cats[pos] = tmp;
+        Arrays.sort(cats[pos]);
       }
-
-      cats[id][0] = titleID[i].getTitle();
-      Arrays.sort(cats[id]);
     }//end: for(i)
   }//end: createArrays(TitleID[])
 

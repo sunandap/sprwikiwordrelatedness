@@ -5,6 +5,7 @@ import java.io.*;
 import java.util.*;
 
 import edu.osu.slate.relatedness.swwr.data.category.CategoryGraph;
+import edu.osu.slate.relatedness.swwr.data.graph.WikiInvGraph;
 
 /**
  * Category graph nodes.
