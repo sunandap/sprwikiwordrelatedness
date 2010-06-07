@@ -14,7 +14,7 @@ import edu.osu.slate.relatedness.swwr.data.category.CategoryGraph;
  * @author weale
  *
  */
-public class VisitNode
+public class VisitIDNode
 {
 
   /* Array of category IDs of the parents of the node */
@@ -29,17 +29,16 @@ public class VisitNode
   private int depth;
 
   /**
-   * Creates a new {@link VisitNode} with given parents and the current {@link CategoryTitleNode}.
+   * Creates a new {@link VisitIDNode} with given parents and the current {@link CategoryTitleNode}.
    * 
    * @param cn Current {@link CategoryNode} index
    * @param p indices of the parents of the current category
    */
-  public VisitNode(int cn, int[] p, int d)
+  public VisitIDNode(int cn, int[] p)
   {
     currIndex = cn;
     parentIndices = p;
     currChild = 0;
-    depth = d;
   }
 
  /**
@@ -80,14 +79,14 @@ public class VisitNode
   * 
   * @return Array of children VisitNodes
   */
-  public VisitNode getNextChild(CategoryNode[] graph)
+  public VisitIDNode getNextChild(CategoryIDNode[] graph)
   {
     /* Get all children in of the current node */
-    CategoryNode tmp = graph[currIndex].getChildrenCategories()[currChild];
+    int childID = graph[currIndex].getChildrenIDs()[currChild];
     currChild++;
 
     // Get the next child
-    int childID = tmp.getCategoryID();
+    //int childID = tmp.getCategoryID();
 
     // Check if a cycle would be created by expanding this child
     boolean validChild = true;
@@ -109,9 +108,9 @@ public class VisitNode
       newParents[parentIndices.length] = currIndex;
 
       Arrays.sort(newParents);
-      
+      CategoryIDNode cn = new CategoryIDNode(childID);
       // Add the new VisitNode to the LinkedList
-      return new VisitNode(Arrays.binarySearch(graph, tmp), newParents, depth+1);
+      return new VisitIDNode(Arrays.binarySearch(graph, cn), newParents);
     }
     else
     {
@@ -130,31 +129,19 @@ public class VisitNode
    * 
    * @return Array of children VisitNodes
    */
-  public VisitNode[] makeChildrenVisitNodes(CategoryNode[] graph)
+  public VisitIDNode[] makeChildrenVisitNodes(CategoryIDNode[] graph)
   {
     /* Get all children of the current node */
-    CategoryNode[] children = graph[currIndex].getChildrenCategories();
-    LinkedList<VisitNode> ll = new LinkedList<VisitNode>();
+    int[] children = graph[currIndex].getChildrenIDs();
+    LinkedList<VisitIDNode> ll = new LinkedList<VisitIDNode>();
 
     for(int i = 0; children != null && i < children.length; i++)
     {
-      // Get the next child
-      //int childID = children[i].getCategoryID();
-      System.out.println(this.depth + "\t" + children[i].getCategoryID());
-      
-      int childIndex = Arrays.binarySearch(graph, children[i]);
-
-      // Check if a cycle would be created by expanding this child
+      int childID = children[i];
+      CategoryIDNode cn = new CategoryIDNode(childID);
+      int childIndex = Arrays.binarySearch(graph, cn);
+      // Check if a cycle would be created by expanding the next child
       boolean validChild = (Arrays.binarySearch(parentIndices, childIndex) < 0);
-      
-//      for(int j = 0; parents != null && j < parents.length; j++)
-//      {
-//        /* If we've already visited the child, we have a cycle */
-//        if(arr[parents[j]].getCategoryID() == childID )
-//        {
-//          validChild = false; // Cycle detected!
-//        }
-//      }//end: for(j)
 
       // Child not found in parent list, therefore eligible for expansion.
       if(validChild)
@@ -168,18 +155,18 @@ public class VisitNode
         Arrays.sort(newParents);
         
         // Add the new VisitNode to the LinkedList
-        ll.add(new VisitNode(Arrays.binarySearch(graph, children[i]), newParents, depth+1));
+        ll.add(new VisitIDNode(childIndex, newParents));
       }
       else
       {
         // Current edge causes a cycle. Remove it.
-        graph[currIndex].removeChild(children[i].getCategoryID());
+        graph[currIndex].removeChild(children[i]);
       }
     }//end: for(i)
 
     // Convert the LinkedList into a more manageable array.
-    VisitNode[] vna = new VisitNode[ll.size()];
-    Iterator<VisitNode> it = ll.iterator();
+    VisitIDNode[] vna = new VisitIDNode[ll.size()];
+    Iterator<VisitIDNode> it = ll.iterator();
     for(int i = 0; i < vna.length; i++)
     {
       vna[i] = it.next();

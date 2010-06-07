@@ -7,41 +7,54 @@ import java.util.LinkedList;
 import edu.osu.slate.relatedness.swwr.data.category.CategoryGraph;
 
 /**
- * Breadth/Depth-first search nodes.
+ * Depth-first search nodes.
  * <p>
  * Used in the {@link CategoryGraph} class.
  * 
  * @author weale
  *
  */
-public class VisitNode
+public class DFSVisitNode
 {
 
   /* Array of category IDs of the parents of the node */
-  private int[] parentIndices;
+  private int[] parents;
 
-  /* Current category index */
-  private int currIndex;
+  /* Current category ID */
+  private int currNode;
 
   /* Current child position */
   private int currChild;
   
-  private int depth;
+  /* Number of times this node has been visited */
+  private int visitCount;
 
   /**
-   * Creates a new {@link VisitNode} with given parents and the current {@link CategoryTitleNode}.
+   * Creates a new {@link DFSVisitNode} with given parents and the current {@link CategoryTitleNode}.
    * 
-   * @param cn Current {@link CategoryNode} index
-   * @param p indices of the parents of the current category
+   * @param cn Current category ID
+   * @param p IDs of the parents of the current category
    */
-  public VisitNode(int cn, int[] p, int d)
+  public DFSVisitNode(int cn, int[] p)
   {
-    currIndex = cn;
-    parentIndices = p;
+    currNode = cn;
+    parents = p;
     currChild = 0;
-    depth = d;
+    if(Arrays.binarySearch(p, cn) >= 0)
+    {
+      visitCount = 1;
+    }
+    else
+    {
+      visitCount = 0;
+    }
   }
-
+  
+  public boolean isDuplicateEdge()
+  {
+    return (visitCount == 1);
+  }
+  
  /**
   * Returns the ID of the current category.
   * <p>
@@ -49,9 +62,9 @@ public class VisitNode
   * 
   * @return ID of the current category.
   */
-  public int getCurrentCategoryIndex()
+  public int getCurrentCategoryID()
   {
-    return currIndex;
+    return currNode;
   }
 
  /**
@@ -60,15 +73,15 @@ public class VisitNode
   * @param arr Array of {@link CategoryNode} objects.
   * @return Boolean determination of whether there's more children to visit.
   */
-  public boolean hasNextChild(CategoryNode[] graph)
+  public boolean hasNextChild(CategoryNode[] arr)
   {
-    if(graph[currIndex].getChildrenCategories() == null)
+    if(arr[currNode].getChildrenCategories() == null)
     {
       return false;
     }
     else
     {
-      return (currChild < graph[currIndex].getChildrenCategories().length);
+      return (currChild < arr[currNode].getChildrenCategories().length);
     }
   }//end: hasNextChild(CategoryNode[])
 
@@ -80,21 +93,21 @@ public class VisitNode
   * 
   * @return Array of children VisitNodes
   */
-  public VisitNode getNextChild(CategoryNode[] graph)
+  public DFSVisitNode getNextChild(CategoryNode[] arr)
   {
     /* Get all children in of the current node */
-    CategoryNode tmp = graph[currIndex].getChildrenCategories()[currChild];
+    CategoryNode tmp = arr[currNode].getChildrenCategories()[currChild];
     currChild++;
 
     // Get the next child
     int childID = tmp.getCategoryID();
 
     // Check if a cycle would be created by expanding this child
-    boolean validChild = true;
-    for(int j = 0; parentIndices != null && j < parentIndices.length; j++)
+    boolean validChild = !isDuplicateEdge();
+    for(int j = 0; parents != null && j < parents.length; j++)
     {
       /* If we've already visited the child, we have a cycle */
-      if(graph[parentIndices[j]].getCategoryID() == childID)
+      if(arr[parents[j]].getCategoryID() == childID)
       {
         validChild = false; // Cycle detected!
       }
@@ -104,19 +117,19 @@ public class VisitNode
     if(validChild)
     {
       // Add current node to the child's parent list
-      int[] newParents = new int[parentIndices.length+1];
-      System.arraycopy(parentIndices, 0, newParents, 0, parentIndices.length);
-      newParents[parentIndices.length] = currIndex;
+      int[] newParents = new int[parents.length+1];
+      System.arraycopy(parents, 0, newParents, 0, parents.length);
+      newParents[parents.length] = currNode;
 
       Arrays.sort(newParents);
       
       // Add the new VisitNode to the LinkedList
-      return new VisitNode(Arrays.binarySearch(graph, tmp), newParents, depth+1);
+      return new DFSVisitNode(Arrays.binarySearch(arr, tmp), newParents);
     }
     else
     {
       // Current edge causes a cycle. Remove it.
-      graph[currIndex].removeChild(childID);
+      arr[currNode].removeChild(childID);
       return null;
     }
 
@@ -130,56 +143,52 @@ public class VisitNode
    * 
    * @return Array of children VisitNodes
    */
-  public VisitNode[] makeChildrenVisitNodes(CategoryNode[] graph)
+  public DFSVisitNode[] makeChildrenVisitNodes(CategoryNode[] arr)
   {
-    /* Get all children of the current node */
-    CategoryNode[] children = graph[currIndex].getChildrenCategories();
-    LinkedList<VisitNode> ll = new LinkedList<VisitNode>();
+    /* Get all children in of the current node */
+    CategoryNode[] tmp = arr[currNode].getChildrenCategories();
+    LinkedList<DFSVisitNode> ll = new LinkedList<DFSVisitNode>();
 
-    for(int i = 0; children != null && i < children.length; i++)
+    for(int i = 0; tmp != null && i < tmp.length; i++)
     {
       // Get the next child
-      //int childID = children[i].getCategoryID();
-      System.out.println(this.depth + "\t" + children[i].getCategoryID());
-      
-      int childIndex = Arrays.binarySearch(graph, children[i]);
+      int childID = tmp[i].getCategoryID();
 
       // Check if a cycle would be created by expanding this child
-      boolean validChild = (Arrays.binarySearch(parentIndices, childIndex) < 0);
-      
-//      for(int j = 0; parents != null && j < parents.length; j++)
-//      {
-//        /* If we've already visited the child, we have a cycle */
-//        if(arr[parents[j]].getCategoryID() == childID )
-//        {
-//          validChild = false; // Cycle detected!
-//        }
-//      }//end: for(j)
+      boolean validChild = !isDuplicateEdge();
+      for(int j = 0; parents != null && j < parents.length; j++)
+      {
+        /* If we've already visited the child, we have a cycle */
+        if(arr[parents[j]].getCategoryID() == childID )
+        {
+          validChild = false; // Cycle detected!
+        }
+      }//end: for(j)
 
       // Child not found in parent list, therefore eligible for expansion.
       if(validChild)
       {
         // Add current node to the child's parent list
-        int[] newParents = new int[parentIndices.length+1];
-        System.arraycopy(parentIndices, 0, newParents, 0, parentIndices.length);
-        newParents[parentIndices.length] = currIndex;
+        int[] newParents = new int[parents.length+1];
+        System.arraycopy(parents, 0, newParents, 0, parents.length);
+        newParents[parents.length] = currNode;
 
         // Sort the array of parents
         Arrays.sort(newParents);
         
         // Add the new VisitNode to the LinkedList
-        ll.add(new VisitNode(Arrays.binarySearch(graph, children[i]), newParents, depth+1));
+        ll.add(new DFSVisitNode(Arrays.binarySearch(arr, tmp[i]), newParents));
       }
       else
       {
         // Current edge causes a cycle. Remove it.
-        graph[currIndex].removeChild(children[i].getCategoryID());
+        arr[currNode].removeChild(childID);
       }
     }//end: for(i)
 
     // Convert the LinkedList into a more manageable array.
-    VisitNode[] vna = new VisitNode[ll.size()];
-    Iterator<VisitNode> it = ll.iterator();
+    DFSVisitNode[] vna = new DFSVisitNode[ll.size()];
+    Iterator<DFSVisitNode> it = ll.iterator();
     for(int i = 0; i < vna.length; i++)
     {
       vna[i] = it.next();

@@ -13,31 +13,19 @@ import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
  * @author weale
  *
  */
-public class CategoryNode implements Serializable, Comparable<Object> {
+public class CategoryIDNode implements Serializable, Comparable<Object> {
 
   /* Serialization variable */
   private static final long serialVersionUID = 1L;
 
   /* Category ID */
   private int catID;
-
-  /* CategoryNode array of category parents in acyclic graph */
-  private CategoryNode[] parents;
-
-  /* CategoryNode array of category children in acyclic graph */
-  private CategoryNode[] children;
   
-  /* Integer array of positions of parents in acyclic graph.
-   * 
-   * Used in reading/writing the object.
-   */
-  private int[] parentsIndex;
+  /* Integer array of the Wiki IDs for the parents of the current node. */
+  private int[] parentIDs;
 
-  /* int array of positions of children in acyclic graph.
-   * 
-   * Used in reading/writing the object.
-   */
-  private int[] childrenIndex;
+  /* Integer array of the Wiki IDs for the children of the current node.*/
+  private int[] childrenIDs;
 
   /* Coverage count of the leaves of the category */
   private int vertexCoverage;
@@ -68,12 +56,12 @@ public class CategoryNode implements Serializable, Comparable<Object> {
    * 
    * @param name Category name.
    */
-  public CategoryNode(int id)
+  public CategoryIDNode(int id)
   {
     catID = id;
     
-    parents = null;
-    children = null;
+    parentIDs = null;
+    childrenIDs = null;
     
     immediateVertices = null;
     allVertices = null;
@@ -88,25 +76,25 @@ public class CategoryNode implements Serializable, Comparable<Object> {
    * <p>
    * Only adds the ID if the parent is not already listed.
    * 
-   * @param parent {@link CategoryNode} of the parent.
+   * @param parent {@link CategoryIDNode} of the parent.
    */
-  public void addParent(CategoryNode parent)
+  public void addParent(int parentID)
   {
-    if(parents == null)
+    if(parentIDs == null)
     { //No existing parents
-      parents = new CategoryNode[1];
-      parents[0] = parent;
+      parentIDs = new int[1];
+      parentIDs[0] = parentID;
     }
-    else if(Arrays.binarySearch(parents, parent) < 0)
+    else if(Arrays.binarySearch(parentIDs, parentID) < 0)
     { // Parent not found in existing parents
 
       // Create new array, copy parent into new array
-      CategoryNode[] tmpParents = new CategoryNode[parents.length+1];
-      System.arraycopy(parents, 0, tmpParents, 0, parents.length);
-      tmpParents[parents.length] = parent;
-      parents = tmpParents;
+      int[] tmpParents = new int[parentIDs.length+1];
+      System.arraycopy(parentIDs, 0, tmpParents, 0, parentIDs.length);
+      tmpParents[parentIDs.length] = parentID;
+      parentIDs = tmpParents;
       
-      Arrays.sort(parents);
+      Arrays.sort(parentIDs);
       tmpParents = null;
     }
   }//end: addParent(CategoryNode)
@@ -114,27 +102,27 @@ public class CategoryNode implements Serializable, Comparable<Object> {
   /**
    * Adds a child ID to the current node.  Only adds the ID if the child is not already listed.
    * 
-   * @param child {@link CategoryNode} of the child.
+   * @param child {@link CategoryIDNode} of the child.
    */
-  public void addChild(CategoryNode child)
+  public void addChild(int childID)
   {
-    if(children == null)
+    if(childrenIDs == null)
     {
-      children = new CategoryNode[1];
-      children[0] = child;
+      childrenIDs = new int[1];
+      childrenIDs[0] = childID;
     }
-    else if(Arrays.binarySearch(children, child) < 0)
+    else if(Arrays.binarySearch(childrenIDs, childID) < 0)
     {
       //Set new size
-      int size = children.length;
+      int size = childrenIDs.length;
       
       //Create Child
-      CategoryNode[] tmpChildren = new CategoryNode[size+1];
-      System.arraycopy(children, 0, tmpChildren, 0, size);
-      tmpChildren[size] = child;
-      children = tmpChildren;
+      int[] tmpChildren = new int[size+1];
+      System.arraycopy(childrenIDs, 0, tmpChildren, 0, size);
+      tmpChildren[size] = childID;
+      childrenIDs = tmpChildren;
       
-      Arrays.sort(children);
+      Arrays.sort(childrenIDs);
       tmpChildren = null;
     }
   }//end: addChild(CategoryNode)
@@ -148,20 +136,20 @@ public class CategoryNode implements Serializable, Comparable<Object> {
    */
   public void removeChild(int id)
   {
-    CategoryNode[] tmpChildren = new CategoryNode[children.length-1];
+    int[] tmpChildren = new int[childrenIDs.length-1];
     int currIndex=0, newIndex=0;
     while(newIndex < tmpChildren.length)
     {
-      if(children[currIndex].catID != id)
+      if(childrenIDs[currIndex] != id)
       {
-        tmpChildren[newIndex] = children[currIndex];
+        tmpChildren[newIndex] = childrenIDs[currIndex];
         newIndex++;
       }
       currIndex++;
     }//end: while(newIndex)
     
-    children = tmpChildren;
-    Arrays.sort(children);
+    childrenIDs = tmpChildren;
+    Arrays.sort(childrenIDs);
   }//end: removeChild(String)
 
   /**
@@ -173,20 +161,20 @@ public class CategoryNode implements Serializable, Comparable<Object> {
    */
   public void removeParent(int id)
   {
-    CategoryNode[] tmpParents = new CategoryNode[parents.length-1];
+    int[] tmpParents = new int[parentIDs.length-1];
     int currIndex=0, newIndex=0;
     while(newIndex < tmpParents.length)
     {
-      if( parents[currIndex].catID  != id )
+      if(parentIDs[currIndex]  != id )
       {
-        tmpParents[newIndex] = parents[currIndex];
+        tmpParents[newIndex] = parentIDs[currIndex];
         newIndex++;
       }
       currIndex++;
     }//end: while(newIndex)
     
-    parents = tmpParents;
-    Arrays.sort(parents);
+    parentIDs = tmpParents;
+    Arrays.sort(parentIDs);
   }//end: removeParent(String)
 
   /**
@@ -306,42 +294,42 @@ public class CategoryNode implements Serializable, Comparable<Object> {
    * @param wg {@link WikiInvGraph}
    * @return Count of the number of edges in-bound to the leaves.
    */
-  public void setOutboundVertexEdgeCount(WikiGraph wg)
-  {
-    int count = 0;
-    
-    if(children != null)
-    {
-      // Visit all children first
-      for(int i = 0; i < children.length; i++)
-      {
-        
-        if(!children[i].outboundEdgeCountsFinalized)
-        {
-          children[i].setOutboundVertexEdgeCount(wg);
-        }
-        
-        count += children[i].inboundEdgeCoverage;
-      }//end: for(i)
-    }//end: children
-
-    // Add children vertex counts
-    for(int i = 0; immediateVertices != null &&
-                   i < immediateVertices.length; i++)
-    {
-      // For each graph vertex, get the in-bound link array
-      int[] arr = wg.getOutboundLinks(immediateVertices[i]);
-
-      if(arr != null)
-      { 
-        //Valid inbound link set
-        count += arr.length;
-      }
-    }//end: for(i)
-    
-    outboundEdgeCountsFinalized = true;
-    outboundEdgeCoverage = count;
-  }//end: setInboundLeaveEdges(WikiInvGraph)
+//  public void setOutboundVertexEdgeCount(WikiGraph wg)
+//  {
+//    int count = 0;
+//    
+//    if(childrenIDs != null)
+//    {
+//      // Visit all children first
+//      for(int i = 0; i < childrenIDs.length; i++)
+//      {
+//        
+//        if(!childrenIDs[i].outboundEdgeCountsFinalized)
+//        {
+//          childrenIDs[i].setOutboundVertexEdgeCount(wg);
+//        }
+//        
+//        count += childrenIDs[i].inboundEdgeCoverage;
+//      }//end: for(i)
+//    }//end: children
+//
+//    // Add children vertex counts
+//    for(int i = 0; immediateVertices != null &&
+//                   i < immediateVertices.length; i++)
+//    {
+//      // For each graph vertex, get the in-bound link array
+//      int[] arr = wg.getOutboundLinks(immediateVertices[i]);
+//
+//      if(arr != null)
+//      { 
+//        //Valid inbound link set
+//        count += arr.length;
+//      }
+//    }//end: for(i)
+//    
+//    outboundEdgeCountsFinalized = true;
+//    outboundEdgeCoverage = count;
+//  }//end: setInboundLeaveEdges(WikiInvGraph)
   
   /**
    * Finds the in-bound edge count for a the category.
@@ -351,42 +339,42 @@ public class CategoryNode implements Serializable, Comparable<Object> {
    * @param wg {@link WikiInvGraph}
    * @return Count of the number of edges in-bound to the leaves.
    */
-  public void setInboundVertexEdgeCount(WikiInvGraph wg)
-  {
-    int count = 0;
-    
-    if(children != null)
-    {
-      // Visit all children first
-      for(int i = 0; i < children.length; i++)
-      {
-        
-        if(!children[i].inboundEdgeCountsFinalized)
-        {
-          children[i].setInboundVertexEdgeCount(wg);
-        }
-        
-        count += children[i].inboundEdgeCoverage;
-      }//end: for(i)
-    }//end: children
-
-    // Add children vertex counts
-    for(int i = 0; immediateVertices != null &&
-                   i < immediateVertices.length; i++)
-    {
-      // For each graph vertex, get the in-bound link array
-      int[] arr = wg.getInboundLinks(immediateVertices[i]);
-
-      if(arr != null)
-      { 
-        //Valid inbound link set
-        count += arr.length;
-      }
-    }//end: for(i)
-    
-    inboundEdgeCountsFinalized = true;
-    inboundEdgeCoverage = count;
-  }//end: setInboundLeaveEdges(WikiInvGraph)
+//  public void setInboundVertexEdgeCount(WikiInvGraph wg)
+//  {
+//    int count = 0;
+//    
+//    if(childrenIDs != null)
+//    {
+//      // Visit all children first
+//      for(int i = 0; i < childrenIDs.length; i++)
+//      {
+//        
+//        if(!childrenIDs[i].inboundEdgeCountsFinalized)
+//        {
+//          childrenIDs[i].setInboundVertexEdgeCount(wg);
+//        }
+//        
+//        count += childrenIDs[i].inboundEdgeCoverage;
+//      }//end: for(i)
+//    }//end: children
+//
+//    // Add children vertex counts
+//    for(int i = 0; immediateVertices != null &&
+//                   i < immediateVertices.length; i++)
+//    {
+//      // For each graph vertex, get the in-bound link array
+//      int[] arr = wg.getInboundLinks(immediateVertices[i]);
+//
+//      if(arr != null)
+//      { 
+//        //Valid inbound link set
+//        count += arr.length;
+//      }
+//    }//end: for(i)
+//    
+//    inboundEdgeCountsFinalized = true;
+//    inboundEdgeCoverage = count;
+//  }//end: setInboundLeaveEdges(WikiInvGraph)
 
   /**
    * Sets the coverage based on the number of category leaves and the number of overall vertices.
@@ -409,35 +397,35 @@ public class CategoryNode implements Serializable, Comparable<Object> {
     //ImmediateLeavesFinalized = true;
   }//end: finalizeImmediateLeaves()
 
- /**
-  * Finalize all the category vertices.
-  */
-  public void finalizeAllVertices()
-  {
-    if(this.children != null)
-    { 
-      // Finalize all children
-      for(int i = 0; i < children.length; i++)
-      {
-        // Check to see if child is finalized
-        if(!children[i].AllChildrenVerticesFinalized)
-        {
-          children[i].finalizeAllVertices();
-        }
-        this.addAncestorVertices(children[i].allVertices);
-      }//end: for(i)
-    }//end: if(this.children)
-    
-    // Set Leaves Finalized Flag
-    this.finalizeImmediateVertices();
-    this.addAncestorVertices(this.immediateVertices);
-    AllChildrenVerticesFinalized = true;
-  }//end: finalizeAllLeaves()
+// /**
+//  * Finalize all the category vertices.
+//  */
+//  public void finalizeAllVertices()
+//  {
+//    if(this.childrenIDs != null)
+//    { 
+//      // Finalize all children
+//      for(int i = 0; i < childrenIDs.length; i++)
+//      {
+//        // Check to see if child is finalized
+//        if(!childrenIDs[i].AllChildrenVerticesFinalized)
+//        {
+//          childrenIDs[i].finalizeAllVertices();
+//        }
+//        this.addAncestorVertices(childrenIDs[i].allVertices);
+//      }//end: for(i)
+//    }//end: if(this.children)
+//    
+//    // Set Leaves Finalized Flag
+//    this.finalizeImmediateVertices();
+//    this.addAncestorVertices(this.immediateVertices);
+//    AllChildrenVerticesFinalized = true;
+//  }//end: finalizeAllLeaves()
 
  /**
-  * Gets the vertex coverage amount of the {@link CategoryNode}.
+  * Gets the vertex coverage amount of the {@link CategoryIDNode}.
   * 
-  * @return Vertex coverage amount of the {@link CategoryNode}.
+  * @return Vertex coverage amount of the {@link CategoryIDNode}.
   */
   public int getVertexCoverage()
   {
@@ -445,9 +433,9 @@ public class CategoryNode implements Serializable, Comparable<Object> {
   }// getCoverage()
 
   /**
-   * Gets the in-bound edge coverage amount of the {@link CategoryNode}.
+   * Gets the in-bound edge coverage amount of the {@link CategoryIDNode}.
    * 
-   * @return In-bound edge coverage amount of the {@link CategoryNode}.
+   * @return In-bound edge coverage amount of the {@link CategoryIDNode}.
    */
    public int getInboundEdgeCoverage()
    {
@@ -455,9 +443,9 @@ public class CategoryNode implements Serializable, Comparable<Object> {
    }// getCoverage()
    
    /**
-    * Gets the out-bound edge coverage amount of the {@link CategoryNode}.
+    * Gets the out-bound edge coverage amount of the {@link CategoryIDNode}.
     * 
-    * @return Out-bound edge coverage amount of the {@link CategoryNode}.
+    * @return Out-bound edge coverage amount of the {@link CategoryIDNode}.
     */
     public int getOutboundEdgeCoverage()
     {
@@ -501,105 +489,105 @@ public class CategoryNode implements Serializable, Comparable<Object> {
   /**
    * Accessor for the list of children
    * 
-   * @return {@link CategoryNode} array
+   * @return {@link CategoryIDNode} array
    */
-  public CategoryNode[] getChildrenCategories()
+  public int[] getChildrenIDs()
   {
-    return children;
+    return childrenIDs;
   }//end: getChildren()
 
   /**
    * Accessor for the list of parents
    * 
-   * @return {@link CategoryNode} array
+   * @return {@link CategoryIDNode} array
    */
-  public CategoryNode[] getParentCategories()
+  public int[] getParentIDs()
   {
-    return parents;
+    return parentIDs;
   }//end: getParents()
 
   /**
    * Prints the contents of the node.
    */
-  public void print()
-  {
-    //Print name of the node
-    System.out.print(catID);
-
-    //Print parents of the node
-    System.out.print("\tParents:");
-    if(parents != null)
-    {
-      for(int j = 0; j < parents.length; j++)
-      {
-        System.out.print(" "+ parents[j].getCategoryID());
-      }
-    }
-    else
-    {
-      System.out.print("-");
-    }
-
-    //Print children of the node
-    System.out.print("\tChildren:");
-    if(children != null)
-    {
-      for(int j = 0; j < children.length; j++)
-      {
-        System.out.print(" "+ children[j].getCategoryID());
-      }
-    }
-    else
-    {
-      System.out.print("-");
-    }
-
-    //Print category coverage
-    System.out.println("\t" + vertexCoverage);
-  }//end: print()
+//  public void print()
+//  {
+//    //Print name of the node
+//    System.out.print(catID);
+//
+//    //Print parents of the node
+//    System.out.print("\tParents:");
+//    if(parents != null)
+//    {
+//      for(int j = 0; j < parents.length; j++)
+//      {
+//        System.out.print(" "+ parents[j].getCategoryID());
+//      }
+//    }
+//    else
+//    {
+//      System.out.print("-");
+//    }
+//
+//    //Print children of the node
+//    System.out.print("\tChildren:");
+//    if(children != null)
+//    {
+//      for(int j = 0; j < children.length; j++)
+//      {
+//        System.out.print(" "+ children[j].getCategoryID());
+//      }
+//    }
+//    else
+//    {
+//      System.out.print("-");
+//    }
+//
+//    //Print category coverage
+//    System.out.println("\t" + vertexCoverage);
+//  }//end: print()
 
  /**
-  * Determines if the given {@link CategoryNode} is a descendant of the current node.
+  * Determines if the given {@link CategoryIDNode} is a descendant of the current node.
   * 
-  * @param cn {@link CategoryNode} to find.
+  * @param cn {@link CategoryIDNode} to find.
   * @return Whether the given category is a descendant.
   */
-  public boolean isDescendant(CategoryNode cn) 
-  {
-    return checkIfDescendant(this, cn);
-  }
+//  public boolean isDescendant(CategoryIDNode cn) 
+//  {
+//    return checkIfDescendant(this, cn);
+//  }
 
  /**
-  * Determines if a given {@link CategoryNode} is a descendant of another category.
+  * Determines if a given {@link CategoryIDNode} is a descendant of another category.
   * 
-  * @param category Current {@link CategoryNode} to search.
-  * @param findMe {@link CategoryNode} to find.
-  * @return Boolean as the the decendant nature of the given {@link CategoryNode}.
+  * @param category Current {@link CategoryIDNode} to search.
+  * @param findMe {@link CategoryIDNode} to find.
+  * @return Boolean as the the decendant nature of the given {@link CategoryIDNode}.
   */
-  public boolean checkIfDescendant(CategoryNode category, CategoryNode findMe)
-  {
-    /* BASE CASES */
-    if(category.equals(findMe))
-    {//Found!
-      return true;
-    }
-    else if(category.children == null)
-    {//No more children
-      return false;
-    }
-
-    // Recursively search descendants
-    boolean found = false;
-    for(int i = 0; !found && i < category.children.length; i++)
-    {
-      found = checkIfDescendant(category.children[i], findMe);
-    }//end: for(i)
-    
-    return found;
-  }//end: checkIfDescendant(CategoryNode, CategoryNode)
+//  public boolean checkIfDescendant(CategoryIDNode category, CategoryIDNode findMe)
+//  {
+//    /* BASE CASES */
+//    if(category.equals(findMe))
+//    {//Found!
+//      return true;
+//    }
+//    else if(category.children == null)
+//    {//No more children
+//      return false;
+//    }
+//
+//    // Recursively search descendants
+//    boolean found = false;
+//    for(int i = 0; !found && i < category.children.length; i++)
+//    {
+//      found = checkIfDescendant(category.children[i], findMe);
+//    }//end: for(i)
+//    
+//    return found;
+//  }//end: checkIfDescendant(CategoryNode, CategoryNode)
 
  /**
-  * Writes a {@link CategoryNode} to the file.
+  * Writes a {@link CategoryIDNode} to the file.
   * 
   * @param out {@link ObjectOutputStream} to write to.
   * @throws IOException
@@ -608,8 +596,8 @@ public class CategoryNode implements Serializable, Comparable<Object> {
   {
     /* Write node information */
     out.writeInt(catID);
-    out.writeObject(parentsIndex);
-    out.writeObject(childrenIndex);
+    out.writeObject(parentIDs);
+    out.writeObject(childrenIDs);
     
     /* Write various counts */
     out.writeInt(vertexCoverage);
@@ -639,41 +627,41 @@ public class CategoryNode implements Serializable, Comparable<Object> {
   }//end: writeObject(ObjectOutputStream)
 
   /**
-   * Used to convert the {@link CategoryNode} links to their integer positions for writing.
+   * Used to convert the {@link CategoryIDNode} links to their integer positions for writing.
    * 
    * @param arr Array of {@link CategoryNodes} representing the category graph.
    */
-  public void convertEdgesBeforeWrite(CategoryNode[] arr)
-  {
-    if(parents != null)
-    {
-      parentsIndex = new int[parents.length];
-      for(int i=0; i<parents.length; i++)
-      {
-        parentsIndex[i] = Arrays.binarySearch(arr, parents[i]);
-      }
-    }
-    else
-    {
-      parentsIndex = null;
-    }
-
-    if(children != null)
-    {
-      childrenIndex = new int[children.length];
-      for(int i=0; i<children.length; i++)
-      {
-        childrenIndex[i] = Arrays.binarySearch(arr, children[i]);
-      }
-    }
-    else
-    {
-      childrenIndex = null;
-    }
-  } 
+//  public void convertEdgesBeforeWrite(CategoryIDNode[] arr)
+//  {
+//    if(parents != null)
+//    {
+//      parentsIndex = new int[parents.length];
+//      for(int i=0; i<parents.length; i++)
+//      {
+//        parentsIndex[i] = Arrays.binarySearch(arr, parents[i]);
+//      }
+//    }
+//    else
+//    {
+//      parentsIndex = null;
+//    }
+//
+//    if(children != null)
+//    {
+//      childrenIndex = new int[children.length];
+//      for(int i=0; i<children.length; i++)
+//      {
+//        childrenIndex[i] = Arrays.binarySearch(arr, children[i]);
+//      }
+//    }
+//    else
+//    {
+//      childrenIndex = null;
+//    }
+//  } 
   
   /**
-   * Reads a {@link CategoryNode} from a file.
+   * Reads a {@link CategoryIDNode} from a file.
    * 
    * @param in {@link ObjectInputStream} to read from.
    * @throws IOException
@@ -683,8 +671,8 @@ public class CategoryNode implements Serializable, Comparable<Object> {
   {
     /* Read node information */
     catID                = in.readInt();
-    parentsIndex         = (int[]) in.readObject();
-    childrenIndex        = (int[]) in.readObject();
+    parentIDs            = (int[]) in.readObject();
+    childrenIDs          = (int[]) in.readObject();
     
     /* Read count information */
     vertexCoverage       = in.readInt();
@@ -720,56 +708,56 @@ public class CategoryNode implements Serializable, Comparable<Object> {
   }//end: readObject(ObjectInputStream)
 
   /**
-   * Used to convert the {@link CategoryNode} integer positions to their memory locations for use.
+   * Used to convert the {@link CategoryIDNode} integer positions to their memory locations for use.
    * 
    * @param arr Array of {@link CategoryNodes} representing the category graph.
    */
-  public void convertEdgesAfterRead(CategoryNode[] arr)
-  {
-    if(parentsIndex != null)
-    {
-      parents = new CategoryNode[parentsIndex.length];
-      for(int i = 0; i < parents.length; i++)
-      {
-        parents[i] = arr[parentsIndex[i]];
-      }//end: for(i)
-    }
-    else
-    {
-      parents = null;
-    }
-
-    if(childrenIndex != null)
-    {
-      children = new CategoryNode[childrenIndex.length];
-      for(int i = 0; i < children.length; i++)
-      {
-        children[i] = arr[childrenIndex[i]];
-      }//end: for(i)
-    }
-    else
-    {
-      children = null;
-    }
-  }//end: convertEdgesAfterRead(CategoryNode[])
+//  public void convertEdgesAfterRead(CategoryIDNode[] arr)
+//  {
+//    if(parentsIndex != null)
+//    {
+//      parents = new CategoryIDNode[parentsIndex.length];
+//      for(int i = 0; i < parents.length; i++)
+//      {
+//        parents[i] = arr[parentsIndex[i]];
+//      }//end: for(i)
+//    }
+//    else
+//    {
+//      parents = null;
+//    }
+//
+//    if(childrenIndex != null)
+//    {
+//      children = new CategoryIDNode[childrenIndex.length];
+//      for(int i = 0; i < children.length; i++)
+//      {
+//        children[i] = arr[childrenIndex[i]];
+//      }//end: for(i)
+//    }
+//    else
+//    {
+//      children = null;
+//    }
+//  }//end: convertEdgesAfterRead(CategoryNode[])
   
   /**
    * Comparator based on node IDs.
    */
   public int compareTo(Object cn)
   {
-    return this.catID - ((CategoryNode)cn).catID;
+    return this.catID - ((CategoryIDNode)cn).catID;
   }//end: compareTo(Object)
 
   /**
    * Comparator based on node IDs.
    * 
-   * @param o1 {@link CategoryNode}
-   * @param o2 {@link CategoryNode}
+   * @param o1 {@link CategoryIDNode}
+   * @param o2 {@link CategoryIDNode}
    * @return comparison of the two objects based on node name.
    */
   public int compare(Object o1, Object o2)
   {
-    return ((CategoryNode)o1).catID - ((CategoryNode)o2).catID;
+    return ((CategoryIDNode)o1).catID - ((CategoryIDNode)o2).catID;
   }//end: compare(Object, Object)
 }

@@ -48,14 +48,17 @@ public class CategoryTitleToIDTranslation implements Serializable {
   public CategoryTitleToIDTranslation(TitleID[] tidArr)
   {
     TitleID[] titleID = (TitleID[]) tidArr.clone();
-    TIDTitleComparator tcom = new TIDTitleComparator();
-    Arrays.sort(titleID, tcom);
+    Arrays.sort(titleID, new TIDTitleComparator());
+
     cats = new String[titleID.length];
     ids = new int[titleID.length];
-    for(int i=0; i<cats.length; i++) {
+    
+    for(int i = 0; i < cats.length; i++)
+    {
       cats[i] = titleID[i].getTitle();
       ids[i] = titleID[i].getID();
     }
+    
     titleID = null;
   }//end: CategoryTitleToIDTranslation(TitleID[])
 
@@ -69,12 +72,14 @@ public class CategoryTitleToIDTranslation implements Serializable {
   */
   public int getID(String cat)
   {
-    int i = Arrays.binarySearch(cats, cat);
-    if(i>=0)
+    int pos = Arrays.binarySearch(cats, cat);
+    
+    if(pos >= 0)
     {
-      return ids[i];
+      return ids[pos];
     }
-    return i;
+    
+    return pos;
   }//end: getID(String)
 
  /**
@@ -88,6 +93,17 @@ public class CategoryTitleToIDTranslation implements Serializable {
     return (getID(name) >= 0);
   }//end: isLookupCategory(String)
 
+ /**
+  * Gets the array of Category IDs.
+  * <p>
+  * Due to redirect possibilities, IDs are not guaranteed to be unique.
+  * 
+  * @return Array of category IDs.
+  */
+  public int[] getCategoryIDs()
+  {
+    return ids.clone();
+  }
  /**
   * Finds the number of categories.
   * 
