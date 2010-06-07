@@ -20,6 +20,9 @@ import java.util.*;
 
 import edu.osu.slate.relatedness.Configuration;
 import edu.osu.slate.relatedness.swwr.data.category.CategoryGraph;
+import edu.osu.slate.relatedness.swwr.data.category.CategoryIDGraph;
+import edu.osu.slate.relatedness.swwr.data.category.CategoryIDNode;
+import edu.osu.slate.relatedness.swwr.data.category.CategoryNode;
 import edu.osu.slate.relatedness.swwr.data.category.CategoryTitleToIDTranslation;
 import edu.osu.slate.relatedness.swwr.data.category.IDToCategoryTitleTranslation;
 
@@ -115,7 +118,7 @@ public class CreateCategoryAcyclicGraph {
     int tmp;
 
     //Seed the category graph
-    CategoryGraph categoryGraph = new CategoryGraph(Cat2ID.getID(seed));
+    CategoryIDGraph categoryGraph = new CategoryIDGraph(Cat2ID.getID(seed));
 
    /* STEP 1:
     * 
@@ -181,6 +184,7 @@ public class CreateCategoryAcyclicGraph {
               categoryTitle = categoryTitle + "," + info[j];
             }
           }//end: for(j)
+          categoryTitle = categoryTitle.substring(1, categoryTitle.length()-1);
           
           /* Add the edge to the category graph if:
            *  -- CHILD Page ID is a valid category page ID
@@ -195,21 +199,22 @@ public class CreateCategoryAcyclicGraph {
 
             // Get all "FROM" IDs
             int childID = Integer.parseInt(childPageID);
-            String [] childrenCategories = ID2Cat.getTitle(childID);
-            for(int k = 0; k < childrenCategories.length; k++)
-            {
-              //Check if child is a valid category
-              if(Cat2ID.isLookupCategory(childrenCategories[k]))
-              {
-                int childID2 = Cat2ID.getID(childrenCategories[k]);
-                
-                // Check to see if both parent and child are members of the categoryGraph
-                if(categoryGraph.isMember(childID2) && categoryGraph.isMember(parentID))
-                {
-                  categoryGraph.addEdge(parentID, childID2);
-                }//end: if(categoryGraph)
-              }//end: if(Cat2ID)
-            }//end: for(k)
+            
+//            String [] childrenCategories = ID2Cat.getTitle(childID);
+//            for(int k = 0; k < childrenCategories.length; k++)
+//            {
+//              //Check if child is a valid category
+//              if(Cat2ID.isLookupCategory(childrenCategories[k]))
+//              {
+//                int childID2 = Cat2ID.getID(childrenCategories[k]);
+//                
+//                // Check to see if both parent and child are members of the categoryGraph
+//                if(categoryGraph.isMember(childID2) && categoryGraph.isMember(parentID))
+//                {
+                  categoryGraph.addEdge(parentID, childID, ID2Cat);
+//                }//end: if(categoryGraph)
+//              }//end: if(Cat2ID)
+//            }//end: for(k)
           }//end: if()
           
         }//end: if(info.length)
@@ -227,7 +232,7 @@ public class CreateCategoryAcyclicGraph {
     //Removing non-used categories
     //System.out.println("Trimming Graph");
     //categoryGraph.trimGraphToRoot();
-    categoryGraph.setVertexCounts();
+    //categoryGraph.setVertexCounts();
     
     //Write .cgraph file
     System.out.println("Writing .cgraph file.");
