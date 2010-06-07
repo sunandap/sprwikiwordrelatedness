@@ -224,6 +224,14 @@ public class CreateCategoryList {
     CategoryTitleToIDTranslation Cat2ID = new CategoryTitleToIDTranslation(tids);
     IDToCategoryTitleTranslation ID2Cat = new IDToCategoryTitleTranslation(tids);
 
+    int tmp = Cat2ID.getID("Fundamental");
+    System.out.println(tmp);
+    String[] arrs = ID2Cat.getTitle(tmp);
+    for(int i=0; i<arrs.length; i++)
+    {
+      System.out.println(arrs[i]);
+    }
+    
     /* STEP: 5
      * 
      * Write .cid file.

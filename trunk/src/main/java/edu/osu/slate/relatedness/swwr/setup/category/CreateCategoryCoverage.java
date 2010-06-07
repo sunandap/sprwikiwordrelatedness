@@ -5,7 +5,7 @@ import java.util.*;
 
 import edu.osu.slate.relatedness.swwr.data.category.CICIDComparator;
 import edu.osu.slate.relatedness.swwr.data.category.CategoryIDCoverage;
-import edu.osu.slate.relatedness.swwr.data.graph.IDVertexRedirect;
+import edu.osu.slate.relatedness.swwr.data.graph.IDIDRedirect;
 import edu.osu.slate.relatedness.swwr.data.graph.IDVertexTranslation;
 
 /**
@@ -68,7 +68,7 @@ public class CreateCategoryCoverage {
     IDVertexTranslation vid = new IDVertexTranslation(baseDir + "/" + binaryDir + "/" + type+ "/" + date + "/" + type + "-"+ date + "-" + graph + ".vid");
  
     System.out.println("Initializing Redirect List.");
-    IDVertexRedirect rdl = new IDVertexRedirect(baseDir + "/" + binaryDir + "/" + type+ "/" + date + "/" + type + "-"+ date + "-" + graph + ".rdr");
+    IDIDRedirect rdl = new IDIDRedirect(baseDir + "/" + binaryDir + "/" + type+ "/" + date + "/" + type + "-"+ date + "-" + graph + ".rdr");
     
     System.out.println("Opening page.sql File");
     Scanner in = new Scanner(new FileReader(baseDir + "/" + sourceDir + "/" + type+ "/" + date + "/" + type + "-"+ date + "-" + "page.sql"));
