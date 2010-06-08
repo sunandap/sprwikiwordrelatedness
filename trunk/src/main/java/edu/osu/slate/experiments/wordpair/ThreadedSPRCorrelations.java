@@ -38,18 +38,6 @@ public class ThreadedSPRCorrelations
 
   private static String graphFile;
 
-  private static String taskFile;
-
-  private static String resultAvgFile;
-
-  private static String resultMaxFile;
-
-  private static String resultAvgFileAll;
-
-  private static String resultMaxFileAll;
-  
-  private static String resultVectFile;
-
   /* */
   private static String wordVertexMapFile;
 
@@ -83,27 +71,6 @@ public class ThreadedSPRCorrelations
     wordVertexMapFile = dir + data + "-" +
                         Configuration.mapsource + "-" + 
                         Configuration.stemming + ".tvc";
-
-    taskFile = Configuration.taskDir + Configuration.task + ".txt";
-    
-    String resultFile = Configuration.resultDir +
-                        "/wordpair/" +
-                        Configuration.type + "/" +
-                        Configuration.type + "_" +
-                        Configuration.date + "_" +
-                        Configuration.graph + "_" +
-                        Configuration.mapsource + "_" + 
-                        Configuration.stemming;
-    
-    resultAvgFile = resultFile + "_avg_";
-    
-    resultMaxFile = resultFile + "_max_";
-
-    resultAvgFileAll = resultFile + "_avg_all_";
-    
-    resultMaxFileAll = resultFile + "_max_all_";
-
-    resultVectFile = resultFile + "_vect_";
   }
 
   /**

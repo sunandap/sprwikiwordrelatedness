@@ -24,7 +24,7 @@ import edu.osu.slate.experiments.Common;
 import edu.osu.slate.relatedness.swwr.algorithm.SourcedPageRank;
 import edu.osu.slate.relatedness.swwr.data.AliasSFToID;
 import edu.osu.slate.relatedness.swwr.data.AliasStrings;
-import edu.osu.slate.relatedness.swwr.data.WikiGraph;
+import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
 
 /**
  * Calculates the Pearson correlation coefficient between a given data set and the output of a given relatedness data set.
