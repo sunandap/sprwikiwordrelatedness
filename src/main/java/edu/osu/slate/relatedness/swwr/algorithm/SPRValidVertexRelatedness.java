@@ -18,7 +18,7 @@ package edu.osu.slate.relatedness.swwr.algorithm;
 import java.util.TreeSet;
 
 import edu.osu.slate.relatedness.RelatednessInterface;
-import edu.osu.slate.relatedness.swwr.data.WikiGraph;
+import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
 
 
 /**
