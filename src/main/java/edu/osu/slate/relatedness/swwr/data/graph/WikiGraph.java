@@ -1,8 +1,22 @@
+/* Copyright 2010 Speech and Language Technologies Lab, The Ohio State University
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package edu.osu.slate.relatedness.swwr.data.graph;
 
 import java.io.*;
 import java.util.Arrays;
-import java.util.Random;
 
 /**
  * Contains the graph structure of the Wiki data set.
@@ -10,7 +24,7 @@ import java.util.Random;
  * This class keeps track of which pages are linked to by particular page.
  * That is, this contains the outbound list to a page (from, to, to, to,...)
  * <p>
- * Requres the <i>.wgp file</i> created from {@link WikiGraph}.
+ * Requires the <i>.wgp file</i> created in {@link CreateGraphFiles}.
  * 
  * @author weale
  * @version 1.0
@@ -65,9 +79,39 @@ public class WikiGraph implements Serializable
   */
   public WikiGraph(WikiGraph wg)
   {
-    this.graph = wg.graph.clone();
-    this.tProb = wg.tProb.clone();
-    this.numEdges = wg.numEdges;
+    numEdges = 0;
+        
+    // Copy edges to new object
+    this.graph = new int[wg.graph.length][];
+    for(int i = 0; i < this.graph.length; i++)
+    {
+      if(wg.graph[i] == null)
+      { // No out-bound links from vertex
+        this.graph[i] = null;
+      }
+      else
+      {
+        this.graph[i] = new int[wg.graph[i].length];
+        numEdges += this.graph[i].length;
+        System.arraycopy(wg.graph[i], 0, this.graph[i], 0, wg.graph[i].length);
+      }      
+    }//end: for(i)
+
+    // Copy transition probabilities to new object
+    this.tProb = new float[wg.tProb.length][];
+    for(int i = 0; i < this.tProb.length; i++)
+    {
+      if(wg.tProb[i] == null)
+      { // No out-bound links from vertex
+        this.tProb[i] = null;
+      }
+      else
+      {
+        this.tProb[i] = new float[wg.tProb[i].length];
+        System.arraycopy(wg.tProb[i], 0, this.tProb[i], 0, wg.tProb[i].length);
+      }
+    }//end: for(i)
+
     this.isUniform = wg.isUniform;
     this.isDirected = wg.isDirected;
   }//end: WikiGraph(WikiGraph)
@@ -140,7 +184,37 @@ public class WikiGraph implements Serializable
     }
   }//end: WikiGraph(String)
 
- /**
+  public WikiGraph(int[][] graph2, float[][] graphtrans)
+  {
+    graph = new int[graph2.length][];
+    tProb = new float[graphtrans.length][];
+    
+    for(int i = 0; i < graph.length; i++)
+    {
+      if(graph2[i] != null)
+      {
+        graph[i] = new int[graph2[i].length];
+        tProb[i] = new float[graph2[i].length];
+        
+        for(int j = 0; j < graph2[i].length; j++)
+        {
+          graph[i][j] = graph2[i][j];
+        }//end: for(j)
+        
+        for(int j = 0; j < graphtrans[i].length; j++)
+        {
+          tProb[i][j] = graphtrans[i][j];
+        }//end: for(j)
+      }
+      else
+      {
+        graph[i] = null;
+        tProb[i] = null;
+      }//end: else
+    }//end: for(i)
+  }//end: WikiGraph(int[][], float[][])
+
+/**
   * Get the outbound vertices for a given vertex.
   * <p>
   * Returns null if there are no outbound vertices.
@@ -179,6 +253,22 @@ public class WikiGraph implements Serializable
     }
   }//end: getOutboundTransitions(int)
 
+  public void setOutboundTransitions(int fromVertex, float[] vals)
+  {
+    if(vals.length != tProb[fromVertex].length)
+    {
+      System.err.println("Invalid transition manipulation. "
+                         + "Vertex:" + fromVertex);
+    }
+    else
+    {
+      for(int i=0; i<vals.length; i++)
+      {
+        tProb[fromVertex][i] = vals[i];      
+      }
+    }
+  }//end: setOutboundTransitions(int, float[])
+  
  /**
   * Gets the number of edges in the graph.
   * 
@@ -279,6 +369,18 @@ public class WikiGraph implements Serializable
   {
     return isDirected;
   }
+  
+  public void setEdgeCount()
+  {
+    numEdges = 0;
+    for(int i=0; i<graph.length; i++)
+    {
+      for(int j=0; graph[i] != null && j < graph[i].length; j++)
+      {
+        numEdges++;
+      }//end: for(j)
+    }//end: for(i)
+  }//end: setEdgeCount()
 
   /**
    * Writes the object to the given {@link ObjectOutputStream}.
@@ -290,7 +392,7 @@ public class WikiGraph implements Serializable
    */
   private void writeObject(ObjectOutputStream out) throws IOException
   {
-    out.writeObject(graph);	
+    out.writeObject(graph);
     out.writeObject(tProb);	
     out.writeInt(numEdges);	
   }//end: writeObject(ObjectOutputStream)

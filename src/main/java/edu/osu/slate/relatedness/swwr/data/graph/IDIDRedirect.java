@@ -19,20 +19,26 @@ import java.io.*;
 import java.util.Arrays;
 
 /**
- * Converts Wiki Page IDs to graph vertices via redirect information.
+ * Converts wiki Page IDs to valid IDs via redirect information.
  * 
  * @author weale
- * @version 1.0
+ * @version 2.0-alpha
  */
-public class IDVertexRedirect {
-
+public class IDIDRedirect implements Serializable
+{
+  
  /**
+   * 
+   */
+  private static final long serialVersionUID = -5054690260260316105L;
+
+/**
   * Original Wiki Page IDs
   */
   private int[] from;
   
  /**
-  * Redirected Vertex numbers
+  * Redirected Page IDs
   */
   private int[] to;
 
@@ -44,7 +50,7 @@ public class IDVertexRedirect {
   * @param id Wiki Page ID
   * @return Vertex number
   */
-  public int redirectIDToVertex(int id)
+  public int redirectIDToValidID(int id)
   {
     int pos = Arrays.binarySearch(from, id);
     
@@ -55,7 +61,7 @@ public class IDVertexRedirect {
     else {
       return -1;
     }
-  }//end: redirectIDToVertex(int)
+  }//end: redirectIDToValidID(int)
 
  /**
   * Returns redirect status of ID.
@@ -66,10 +72,32 @@ public class IDVertexRedirect {
   * @param id Wiki Page ID
   * @return Redirect status of Wiki Page ID
   */
-  public boolean isRedirectID(int id) {
+  public boolean isRedirectID(int id)
+  {
     return (Arrays.binarySearch(from, id) >= 0);
-  }
-	
+  }//end: isRedirectID(int)
+
+ /**
+  * Constructor.
+  * <p>
+  * Given a parallel list of from and to arrays,
+  * creates an object using their information.
+  * 
+  * @param from Array of 'from' page IDs.
+  * @param to Array of 'to' vertex numbers.
+  */
+  public IDIDRedirect(int[] from, int[] to)
+  {
+    this.from = new int[from.length];
+    this.to   = new int[to.length];
+    
+    for(int i = 0; i < to.length; i++)
+    {
+      this.from[i] = from[i];
+      this.to[i]   = to[i];
+    }//end: for(i)
+  }//end: IDVertexRedirect(int[] int[])
+  
  /**
   * Constructor.
   * <p>
@@ -79,7 +107,7 @@ public class IDVertexRedirect {
   * 
   * @param filename Name of the <i>.rdr file</i>.
   */
-  public IDVertexRedirect(String filename) {
+  public IDIDRedirect(String filename) {
     try
     {
       ObjectInputStream fileIn = new ObjectInputStream(new FileInputStream(filename));
@@ -99,5 +127,34 @@ public class IDVertexRedirect {
       System.err.println("Problem reading from file: " + filename);
       e.printStackTrace();
     }
-  }
+  }//end: iDVertexRedirect(String)
+  
+  /**
+   * Writes the object to the given {@link ObjectOutputStream}.
+   * <p>
+   * Writes the vertex-id integer array to the file.
+   * 
+   * @param out {@link ObjectOutputStream} to be written to.
+   * @throws IOException
+   */
+  private void writeObject(ObjectOutputStream out) throws IOException
+  {
+    out.writeObject(from);
+    out.writeObject(to);
+  }//end: writeObject(ObjectOutputStream)
+
+  /**
+   * Reads the object from the given {@link ObjectInputStream}.
+   * <p>
+   * Reads the vertex-id integer arrays.
+   * 
+   * @param in {@link ObjectInputStream} to read from.
+   * @throws IOException
+   * @throws ClassNotFoundException
+   */
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException
+  {
+    from = (int []) in.readObject();
+    to   = (int []) in.readObject();
+  }//end: readObject(ObjectInputStream)
 }

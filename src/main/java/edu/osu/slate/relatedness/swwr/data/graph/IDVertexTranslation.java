@@ -28,14 +28,19 @@ import java.util.*;
  *   <li><b>Vertex</b> -- Internal vertex number used in the PageRank graph.</li>
  * </ul>
  * <p>
- * File input is a simple list of valid page numbers.
  * 
  * @author weale
- * @version 1.9
+ * @version 2.0-alpha
  * 
  */
-public class IDVertexTranslation {
+public class IDVertexTranslation implements Serializable
+{
 
+ /**
+  * 
+  */
+  private static final long serialVersionUID = 771210386820926081L;
+  
  /**
   * Integer array containing the values of the valid,
   * non-redirected IDs from the Wiki data set.
@@ -48,11 +53,29 @@ public class IDVertexTranslation {
  /**
   * Constructor.
   * <p>
+  * Reads in a new list of vertex-to-ID translations as an integer array.
+  * 
+  * @param vertexList Integer array of vertex-to-ID translations.
+  */
+  public IDVertexTranslation(int[] vertexList)
+  {
+    validList = new int[vertexList.length];
+    
+    for(int i = 0; i < validList.length; i++)
+    {
+      validList[i] = vertexList[i];
+    }
+  }//end: IDVertexTranslation(int[])
+  
+ /**
+  * Constructor.
+  * <p>
   * Takes the name of the <i>.vid file</i> generated from {@link CreateIDToVertexFile} as input.
   * 
   * @param filename File name of the <i>.vid file</i>.
   */
-  public IDVertexTranslation(String filename) {
+  public IDVertexTranslation(String filename)
+  {
     try
     {
       ObjectInputStream fileIn = new ObjectInputStream(new FileInputStream(filename));
@@ -61,7 +84,6 @@ public class IDVertexTranslation {
       
       //Ensure a sorted list
       Arrays.sort(validList);
-			
     }//end: try {}
     catch (ClassNotFoundException e)
     {
@@ -85,9 +107,10 @@ public class IDVertexTranslation {
   * 
   * @return The number of graph vertices.
   */
-  public int numVertices() {
+  public int numVertices()
+  {
     return validList.length;
-  }
+  }//end: numVertices()
 	
  /**
   * Determines if a Wiki ID value has a corresponding Vertex number.
@@ -95,9 +118,10 @@ public class IDVertexTranslation {
   * @param id Wiki ID Value
   * @return True if Wiki ID Value has a Vertex number. False otherwise.
   */
-  public boolean isValidWikiID(int id) {
+  public boolean isValidWikiID(int id)
+  {
     return (Arrays.binarySearch(validList, id) >= 0);
-  }
+  }//end: isValidWikiID(int)
 	
  /**
   * This method takes a Wiki ID and returns the graph vertex number.
@@ -107,9 +131,10 @@ public class IDVertexTranslation {
   * @param id Wiki ID value
   * @return Graph vertex value
   */
-  public int getVertex(int id) {
+  public int getVertex(int id)
+  {
     return Arrays.binarySearch(validList, id);
-  }
+  }//end: getVertex(int)
 	
  /**
   * Translates a Vertex number to a Wiki ID.
@@ -117,26 +142,46 @@ public class IDVertexTranslation {
   * @param vertex Vertex to translate.
   * @return Original Wiki ID.
   */
-  public int getID(int vertex) {
-    if(vertex > -1 && vertex < validList.length) {
+  public int getID(int vertex)
+  {
+    if(vertex > -1 && vertex < validList.length)
+    {
       return validList[vertex];
     }
-    else {
+    else
+    {
       return -1;
     }
-  }
+  }//end: getID(int)
 	
+  /**
+   * Writes the object to the given {@link ObjectOutputStream}.
+   * <p>
+   * Writes the vertex-id integer array to the file.
+   * 
+   * @param out {@link ObjectOutputStream} to be written to.
+   * @throws IOException
+   */
+  private void writeObject(ObjectOutputStream out) throws IOException
+  {
+    out.writeObject(validList);
+  }//end: writeObject(ObjectOutputStream)
+
+  /**
+   * Reads the object from the given {@link ObjectInputStream}.
+   * <p>
+   * Reads the vertex-id integer array.
+   * 
+   * @param in {@link ObjectInputStream} to read from.
+   * @throws IOException
+   * @throws ClassNotFoundException
+   */
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException
+  {
+    validList = (int []) in.readObject();
+  }//end: readObject(ObjectInputStream)
+  
   public static void main(String[] args) {
-    IDVertexTranslation vid = new IDVertexTranslation("/scratch/weale/data/binary/enwiki/20080103/enwiki-20080103-M.vid");
-    System.out.println(vid.isValidWikiID(12));
-    System.out.println(vid.isValidWikiID(13));
-    System.out.println(vid.isValidWikiID(156));
-    System.out.println(vid.getVertex(12));
-    System.out.println(vid.getVertex(12234));
-    System.out.println(vid.getVertex(1221612));
-    
-    for(int i=0; i<vid.validList.length; i++) {
-      System.out.println(vid.validList[i]);
-    }
+    //IDVertexTranslation vid = new IDVertexTranslation("/scratch/weale/data/binary/enwiki/20080103/enwiki-20080103-M.vid");
   }//end: main()
 }
