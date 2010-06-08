@@ -32,7 +32,7 @@ public class SplitFiles {
     }
     
     String[] tasks = {"ESL", "TOEFL", "RDWP300", "RDWP1K"};
-    int[] splits = {3,5,16,16};
+    int[] splits = {3,5,16,32};
     
     for(int currTask = 0; currTask < tasks.length; currTask++)
     {
