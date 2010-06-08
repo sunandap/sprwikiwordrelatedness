@@ -20,7 +20,7 @@ import java.util.*;
 
 public class GetIDS {
 
-	private static ConvertIDToTitle ctt;
+	//private static ConvertIDToTitle ctt;
 	
 	/**
 	 * @param args
@@ -32,7 +32,7 @@ public class GetIDS {
 		System.out.println("Opening Alias -> ID File");
 		AliasSFToID sf2ID = new AliasSFToID("/scratch/weale/data/binary/enwiktionary/20090203/enwiktionary-20090203-M.alf");		
 
-		ctt = new ConvertIDToTitle("/scratch/weale/data/binary/enwiktionary/20090203/enwiktionary-20090203-M.tid");
+		//ctt = new ConvertIDToTitle("/scratch/weale/data/binary/enwiktionary/20090203/enwiktionary-20090203-M.tid");
 		
 		Scanner s = new Scanner(new FileReader("/u/weale/data/wordpair/RDWP300.txt"));
 		

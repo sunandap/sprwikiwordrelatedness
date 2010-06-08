@@ -23,7 +23,7 @@ import java.io.Serializable;
  * @author weale
  * @version 1.0
  */
-public class VertexCount implements Serializable{
+public class VertexCount implements Serializable, Comparable {
   
  /**
    * 
@@ -81,5 +81,12 @@ public class VertexCount implements Serializable{
   */
   public int compareTo(VertexCount idc2) {
     return this.vertex - idc2.vertex;
+  }
+
+  public int compareTo(Object o)
+  {
+    if ( this == o )
+      return 0;
+    return ((VertexCount) o).compareTo(this);
   }
 }

@@ -1,5 +1,6 @@
 package edu.osu.slate.relatedness.swwr.data.category;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -7,15 +8,20 @@ import java.util.LinkedList;
 import edu.osu.slate.relatedness.swwr.data.category.CategoryGraph;
 
 /**
- * Breadth/Depth-first search nodes.
+ * Breadth-first search nodes.
  * <p>
  * Used in the {@link CategoryGraph} class.
  * 
  * @author weale
  *
  */
-public class VisitIDNode
+public class VisitIDNode implements Serializable
 {
+
+  /**
+   * 
+   */
+  private static final long serialVersionUID = 1L;
 
   /* Array of category IDs of the parents of the node */
   private int[] parentIndices;

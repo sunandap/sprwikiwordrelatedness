@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 
 /**
@@ -54,6 +56,17 @@ public class TermToVertexCount implements Serializable
     term = t;
     vertexCounts = new VertexCount[0];
   }
+
+  /**
+   * Constructor.
+   *  
+   * @param t Term to map to {@link VertexCount} pairs.
+   */
+   public TermToVertexCount(String t, VertexCount[] vc)
+   {
+     term = t;
+     vertexCounts = vc;
+   }
   
  /**
   * Gets the Term for this mapping.
@@ -73,6 +86,52 @@ public class TermToVertexCount implements Serializable
   public VertexCount[] getVertexCounts()
   {
     return vertexCounts;
+  }
+  
+ /**
+  *  
+  * @param cutoff
+  * @return
+  */
+  public VertexCount[] getTrimmedVertexCounts(double cutoff)
+  {
+    double totalCounts = 0;
+    for(int i = 0; i < vertexCounts.length; i++)
+    {
+      totalCounts += vertexCounts[i].getCount();
+    }//end: for(i)
+    
+    if(totalCounts == 0)
+    {
+      //System.out.println(term);
+    }
+    
+    LinkedList<VertexCount> list = new LinkedList<VertexCount>();
+    for(int i = 0; i < vertexCounts.length; i++)
+    {
+      if((vertexCounts[i].getCount() / totalCounts) >= cutoff)
+      {
+        list.add(vertexCounts[i]);
+      }
+    }//end: for(i)
+    
+    if(list.size() > 0)
+    {
+      VertexCount[] vcReturn = new VertexCount[list.size()];
+      Iterator<VertexCount> it = list.iterator();
+      int i = 0;
+      while(it.hasNext())
+      {
+        vcReturn[i] = it.next();
+        i++;
+      }//end: while(it)
+      
+      return vcReturn;
+    }
+    else
+    {
+      return null;
+    }
   }
   
  /**

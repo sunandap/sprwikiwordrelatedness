@@ -440,6 +440,15 @@ public class TermToVertexMapping implements Serializable, MappingInterface
       TermToVertexMapping tmp = (TermToVertexMapping) in.readObject();
       in.close();
       
+      boolean trim = Configuration.trimming.equals("t");
+      if(trim)
+      {
+        System.out.println("TRIM");
+      }
+      else
+      {
+        System.out.println(Configuration.trimming);
+      }
       // Convert Mapping to Algorithm
       if(Configuration.mapsource.equals("extitle"))
       {
@@ -447,27 +456,36 @@ public class TermToVertexMapping implements Serializable, MappingInterface
       }
       else if(Configuration.mapsource.equals("title"))
       {
-        tmp = new ApproximateMapping(tmp);
+        if(trim)
+        {
+          tmp = new TrimmedMapping(tmp);
+        }
+        else
+        {
+          tmp = new ApproximateMapping(tmp);
+        }
       }
       else if(Configuration.mapsource.equals("link"))
       {
-        tmp = new ApproximateMapping(tmp);
+        if(trim)
+        {
+          tmp = new TrimmedMapping(tmp);
+        }
+        else
+        {
+          tmp = new ApproximateMapping(tmp);
+        }
       }
       else if(Configuration.mapsource.equals("titlelink"))
       {
+        if(trim)
+        {
+          tmp = new TrimmedMapping(tmp);
+        }
+        else
+        {
         tmp = new ApproximateMapping(tmp);
-      }
-      else if(Configuration.mapsource.equals("t-title"))
-      {
-        tmp = new TrimmedMapping(tmp);
-      }
-      else if(Configuration.mapsource.equals("t-link"))
-      {
-        tmp = new TrimmedMapping(tmp);
-      }
-      else if(Configuration.mapsource.equals("t-titlelink"))
-      {
-        tmp = new TrimmedMapping(tmp);
+        }        
       }
       
       // Set stemming

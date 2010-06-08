@@ -18,6 +18,7 @@ package edu.osu.slate.relatedness.swwr.data.mapping;
 import java.io.*;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
@@ -105,7 +106,34 @@ public class VertexToTermMapping implements Serializable
 
     return null;
   }//end: getTermMappings(int)
+  
+  public TreeMap<Integer,Integer> generateTermVertexHistogram()
+  {
+    TreeMap<Integer,Integer> hist = new TreeMap<Integer,Integer>();
 
+    for(int i = 0; i < vertices.length; i++)
+    {
+      TermCount[] counts = vertices[i].getWordCounts();
+      int termVertexCount = counts.length;
+      
+      if(counts.length == 0)
+      {
+        System.out.println(vertices[i].getVertex());
+      }
+      else
+      {
+        int count = 1;
+        if(hist.containsKey(termVertexCount))
+        {
+          count += hist.get(termVertexCount);
+        }
+        hist.put(termVertexCount, count);
+      }
+    }//end: for(i)
+    
+    return hist;
+  }
+  
   public void joinMappings(VertexToTermMapping vtm)
   {
     int numToAdd = 0;

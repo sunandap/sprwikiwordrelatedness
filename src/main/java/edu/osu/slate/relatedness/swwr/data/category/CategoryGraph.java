@@ -15,7 +15,6 @@
 
 package edu.osu.slate.relatedness.swwr.data.category;
 
-import it.unimi.dsi.fastutil.ints.*;
 import java.io.*;
 import java.util.*;
 
@@ -30,8 +29,8 @@ import edu.osu.slate.relatedness.swwr.data.graph.WikiInvGraph;
  * @author weale
  *
  */
-public class CategoryGraph implements Serializable {
-
+public class CategoryGraph implements Serializable
+{
   /* Serialization ID */
   private static final long serialVersionUID = 1L;
 
