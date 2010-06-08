@@ -129,7 +129,7 @@ public class CreateLinkTermMapping {
     Scanner in = new Scanner(new FileReader(csvFile));
     
     // Set stem flag
-    stem = Configuration.stemming.equals("true");
+    stem = Configuration.stemming.equals("t");
     
     /* STEP 1
      * 
@@ -149,6 +149,7 @@ public class CreateLinkTermMapping {
       int count = Integer.parseInt(s.substring(lastComma+1));
       int id = Integer.parseInt(s.substring(secondLastComma+1,lastComma));
 
+      // Check for valid ID
       int vertex = -1;
       if(vid.isValidWikiID(id))
       {
@@ -158,7 +159,8 @@ public class CreateLinkTermMapping {
       {
         vertex = vid.getVertex(rdl.redirectIDToValidID(id));
       }
-        
+      
+      // Valid ID. Add term.
       if(vertex >= 0)
       {
         if(stem)
@@ -206,6 +208,7 @@ public class CreateLinkTermMapping {
       int count = Integer.parseInt(s.substring(lastComma+1));
       int id = Integer.parseInt(s.substring(secondLastComma+1,lastComma));
 
+      // Check for valid ID
       int vertex = -1;
       if(vid.isValidWikiID(id))
       {
@@ -216,6 +219,7 @@ public class CreateLinkTermMapping {
         vertex = vid.getVertex(rdl.redirectIDToValidID(id));
       }
         
+      // Valid ID. Add term.
       if(vertex >= 0)
       {
         valid++;
@@ -276,6 +280,7 @@ public class CreateLinkTermMapping {
        int count = Integer.parseInt(s.substring(lastComma+1));
        int id = Integer.parseInt(s.substring(secondLastComma+1,lastComma));
        
+       // Check for valid ID
        int vertex = -1;
        if(vid.isValidWikiID(id))
        {
@@ -286,6 +291,7 @@ public class CreateLinkTermMapping {
          vertex = vid.getVertex(rdl.redirectIDToValidID(id));
        }
          
+       // Valid ID. Add term.
        if(vertex >= 0)
        {
          vertexSet.add(vertex);
@@ -327,6 +333,7 @@ public class CreateLinkTermMapping {
        int count = Integer.parseInt(s.substring(lastComma+1));
        int id = Integer.parseInt(s.substring(secondLastComma+1,lastComma));
        
+       // Check for valid ID
        int vertex = -1;
        if(vid.isValidWikiID(id))
        {
@@ -337,6 +344,7 @@ public class CreateLinkTermMapping {
          vertex = vid.getVertex(rdl.redirectIDToValidID(id));
        }
        
+       // Valid ID. Add term.
        if(vertex >= 0)
        {
          int pos = Arrays.binarySearch(verticies, new VertexToTermCount(vertex), new VertexToTermCountComparator());
