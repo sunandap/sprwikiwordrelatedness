@@ -15,23 +15,21 @@
 
 package edu.osu.slate.relatedness.swwr.data.category;
 
-import it.unimi.dsi.fastutil.ints.*;
 import java.io.*;
 import java.util.*;
 
-import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
-import edu.osu.slate.relatedness.swwr.data.graph.WikiInvGraph;
+import edu.osu.slate.relatedness.Configuration;
 
 /**
- * Holds the acyclic category graph for Wikipedia/Wiktionary.
+ * Holds the category graph for our Wiki data set.
  * <p>
  * Graphs are 'rooted' at an individual node.
  * 
  * @author weale
  *
  */
-public class CategoryIDGraph implements Serializable {
-
+public class CategoryIDGraph implements Serializable
+{
   /* Serialization ID */
   private static final long serialVersionUID = 1L;
 
@@ -44,7 +42,8 @@ public class CategoryIDGraph implements Serializable {
  /**
   * Constructor.
   * <p>
-  * Takes the name of the root category as input and creates a temporary graph structure to build upon.
+  * Takes the name of the root category as input and 
+  * creates a temporary graph structure to build upon.
   * 
   * @param root Name of the root category
   */
@@ -57,15 +56,21 @@ public class CategoryIDGraph implements Serializable {
     graph[0] = cn;	
   }//end: CategoryGraph(int)
 
+ /**
+  * Gets the root node.
+  * 
+  * @return {@link CategoryIDNode} of the root.
+  */
   public CategoryIDNode getRoot()
   {
     CategoryIDNode tmp = new CategoryIDNode(rootID);
     int index = Arrays.binarySearch(graph, tmp);
 
     return graph[index];
-  }
+  }//end: getRoot()
+  
  /**
-  *  
+  * 
   * @return
   */
   public int getTotalNumVertices()
@@ -76,7 +81,7 @@ public class CategoryIDGraph implements Serializable {
   }
 	
  /**
-  * Adds a node to the graph with the given page ID.
+  * Adds a node to the graph with the given category ID.
   * <p>
   * Only adds a {@link CategoryNode} if the node is not already present.
   * 
@@ -246,34 +251,261 @@ public class CategoryIDGraph implements Serializable {
 //    }//end: for(i)
 //  }
   
-  public void removeCycles()
+  public BFSNode[] setBFSNodes()
   {
-    LinkedList<VisitIDNode> vistedList = new LinkedList<VisitIDNode>();
+    
+    BFSNode[] bfs = new BFSNode[graph.length];
+    
+    for(int i=0; i<bfs.length; i++)
+    {
+      bfs[i] = new BFSNode();
+    }
+    int depth = 0;
+    int setCount = 1;
+    TreeSet<Integer> ts = new TreeSet<Integer>();
+    ts.add(rootID);
+    while(setCount != 0)
+    {
+      setCount = 0;
+      TreeSet<Integer> newTS = new TreeSet<Integer>();
+      Iterator<Integer> it = ts.iterator();
+      while(it.hasNext())
+      {
+        // Get the category ID
+        int cat = it.next();
+        
+        // Find the index of the CategoryIDNode
+        CategoryIDNode tmp = new CategoryIDNode(cat);
+        int index = Arrays.binarySearch(graph, tmp);
+        
+        // Check to see if we've visited this yet
+        if(bfs[index].depth == -1)
+        {
+          // Set depth, ID
+          bfs[index].catID = cat;
+          bfs[index].depth = depth;
+          
+          // Check the children of the ID
+          int[] children = graph[index].getChildrenIDs();
+          for(int i = 0; children != null && i < children.length; i++)
+          {
+            tmp = new CategoryIDNode(children[i]);
+            index = Arrays.binarySearch(graph, tmp);
+            if(bfs[index].depth == -1)
+            {
+              newTS.add(children[i]);
+            }
+          }
+        }//end: if(bfs[index])
+      }//end: while(it)
+      
+      setCount = newTS.size();
+      ts = newTS;
+      newTS = null;
+    }//end: while(setCount)
+    return bfs;
+  }
+  
+  /**
+   *  
+   */
+   public void removeCycles()
+   {
+     int depth = 0;
+     int prevCount = -1;
+     int currCount = 0;
+     
+     // Get the root node
+     CategoryIDNode tmp = new CategoryIDNode(rootID);
+     int index = Arrays.binarySearch(graph, tmp);
 
-    //Find the root in the tree
+     while(currCount != prevCount)
+     {
+       prevCount = currCount;
+       
+       // Update max depth
+       depth++;
+       System.out.println("Depth: " + depth);
+       
+       // Run Iterative Deepening Algorithm
+       currCount = checkDFS(graph[index], new int[0], 1, depth);
+       
+       System.out.println("Count: " + currCount);
+     }//end: while(currCount)
+   }//end: removeCycles()
+  
+   private int checkDFS(CategoryIDNode cin, int[] parents, int currDepth, int maxDepth)
+   {
+     // Cut off at the bottom of the search
+     if(currDepth > maxDepth)
+     {
+       return 0;
+     }
+     
+     // Get children of current node
+     int[] children = cin.getChildrenIDs();
+     
+     // No Children
+     if(children == null)
+     { 
+       return 1;
+     }
+     // Set up new parent array
+     int[] newParents = new int[parents.length+1];
+     System.arraycopy(parents, 0, newParents, 0, parents.length);
+     newParents[parents.length] = cin.getCategoryID();
+     Arrays.sort(newParents);
+     
+     // For each child
+     int numAncestors = 0;
+     for(int i = 0; i < children.length; i++)
+     {
+       
+       if(Arrays.binarySearch(newParents, children[i]) >= 0)
+       {
+         // Child is in the list of parents.
+         // Remove the child to eliminate cycles
+         cin.removeChild(children[i]);
+       }
+       else
+       {
+         // Find the index of the child
+         CategoryIDNode cin2 = new CategoryIDNode(children[i]);
+         int index = Arrays.binarySearch(graph, cin2);
+         
+         // Run DFS at the new depth for the child
+         numAncestors += checkDFS(graph[index], newParents, currDepth+1, maxDepth);
+       }
+       
+     }//end: for(i)
+     return numAncestors + 1;
+   }//end: checkDFS(CategoryIDNode, int[], int, int)
+   
+ /**
+  *  
+  * @param bfs Array of {@link BFSNode} objects.
+  */
+  public void removeCycles(BFSNode[] bfs)
+  {
+    // Get the root node
     CategoryIDNode tmp = new CategoryIDNode(rootID);
     int index = Arrays.binarySearch(graph, tmp);
     
-    // Add the root to the VisitNode list
-    vistedList.add(new VisitIDNode(index, new int[0]));
-
-    // While there are nodes to visit
-    while(!vistedList.isEmpty())
-    {
-      // Remove the first node from the list
-      VisitIDNode vn = vistedList.removeFirst();
-      
-      // Make visit nodes for all the children
-      VisitIDNode[] arr = vn.makeChildrenVisitNodes(graph);
-      
-      // Add visit nodes to the list
-      for(int i = 0; arr != null && i < arr.length; i++)
-      {
-        vistedList.addLast(arr[i]);
-      }//end: for(i)
-      
-    }//end: while(!ts)
+    // Check starting at the root node
+    checkDFS(new int[0], graph[index], bfs, 0);
+  }
+  
+  public void checkDFS(int[] parents, CategoryIDNode cin, BFSNode[] bfs, int depth)
+  {
+    // Get the children of the node
+    int[] children = cin.getChildrenIDs();
+    int currID = cin.getCategoryID();
     
+    // Find the child in the graph array
+    CategoryIDNode tmp = new CategoryIDNode(currID);
+    int index = Arrays.binarySearch(graph, tmp);
+    
+    // Check for children
+    if(children == null)
+    {
+      return;
+    }
+    else if(Arrays.binarySearch(parents, currID) >= 0)
+    { // Loop Found
+      System.out.println("Cycle Found: " + cin.getCategoryID());
+      
+      // If the child 
+      //if(bfs[index].depth <= depth)
+      //{
+        cin.removeChild(currID);
+      //}
+      return;
+    }
+    
+    int[] newParents = new int[parents.length+1];
+    System.arraycopy(parents, 0, newParents, 0, parents.length);
+    newParents[parents.length] = cin.getCategoryID();
+    Arrays.sort(newParents);
+    // Check all children
+    for(int i = 0; i < children.length; i++)
+    {
+      checkDFS(newParents, graph[index], bfs, depth+1);
+    }//end: for(i)
+  }
+  
+ /**
+  * Removed cycles from the category tree. 
+  */
+  public void removeCycles2()
+  {
+    //Find the root in the tree
+    CategoryIDNode tmp = new CategoryIDNode(rootID);
+    int index = Arrays.binarySearch(graph, tmp);
+    String tempFile = Configuration.baseDir + Configuration.tempDir;
+    try
+    {
+      ObjectInputStream in;
+      
+      int count = 1;
+      boolean readOut1 = true;
+
+      ObjectOutputStream out = new ObjectOutputStream(
+                               new FileOutputStream(tempFile + "1"));
+      
+      // Add the root to the VisitNode File
+      out.writeObject(new VisitIDNode(index, new int[0]));
+      out.close();
+  
+      // While there are nodes to visit
+      while(count > 0)
+      {
+        count = 0;
+        if(readOut1)
+        {
+          out = new ObjectOutputStream(new FileOutputStream(tempFile + "2"));
+          in = new ObjectInputStream(new FileInputStream(tempFile + "1"));
+          readOut1 = false;
+        }
+        else
+        {
+          out = new ObjectOutputStream(new FileOutputStream(tempFile + "1"));
+          in = new ObjectInputStream(new FileInputStream(tempFile + "2"));
+          readOut1 = true;
+        }
+        
+        try
+        {
+          while(true)
+          {
+            // Remove the first node from the list
+            VisitIDNode vn = (VisitIDNode) in.readObject();
+            
+            // Make visit nodes for all the children
+            VisitIDNode[] arr = vn.makeChildrenVisitNodes(graph);
+            
+            // Add visit nodes to the list
+            for(int i = 0; arr != null && i < arr.length; i++)
+            {
+              out.writeObject(arr[i]);
+              count++;
+            }//end: for(i)
+          }
+        }
+        catch (IOException e) { }
+        catch (ClassNotFoundException e) { }
+        
+        in.close();
+        out.close();
+      }//end: while(!ts)  
+    }
+    catch (FileNotFoundException e)
+    {
+      e.printStackTrace();
+    }
+    catch (IOException e)
+    {
+      e.printStackTrace();
+    }
   }//end: removeCycles()
 
  /*
@@ -344,6 +576,25 @@ public class CategoryIDGraph implements Serializable {
 		
     return false;
   }//end: isMember(String)
+  
+  /**
+   * Checks to see if a given category name is a member of the graph.
+   * 
+   * @param name Name of the category
+   * @return true/false based on if the category name is found in the graph.
+   */
+   public CategoryIDNode getMember(int categoryID)
+   {
+     for(int i = 0; i < graph.length; i++)
+     {
+       if(graph[i].isCategoryID(categoryID))
+       {
+         return graph[i];
+       }//end: if(graph[i]
+     }//end: for(i)
+         
+     return null;
+   }//end: isMember(String)
 	
  /**
   * Gets the number of categories in the graph.
@@ -384,8 +635,7 @@ public class CategoryIDGraph implements Serializable {
     }
     ts = null;
     return cn;
-  }
-	
+  }//end: getParents(int)
 	
  /**
   * Writes the graph to a file.
@@ -397,12 +647,6 @@ public class CategoryIDGraph implements Serializable {
   */
   private void writeObject(ObjectOutputStream out) throws IOException
   {
-    /* Convert graph from CategoryNodes to ints */
-    for(int i = 0; i < graph.length; i++)
-    {
-      //graph[i].convertEdgesBeforeWrite(graph);
-    }
-		
     out.writeObject(graph);
     out.writeInt(rootID);
   }//end: writeObject()
@@ -420,11 +664,5 @@ public class CategoryIDGraph implements Serializable {
   {
     graph = (CategoryIDNode[]) in.readObject();
     rootID = in.readInt();
-		
-    /* Convert graph from ints to CategoryNodes */
-    for(int i = 0; i < graph.length; i++)
-    {
-      //graph[i].convertEdgesAfterRead(graph);
-    }//end:for(i)
   }//end: readObject()
 }

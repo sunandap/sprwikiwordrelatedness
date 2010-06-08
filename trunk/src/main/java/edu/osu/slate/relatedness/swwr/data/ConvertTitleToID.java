@@ -19,8 +19,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;
+
+import edu.osu.slate.relatedness.swwr.data.category.CategoryTitleToIDTranslation;
 
 /**
  * Translates Page titles to un-redirected Page ID values.
@@ -32,7 +36,7 @@ import java.util.Comparator;
  * @author weale
  *
  */
-public class TitleToIDTranslation
+public class ConvertTitleToID  implements Serializable
 {
 	
   /* List of Wiki Page titles*/
@@ -89,47 +93,54 @@ public class TitleToIDTranslation
   * 
   * @param temp
   */
-  private TitleToIDTranslation(TitleID[] temp)
+  public ConvertTitleToID(TitleID[] titleID)
   {
-    TitleID[] titleID = (TitleID[]) temp.clone();
-    createArrays(titleID);
-    titleID = null;
+    Arrays.sort(titleID, new TIDTitleComparator());
+    
+    titles = new String[titleID.length];
+    ids = new int[titleID.length];
+    
+    for(int i = 0; i < titles.length; i++)
+    {
+      titles[i] = titleID[i].getTitle();
+      ids[i] = titleID[i].getID();
+    }//end: for(i)
   }
 	
-  /**
-   * Constructor.
-   * <p>
-   * Takes a <i>.tid file</i> as its input.
-   * 
-   * @param filename Name of the <i>.tid file</i>.
-   */
-  public TitleToIDTranslation(String filename)
-  {
-    try
-    {
-      ObjectInputStream fileIn = new ObjectInputStream(
-                                 new FileInputStream(filename));
-      TitleID[] titleID = (TitleID[]) fileIn.readObject();
-      fileIn.close();
-
-      createArrays(titleID);
-      titleID = null; // Free memory (?)
-    }//end: try {}
-    catch (ClassNotFoundException e)
-    {
-      System.err.println("Problem converting to an integer array: " +
-                         filename);
-      e.printStackTrace();
-    }
-    catch (FileNotFoundException e) {
-      System.err.println("File not found: " + filename);
-      e.printStackTrace();
-    }
-    catch (IOException e) {
-      System.err.println("Problem reading from file: " + filename);
-      e.printStackTrace();
-    }
-  }//end: TitleToIDTranslation(String)
+//  /**
+//   * Constructor.
+//   * <p>
+//   * Takes a <i>.tid file</i> as its input.
+//   * 
+//   * @param filename Name of the <i>.tid file</i>.
+//   */
+//  public ConvertTitleToID(String filename)
+//  {
+//    try
+//    {
+//      ObjectInputStream fileIn = new ObjectInputStream(
+//                                 new FileInputStream(filename));
+//      TitleID[] titleID = (TitleID[]) fileIn.readObject();
+//      fileIn.close();
+//
+//      createArrays(titleID);
+//      titleID = null; // Free memory (?)
+//    }//end: try {}
+//    catch (ClassNotFoundException e)
+//    {
+//      System.err.println("Problem converting to an integer array: " +
+//                         filename);
+//      e.printStackTrace();
+//    }
+//    catch (FileNotFoundException e) {
+//      System.err.println("File not found: " + filename);
+//      e.printStackTrace();
+//    }
+//    catch (IOException e) {
+//      System.err.println("Problem reading from file: " + filename);
+//      e.printStackTrace();
+//    }
+//  }//end: TitleToIDTranslation(String)
 	
  /**
   * Turns an array of {@link TitleID} objects into corresponding
@@ -139,15 +150,31 @@ public class TitleToIDTranslation
   */
   private void createArrays(TitleID[] titleID)
   {
-    TitleIDComparator tcom = new TitleIDComparator();
-    Arrays.sort(titleID, tcom);
-    
-    titles = new String[titleID.length];
-    ids = new int[titleID.length];
-    
-    for(int i = 0; i < titles.length; i++) {
-      titles[i] = titleID[i].getTitle();
-      ids[i] = titleID[i].getID();
-    }//end: for(i)
+
   }//end: createArrays(TitleID[])
+  
+  /**
+   * Writes a {@link ConvertTitleToID} object to a file.
+   * 
+   * @param out Output file stream.
+   * @throws IOException
+   */
+   private void writeObject(ObjectOutputStream out) throws IOException
+   {
+     out.writeObject(titles);
+     out.writeObject(ids);
+   }//end: writeObject(ObjectOutputStream)
+
+  /**
+   * Reads a {@link ConvertTitleToID} object from a file.
+   * 
+   * @param in Input file stream.
+   * @throws IOException
+   * @throws ClassNotFoundException
+   */
+   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException
+   {
+     titles = (String[]) in.readObject();
+     ids = (int[]) in.readObject();
+   }//end: readObject(ObjectInputStream)
 }

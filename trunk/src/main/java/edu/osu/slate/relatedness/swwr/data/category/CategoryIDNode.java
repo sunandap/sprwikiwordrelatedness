@@ -3,18 +3,16 @@ package edu.osu.slate.relatedness.swwr.data.category;
 import java.io.*;
 import java.util.*;
 
-import edu.osu.slate.relatedness.swwr.data.category.CategoryGraph;
-import edu.osu.slate.relatedness.swwr.data.graph.WikiInvGraph;
-import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
-
 /**
  * Category graph nodes.
+ * <p>
+ * Each contains a list of parent IDs, children IDs.
  * 
  * @author weale
  *
  */
-public class CategoryIDNode implements Serializable, Comparable<Object> {
-
+public class CategoryIDNode implements Serializable, Comparable<Object>
+{
   /* Serialization variable */
   private static final long serialVersionUID = 1L;
 
@@ -29,12 +27,10 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
 
   /* Coverage count of the leaves of the category */
   private int vertexCoverage;
-
   private int inboundEdgeCoverage;
-  
   private int outboundEdgeCoverage;
   
-  /* Array of all immediate category leaves 
+  /* Array of all vertices that are immediate children of the category. 
    * 
    * Array contains vertex numbers from the graph.
    */
@@ -49,6 +45,7 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
   private boolean AllChildrenVerticesFinalized;
   private boolean inboundEdgeCountsFinalized;
   private boolean outboundEdgeCountsFinalized;
+  
   /**
    * Creates a category node for the tree.
    * <p>
@@ -76,12 +73,13 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
    * <p>
    * Only adds the ID if the parent is not already listed.
    * 
-   * @param parent {@link CategoryIDNode} of the parent.
+   * @param parentID Integer category ID of the parent.
    */
   public void addParent(int parentID)
   {
+    //No existing parents
     if(parentIDs == null)
-    { //No existing parents
+    { 
       parentIDs = new int[1];
       parentIDs[0] = parentID;
     }
@@ -97,42 +95,47 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
       Arrays.sort(parentIDs);
       tmpParents = null;
     }
-  }//end: addParent(CategoryNode)
+  }//end: addParent(int)
 
   /**
-   * Adds a child ID to the current node.  Only adds the ID if the child is not already listed.
+   * Adds a child category ID to the current node.
+   * <p>
+   * Only adds the ID if the child is not already listed.
    * 
-   * @param child {@link CategoryIDNode} of the child.
+   * @param childID Integer category ID of the child.
    */
   public void addChild(int childID)
   {
+    //No existing children
     if(childrenIDs == null)
     {
       childrenIDs = new int[1];
       childrenIDs[0] = childID;
     }
     else if(Arrays.binarySearch(childrenIDs, childID) < 0)
-    {
-      //Set new size
-      int size = childrenIDs.length;
+    { // Child not found in existing children
       
-      //Create Child
-      int[] tmpChildren = new int[size+1];
-      System.arraycopy(childrenIDs, 0, tmpChildren, 0, size);
-      tmpChildren[size] = childID;
+      // Create new array, copy child into new array
+      int[] tmpChildren = new int[childrenIDs.length+1];
+      System.arraycopy(childrenIDs, 0, tmpChildren, 0, childrenIDs.length);
+      tmpChildren[childrenIDs.length] = childID;
       childrenIDs = tmpChildren;
       
       Arrays.sort(childrenIDs);
       tmpChildren = null;
     }
-  }//end: addChild(CategoryNode)
+  }//end: addChild(int)
 
   /**
-   * Removes the named child from the list of children.
+   * Removes the child ID from the list of children.
    * <p>
-   * Used by {@link CategoryGraph} and {@link VisitNode} to break cycles in the graph.
+   * Used by {@link CategoryGraph} and {@link VisitNode}
+   * to break cycles in the graph.
+   * <p>
+   * Does NOT do error checking. Child ID is assumed
+   * to be present in the array.
    * 
-   * @param name Name of the child to remove.
+   * @param id Category ID of the child to remove.
    */
   public void removeChild(int id)
   {
@@ -150,14 +153,17 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
     
     childrenIDs = tmpChildren;
     Arrays.sort(childrenIDs);
-  }//end: removeChild(String)
+  }//end: removeChild(int)
 
   /**
-   * Removes the named parent from the list of parents.
+   * Removes the parent ID from the list of parents.
    * <p>
    * Used by {@link CategoryGraph} to remove non-root reachable nodes in the graph.
+   * <p>
+   * Does NOT do error checking. Parent ID is assumed
+   * to be present in the array.
    * 
-   * @param name Name of the parent to remove.
+   * @param id Category ID of the parent to remove.
    */
   public void removeParent(int id)
   {
@@ -175,7 +181,7 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
     
     parentIDs = tmpParents;
     Arrays.sort(parentIDs);
-  }//end: removeParent(String)
+  }//end: removeParent(int)
 
   /**
    * Gets the ID of the category.
@@ -190,8 +196,8 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
   /**
    * Compares a given Wiki ID to the ID of this CategoryNode.
    * 
-   * @param name Category ID being searched for.
-   * @return Boolean value of whether or not the searched name is the ID of the node.
+   * @param id Category ID being searched for.
+   * @return Boolean value of whether or not the searched ID is the ID of the node.
    */
   public boolean isCategoryID(int id)
   {
@@ -199,28 +205,29 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
   }
 
   /**
-   * Adds the given leafID to the current list of category leaves.
+   * Adds the given vertex number to the current list of category leaves.
    * 
    * @param vertexNum Graph vertex number.
    */
   public void addImmediateVertex(int vertexNum)
   {
+    // No immediate vertices
     if(immediateVertices == null)
     {
       immediateVertices = new int[1];
       immediateVertices[0] = vertexNum;
     }
     else if(Arrays.binarySearch(immediateVertices, vertexNum) < 0)
-    {// Leaf not already in category
-      int[] tmpLeaves = new int[immediateVertices.length+1];
-      System.arraycopy(immediateVertices, 0, tmpLeaves, 0, immediateVertices.length);
-      tmpLeaves[immediateVertices.length] = vertexNum;
-      immediateVertices = tmpLeaves;
+    {  // Vertex not already in category
+      int[] tmpVertices = new int[immediateVertices.length+1];
+      System.arraycopy(immediateVertices, 0, tmpVertices, 0, immediateVertices.length);
+      tmpVertices[immediateVertices.length] = vertexNum;
+      immediateVertices = tmpVertices;
       
       Arrays.sort(immediateVertices);
-      tmpLeaves = null;
+      tmpVertices = null;
     }
-  }//end: addImmediateLeaf(int)
+  }//end: addImmediateVertex(int)
 
  /**
   * Adds the given vertex number to the current list of category vertices.
@@ -229,13 +236,14 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
   */
   private void addAncestorVertex(int vertexNum)
   {
+    // No ancestor vertices
     if(allVertices == null)
     {
       allVertices = new int[1];
       allVertices[0] = vertexNum;
     }
     else if(Arrays.binarySearch(allVertices, vertexNum) < 0)
-    {//Leaf not already an ancestor
+    {  // Vertex not already an ancestor
       int[] tmpLeaves = new int[allVertices.length+1];
       System.arraycopy(allVertices, 0, tmpLeaves, 0, allVertices.length);
       tmpLeaves[allVertices.length] = vertexNum;
@@ -244,7 +252,7 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
       Arrays.sort(allVertices);
       tmpLeaves = null;
     }
-  }//end: addAncestorLeaf(int)
+  }//end: addAncestorVertex(int)
 
  /**
   * Adds the given leafID to the current list of category leaves.
@@ -453,7 +461,7 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
     }// getCoverage()
     
  /**
-  * Determines if the given vertex number is a leaf vertex of the category.
+  * Determines if the given vertex number is an immediate vertex of the category.
   * 
   * @return Boolean value based on if the leaf is found.
   */
@@ -469,11 +477,11 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
     }
   }//end: isImmediateVertex(int)
 
-  /**
-   * Determines if the given vertex number is a leaf vertex of the category.
-   * 
-   * @return Boolean value based on if the leaf is found.
-   */
+ /**
+  * Determines if the given vertex number is a vertex of the category.
+  * 
+  * @return Boolean value based on if the leaf is found.
+  */
   public boolean isAncestorVertex(int vertex)
   {
     if(allVertices != null)
@@ -486,21 +494,21 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
     }
   }//end: isAncestorVertex(int)
 
-  /**
-   * Accessor for the list of children
-   * 
-   * @return {@link CategoryIDNode} array
-   */
+ /**
+  * Gets the list of children IDs
+  * 
+  * @return Integer array of children IDs.
+  */
   public int[] getChildrenIDs()
   {
     return childrenIDs;
   }//end: getChildren()
 
-  /**
-   * Accessor for the list of parents
-   * 
-   * @return {@link CategoryIDNode} array
-   */
+ /**
+  * Gets the list of parent IDs
+  * 
+  * @return Integer array of parent IDs.
+  */
   public int[] getParentIDs()
   {
     return parentIDs;
@@ -741,21 +749,21 @@ public class CategoryIDNode implements Serializable, Comparable<Object> {
 //    }
 //  }//end: convertEdgesAfterRead(CategoryNode[])
   
-  /**
-   * Comparator based on node IDs.
-   */
+ /**
+  * Comparator based on node IDs.
+  */
   public int compareTo(Object cn)
   {
     return this.catID - ((CategoryIDNode)cn).catID;
   }//end: compareTo(Object)
 
-  /**
-   * Comparator based on node IDs.
-   * 
-   * @param o1 {@link CategoryIDNode}
-   * @param o2 {@link CategoryIDNode}
-   * @return comparison of the two objects based on node name.
-   */
+ /**
+  * Comparator based on node IDs.
+  * 
+  * @param o1 {@link CategoryIDNode}
+  * @param o2 {@link CategoryIDNode}
+  * @return comparison of the two objects based on node name.
+  */
   public int compare(Object o1, Object o2)
   {
     return ((CategoryIDNode)o1).catID - ((CategoryIDNode)o2).catID;

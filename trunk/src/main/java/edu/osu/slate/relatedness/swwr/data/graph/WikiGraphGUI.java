@@ -28,11 +28,16 @@ import edu.osu.slate.relatedness.swwr.data.ConvertTitleToID;
 public class WikiGraphGUI extends JFrame
 {
 
+  /**
+   * 
+   */
+  private static final long serialVersionUID = 1L;
+  
   private JPanel IDPanel;
   private JTable Table;
   private JScrollPane IDScroll;
 
-  private static int[] validList;
+  //private static int[] validList;
 
   private static String graphFile;
 
