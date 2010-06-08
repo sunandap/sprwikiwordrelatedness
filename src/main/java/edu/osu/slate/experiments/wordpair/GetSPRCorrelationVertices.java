@@ -31,22 +31,14 @@ import edu.osu.slate.relatedness.swwr.data.mapping.algorithm.TermToVertexMapping
  * @author weale
  *
  */
-public class GetSPRCorrelations
+public class GetSPRCorrelationVertices
 {
 
   private static String graphFile;
 
   private static String taskFile;
 
-  private static String resultAvgFile;
-
-  private static String resultMaxFile;
-
-  private static String resultAvgFileAll;
-
-  private static String resultMaxFileAll;
-  
-  private static String resultVectFile;
+  private static String vertexFile;
 
   /* */
   private static String wordVertexMapFile;
@@ -87,21 +79,14 @@ public class GetSPRCorrelations
     String resultFile = Configuration.resultDir +
                         "/wordpair/" +
                         Configuration.type + "/" +
-                        Configuration.type + "_" +
-                        Configuration.date + "_" +
-                        Configuration.graph + "_" +
-                        Configuration.mapsource + "_" + 
+                        "/vertex/" +
+                        Configuration.type + "-" +
+                        Configuration.date + "-" +
+                        Configuration.graph + "-" +
+                        Configuration.mapsource + "-" + 
                         Configuration.stemming;
     
-    resultAvgFile = resultFile + "_avg_";
-    
-    resultMaxFile = resultFile + "_max_";
-
-    resultAvgFileAll = resultFile + "_avg_all_";
-    
-    resultMaxFileAll = resultFile + "_max_all_";
-
-    resultVectFile = resultFile + "_vect_";
+    vertexFile = resultFile;    
   }
 
   /**
@@ -154,26 +139,29 @@ public class GetSPRCorrelations
       
       System.out.println("Setting Synonym Task: " + Configuration.task);
       Scanner s = new Scanner(new FileReader(taskFile));
-      PrintWriter pwAvg = new PrintWriter(resultAvgFile + tasks[currTask] + ".m");
-      PrintWriter pwMax = new PrintWriter(resultMaxFile + tasks[currTask] + ".m");
+//      PrintWriter pwAvg = new PrintWriter(resultAvgFile + tasks[currTask] + ".csv");
+//      PrintWriter pwMax = new PrintWriter(resultMaxFile + tasks[currTask] + ".csv");
       
-      PrintWriter pwAvgAll = new PrintWriter(resultAvgFileAll + tasks[currTask] + ".m");
-      PrintWriter pwMaxAll = new PrintWriter(resultMaxFileAll + tasks[currTask] + ".m");
+      PrintWriter pwVertices = new PrintWriter(vertexFile + "-" + tasks[currTask] + ".csv");
+//      PrintWriter pwMaxAll = new PrintWriter(resultMaxFileAll + tasks[currTask] + ".csv");
       
       int i=0;
       
-      StringBuffer humanVals = new StringBuffer("human = [");
-      StringBuffer sprMaxVals = new StringBuffer("spr = [");
-      StringBuffer sprAvgVals = new StringBuffer("spr = [");
-
-      StringBuffer humanValsAll = new StringBuffer("human = [");
-      StringBuffer sprMaxValsAll = new StringBuffer("spr = [");
-      StringBuffer sprAvgValsAll = new StringBuffer("spr = [");
+//      StringBuffer humanVals = new StringBuffer("human = [");
+//      StringBuffer sprMaxVals = new StringBuffer("spr = [");
+//      StringBuffer sprAvgVals = new StringBuffer("spr = [");
+//
+//      StringBuffer humanValsAll = new StringBuffer("human = [");
+//      StringBuffer sprMaxValsAll = new StringBuffer("spr = [");
+//      StringBuffer sprAvgValsAll = new StringBuffer("spr = [");
 
       while(s.hasNext())
       {
         String str = s.nextLine();
         String[] arr = str.split(",");
+        
+        int maxV11 = -1, maxV12 = -1;
+        int maxV21 = -1, maxV22 = -1;
 
         double d12 = -10.0;
         VertexCount[] vc1 = getVertices(arr[0]);
@@ -187,6 +175,11 @@ public class GetSPRCorrelations
           for(int y = 0; vc2 != null && y <vc2.length; y++)
           {
             int v2 = vc2[y].getVertex();
+            if(relValues[v2] > d12)
+            {
+              maxV11 = v1;
+              maxV12 = v2;
+            }
             d12 = Math.max(d12, relValues[v2]);
           }
         }//end: for(x)
@@ -200,6 +193,11 @@ public class GetSPRCorrelations
           for(int y = 0; vc1 != null && y <vc1.length; y++)
           {
             int v1 = vc1[y].getVertex();
+            if(relValues[v1] > d21)
+            {
+              maxV21 = v1;
+              maxV22 = v2;
+            }
             d21 = Math.max(d21, relValues[v1]);
           }
         }//end: for(x)
@@ -219,14 +217,19 @@ public class GetSPRCorrelations
         
         if(max != -10)
         {
-          sprMaxVals = sprMaxVals.append(max + ";");
-          sprAvgVals = sprAvgVals.append(avg + ";");
-          humanVals = humanVals.append(arr[2] + ";");
+          pwVertices.println(maxV11 + "," + maxV12 + "," + maxV21 + "," + maxV22);
+//          sprMaxVals = sprMaxVals.append(max + ";");
+//          sprAvgVals = sprAvgVals.append(avg + ";");
+//          humanVals = humanVals.append(arr[2] + ";");
+        }
+        else
+        {
+          pwVertices.println("-1,-1,-1,-1");
         }
         
-        sprMaxValsAll = sprMaxValsAll.append(max + ";");
-        sprAvgValsAll = sprAvgValsAll.append(avg + ";");
-        humanValsAll = humanValsAll.append(arr[2] + ";");
+//        sprMaxValsAll = sprMaxValsAll.append(max + ";");
+//        sprAvgValsAll = sprAvgValsAll.append(avg + ";");
+//        humanValsAll = humanValsAll.append(arr[2] + ";");
   
         i++;
         System.out.print(".");
@@ -236,46 +239,47 @@ public class GetSPRCorrelations
         }
       }//end while(hasNext())
       System.out.println();
+      pwVertices.close();
       
-      sprMaxVals = sprMaxVals.deleteCharAt(sprMaxVals.length()-1);
-      sprAvgVals = sprAvgVals.deleteCharAt(sprAvgVals.length()-1);
-      humanVals = humanVals.deleteCharAt(humanVals.length()-1);
+//      sprMaxVals = sprMaxVals.deleteCharAt(sprMaxVals.length()-1);
+//      sprAvgVals = sprAvgVals.deleteCharAt(sprAvgVals.length()-1);
+//      humanVals = humanVals.deleteCharAt(humanVals.length()-1);
+//      
+//      sprMaxVals = sprMaxVals.append("];");
+//      sprAvgVals = sprAvgVals.append("];");
+//      humanVals = humanVals.append("];");
       
-      sprMaxVals = sprMaxVals.append("];");
-      sprAvgVals = sprAvgVals.append("];");
-      humanVals = humanVals.append("];");
-      
-      pwAvg.println(sprAvgVals);
-      pwAvg.println(humanVals);
-      pwAvg.println("corr(human, spr, 'type', 'Pearson')");
-      pwAvg.println("corr(human, spr, 'type', 'Spearman')");
-      pwAvg.close();
-
-      pwMax.println(sprMaxVals);
-      pwMax.println(humanVals);
-      pwMax.println("corr(human, spr, 'type', 'Pearson')");
-      pwMax.println("corr(human, spr, 'type', 'Spearman')");
-      pwMax.close();
-      
-      sprMaxValsAll = sprMaxValsAll.deleteCharAt(sprMaxValsAll.length()-1);
-      sprAvgValsAll = sprAvgValsAll.deleteCharAt(sprAvgValsAll.length()-1);
-      humanValsAll = humanValsAll.deleteCharAt(humanValsAll.length()-1);
-      
-      sprMaxValsAll = sprMaxValsAll.append("];");
-      sprAvgValsAll = sprAvgValsAll.append("];");
-      humanValsAll = humanValsAll.append("];");
-      
-      pwAvgAll.println(sprAvgValsAll);
-      pwAvgAll.println(humanValsAll);
-      pwAvgAll.println("corr(human, spr, 'type', 'Pearson')");
-      pwAvgAll.println("corr(human, spr, 'type', 'Spearman')");
-      pwAvgAll.close();
-
-      pwMaxAll.println(sprMaxValsAll);
-      pwMaxAll.println(humanValsAll);
-      pwMaxAll.println("corr(human, spr, 'type', 'Pearson')");
-      pwMaxAll.println("corr(human, spr, 'type', 'Spearman')");
-      pwMaxAll.close();
+//      pwAvg.println(sprAvgVals);
+//      pwAvg.println(humanVals);
+//      pwAvg.println("corr(human, spr, 'type', 'Pearson')");
+//      pwAvg.println("corr(human, spr, 'type', 'Spearman')");
+//      pwAvg.close();
+//
+//      pwMax.println(sprMaxVals);
+//      pwMax.println(humanVals);
+//      pwMax.println("corr(human, spr, 'type', 'Pearson')");
+//      pwMax.println("corr(human, spr, 'type', 'Spearman')");
+//      pwMax.close();
+//      
+//      sprMaxValsAll = sprMaxValsAll.deleteCharAt(sprMaxValsAll.length()-1);
+//      sprAvgValsAll = sprAvgValsAll.deleteCharAt(sprAvgValsAll.length()-1);
+//      humanValsAll = humanValsAll.deleteCharAt(humanValsAll.length()-1);
+//      
+//      sprMaxValsAll = sprMaxValsAll.append("];");
+//      sprAvgValsAll = sprAvgValsAll.append("];");
+//      humanValsAll = humanValsAll.append("];");
+//      
+//      pwAvgAll.println(sprAvgValsAll);
+//      pwAvgAll.println(humanValsAll);
+//      pwAvgAll.println("corr(human, spr, 'type', 'Pearson')");
+//      pwAvgAll.println("corr(human, spr, 'type', 'Spearman')");
+//      pwAvgAll.close();
+//
+//      pwMaxAll.println(sprMaxValsAll);
+//      pwMaxAll.println(humanValsAll);
+//      pwMaxAll.println("corr(human, spr, 'type', 'Pearson')");
+//      pwMaxAll.println("corr(human, spr, 'type', 'Spearman')");
+//      pwMaxAll.close();
     }//end: for(currTask)
     
     // Calculate the relatedness correlation

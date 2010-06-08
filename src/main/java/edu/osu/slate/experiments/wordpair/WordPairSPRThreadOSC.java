@@ -31,11 +31,12 @@ import edu.osu.slate.relatedness.swwr.data.mapping.algorithm.TermToVertexMapping
  * @author weale
  *
  */
-public class WordPairSPRThread extends Thread
+public class WordPairSPRThreadOSC extends Thread
 {
 
   private String taskFile;
   private String task;
+  private int part;
 
   private String resultAvgFile;
   private String resultAvgFileAll;
@@ -43,11 +44,15 @@ public class WordPairSPRThread extends Thread
   private String resultMaxFile;
   private String resultMaxFileAll;
   
+  private String resultHumanFile;
+  private String resultHumanFileAll;
+  
   private String resultVectFile;
 
   private Scanner s;
   private PrintWriter pwAvg, pwMax;
   private PrintWriter pwAvgAll, pwMaxAll;
+  private PrintWriter pwHuman, pwHumanAll;
   private PrintWriter vertices;
   
   /* */
@@ -60,24 +65,24 @@ public class WordPairSPRThread extends Thread
    */
   private void setFiles()
   {
-    taskFile = Configuration.taskDir + task + ".txt";
+    taskFile = Configuration.taskDir + "/" + task + ".part" + part;
     
     String resultFile = Configuration.resultDir +
                         "/wordpair/" +
                         Configuration.type + "/" +
-                        Configuration.type + "_" +
-                        Configuration.date + "_" +
-                        Configuration.graph + "_" +
-                        Configuration.mapsource + "_" + 
+                        Configuration.type + "-" +
+                        Configuration.date + "-" +
+                        Configuration.graph + "-" +
+                        Configuration.mapsource + "-" + 
                         Configuration.stemming;
     
-    resultAvgFile = resultFile + "_avg_";
-    
-    resultMaxFile = resultFile + "_max_";
+    resultAvgFile = resultFile + "-avg-";    
+    resultMaxFile = resultFile + "-max-";
+    resultHumanFile = resultFile + "-human-";
 
-    resultAvgFileAll = resultFile + "_avg_all_";
-    
-    resultMaxFileAll = resultFile + "_max_all_";
+    resultAvgFileAll = resultFile + "-avg-all-";
+    resultMaxFileAll = resultFile + "-max-all-";
+    resultHumanFileAll = resultFile + "-human-all-";
 
     resultVectFile = Configuration.resultDir +
                      "/wordpair/" +
@@ -88,7 +93,7 @@ public class WordPairSPRThread extends Thread
                      Configuration.graph + "-" +
                      Configuration.mapsource + "-" + 
                      Configuration.stemming + "-" +
-                     task + ".csv";
+                     task + ".part" + part;
   }
   
   /**
@@ -103,11 +108,12 @@ public class WordPairSPRThread extends Thread
    * @param rFile Results file name.
    * @param vFile Vertex number file name.
    */
-   public WordPairSPRThread(TermToVertexMapping t2v, WikiGraph wg, String task)
+   public WordPairSPRThreadOSC(TermToVertexMapping t2v, WikiGraph wg, String task, int part)
    {
      term2Vertex = t2v;
      spr = new SourcedPageRank(wg);
      this.task = task;
+     this.part = part;
      setFiles();
    }
   
@@ -154,15 +160,18 @@ public class WordPairSPRThread extends Thread
 
   public void run()
   {
-    System.out.println("Setting Synonym Task: " + task);
+    System.out.println("Setting Synonym Task: " + task + ".part" + part);
     try 
     {
       s = new Scanner(new FileReader(taskFile));
-      pwAvg = new PrintWriter(resultAvgFile + task + ".m");
-      pwMax = new PrintWriter(resultMaxFile + task + ".m");
+      pwAvg = new PrintWriter(resultAvgFile + task + ".part"+ part);
+      pwMax = new PrintWriter(resultMaxFile + task + ".part"+ part);
       
-      pwAvgAll = new PrintWriter(resultAvgFileAll + task + ".m");
-      pwMaxAll = new PrintWriter(resultMaxFileAll + task + ".m");
+      pwAvgAll = new PrintWriter(resultAvgFileAll + task + ".part"+ part);
+      pwMaxAll = new PrintWriter(resultMaxFileAll + task + ".part"+ part);
+      
+      pwHuman = new PrintWriter(resultHumanFile + task + ".part"+ part);
+      pwHumanAll = new PrintWriter(resultHumanFileAll + task + ".part"+ part);
       
       vertices = new PrintWriter(resultVectFile);
     }
@@ -173,14 +182,6 @@ public class WordPairSPRThread extends Thread
     }
     int i=0;
     
-    StringBuffer humanVals = new StringBuffer("human = [");
-    StringBuffer sprMaxVals = new StringBuffer("spr = [");
-    StringBuffer sprAvgVals = new StringBuffer("spr = [");
-
-    StringBuffer humanValsAll = new StringBuffer("human = [");
-    StringBuffer sprMaxValsAll = new StringBuffer("spr = [");
-    StringBuffer sprAvgValsAll = new StringBuffer("spr = [");
-
     while(s.hasNext())
     {
       String str = s.nextLine();
@@ -243,9 +244,9 @@ public class WordPairSPRThread extends Thread
       
       if(max != -10)
       {
-        sprMaxVals = sprMaxVals.append(max + ";");
-        sprAvgVals = sprAvgVals.append(avg + ";");
-        humanVals = humanVals.append(arr[2] + ";");
+        pwMax.println(max);
+        pwAvg.println(avg);
+        pwHuman.println(arr[2]);
         vertices.println(maxV11 + "," + maxV12 + "," + maxV21 + "," + maxV22);
       }
       else
@@ -253,55 +254,18 @@ public class WordPairSPRThread extends Thread
         vertices.println("-1,-1,-1,-1");
       }
       
-      sprMaxValsAll = sprMaxValsAll.append(max + ";");
-      sprAvgValsAll = sprAvgValsAll.append(avg + ";");
-      humanValsAll = humanValsAll.append(arr[2] + ";");
-
+      pwMaxAll.println(max);
+      pwAvgAll.println(avg);
+      pwHumanAll.println(arr[2]);
       i++;
     }//end while(hasNext())
     vertices.close();
-    System.out.println();
-    
-    sprMaxVals = sprMaxVals.deleteCharAt(sprMaxVals.length()-1);
-    sprAvgVals = sprAvgVals.deleteCharAt(sprAvgVals.length()-1);
-    humanVals = humanVals.deleteCharAt(humanVals.length()-1);
-    
-    sprMaxVals = sprMaxVals.append("];");
-    sprAvgVals = sprAvgVals.append("];");
-    humanVals = humanVals.append("];");
-    
-    pwAvg.println(sprAvgVals);
-    pwAvg.println(humanVals);
-    pwAvg.println("corr(human, spr, 'type', 'Pearson')");
-    pwAvg.println("corr(human, spr, 'type', 'Spearman')");
     pwAvg.close();
-
-    pwMax.println(sprMaxVals);
-    pwMax.println(humanVals);
-    pwMax.println("corr(human, spr, 'type', 'Pearson')");
-    pwMax.println("corr(human, spr, 'type', 'Spearman')");
     pwMax.close();
-    
-    sprMaxValsAll = sprMaxValsAll.deleteCharAt(sprMaxValsAll.length()-1);
-    sprAvgValsAll = sprAvgValsAll.deleteCharAt(sprAvgValsAll.length()-1);
-    humanValsAll = humanValsAll.deleteCharAt(humanValsAll.length()-1);
-    
-    sprMaxValsAll = sprMaxValsAll.append("];");
-    sprAvgValsAll = sprAvgValsAll.append("];");
-    humanValsAll = humanValsAll.append("];");
-    
-    pwAvgAll.println(sprAvgValsAll);
-    pwAvgAll.println(humanValsAll);
-    pwAvgAll.println("corr(human, spr, 'type', 'Pearson')");
-    pwAvgAll.println("corr(human, spr, 'type', 'Spearman')");
     pwAvgAll.close();
-
-    pwMaxAll.println(sprMaxValsAll);
-    pwMaxAll.println(humanValsAll);
-    pwMaxAll.println("corr(human, spr, 'type', 'Pearson')");
-    pwMaxAll.println("corr(human, spr, 'type', 'Spearman')");
     pwMaxAll.close();
+    pwHuman.close();
+    pwHumanAll.close();
+    System.out.println("Finished Synonym Task: " + task + ".part" + part);
   }
-  
-
 }
