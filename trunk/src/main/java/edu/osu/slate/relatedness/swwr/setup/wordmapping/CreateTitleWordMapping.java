@@ -25,8 +25,10 @@ import edu.osu.slate.relatedness.swwr.data.graph.IDVertexTranslation;
 
 /**
  * Creates a simple word-to-vertex mapping for the Wiki graph using the Page title.
- * 
+ * <p>
  * Requires initialized {@link IDVertexTranslation} and {@link IDIDRedirect} classes.  All output text is lowercase.
+ * <p>
+ * Implements more advanced processing to eliminate disambiguation on page titles.
  * 
  * Configuration File Requirements
  * <ul>

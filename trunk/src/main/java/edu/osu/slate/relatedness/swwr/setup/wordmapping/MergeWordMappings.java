@@ -90,12 +90,12 @@ public class MergeWordMappings {
                   Configuration.date + "-" +
                   Configuration.graph;
 
-    wordVertexMapFile1 = dir + data + "-title-f.wvc";
-    wordVertexMapFile2 = dir + data + "-link-f.wvc";
-    wordVertexMapFileOut = dir + data + "-titlelink-f.wvc";
-    vertexWordMapFile1 = dir + data + "-title-f.vwc";
-    vertexWordMapFile2 = dir + data + "-link-f.vwc";
-    vertexWordMapFileOut = dir + data + "-titlelink-f.vwc";
+    wordVertexMapFile1 = dir + data + "-title-"+Configuration.stemming + ".tvc";
+    wordVertexMapFile2 = dir + data + "-link-"+Configuration.stemming + ".tvc";
+    wordVertexMapFileOut = dir + data + "-titlelink-"+Configuration.stemming + ".tvc";
+    vertexWordMapFile1 = dir + data + "-title-"+Configuration.stemming + ".vtc";
+    vertexWordMapFile2 = dir + data + "-link-"+Configuration.stemming + ".vtc";
+    vertexWordMapFileOut = dir + data + "-titlelink-"+Configuration.stemming + ".vtc";
   }
   
   /**

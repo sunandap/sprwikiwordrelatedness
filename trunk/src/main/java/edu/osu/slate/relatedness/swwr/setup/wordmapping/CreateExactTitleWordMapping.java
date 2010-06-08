@@ -17,7 +17,6 @@ package edu.osu.slate.relatedness.swwr.setup.wordmapping;
 
 import java.io.*;
 import java.util.*;
-import java.util.regex.Pattern;
 
 import edu.osu.slate.relatedness.Configuration;
 import edu.osu.slate.relatedness.swwr.data.graph.IDIDRedirect;
@@ -62,7 +61,7 @@ public class CreateExactTitleWordMapping {
   private static IDIDRedirect rdr;
     
   /**
-   * Creates a (word, ID) pairs from the titles of a wiki data source.
+   * Creates a (term, vertex) pairs from the titles of a wiki data source.
    * 
    * @param args
    * @throws IOException 
@@ -147,7 +146,6 @@ public class CreateExactTitleWordMapping {
     * Create the List of Surface Forms.
     */
     System.out.println("Writing Page Titles and Vertex IDs to File");
-    Pattern p = Pattern.compile("\\([\\p{Graph}\\p{Blank}]+\\)");
 
     // Strip beginning lines from file
     String str = in.nextLine();
@@ -225,4 +223,4 @@ public class CreateExactTitleWordMapping {
     
     out.close();
   }//end: main()
-}//end: CreateSimpleWordMapping
+}//end: CreateExactTitleWordMapping
