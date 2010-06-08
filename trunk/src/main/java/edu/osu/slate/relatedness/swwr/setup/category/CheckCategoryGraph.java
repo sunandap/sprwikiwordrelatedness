@@ -19,11 +19,8 @@ import java.io.*;
 import java.util.*;
 
 import edu.osu.slate.relatedness.Configuration;
-import edu.osu.slate.relatedness.swwr.data.category.BFSNode;
 import edu.osu.slate.relatedness.swwr.data.category.CategoryIDGraph;
 import edu.osu.slate.relatedness.swwr.data.category.CategoryIDNode;
-import edu.osu.slate.relatedness.swwr.data.category.CategoryTitleToIDTranslation;
-import edu.osu.slate.relatedness.swwr.data.category.IDToCategoryTitleTranslation;
 
 /**
  * Program to create the category tree.
