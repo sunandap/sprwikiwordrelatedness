@@ -5,11 +5,11 @@ import java.util.*;
 
 import edu.osu.slate.relatedness.Configuration;
 
-import edu.osu.slate.relatedness.swwr.data.ConvertIDToTitle;
 import edu.osu.slate.relatedness.swwr.data.category.CategoryGraph;
 import edu.osu.slate.relatedness.swwr.data.category.CategoryTitleToIDTranslation;
 import edu.osu.slate.relatedness.swwr.data.category.IDToCategoryTitleTranslation;
 import edu.osu.slate.relatedness.swwr.data.graph.IDVertexTranslation;
+import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
 import edu.osu.slate.relatedness.swwr.data.graph.WikiInvGraph;
 
 /**
@@ -19,6 +19,7 @@ import edu.osu.slate.relatedness.swwr.data.graph.WikiInvGraph;
  * <ul>
  * <li> Vertex Counting
  * <li> Inbound Edge Counting
+ * <li> Outbound Edge Counting
  * </ul>
  * <p>
  * <ul>
@@ -44,6 +45,10 @@ public class CreateGraphCounts {
 
   /* Name of the previously generated inverted graph file */
   private static String invBinaryFileName;
+
+  /* Name of the previously generated graph file */
+  private static String wgBinaryFileName;
+
   
   /* Name of the previously generated category-to-ID file */
   private static String cidBinaryFileName;
@@ -53,6 +58,7 @@ public class CreateGraphCounts {
   
   /* Translates category IDs to category titles */
   private static IDToCategoryTitleTranslation ID2Cat;
+  
   /**
    * Sets the names of:<br>
    * 
@@ -86,6 +92,7 @@ public class CreateGraphCounts {
                         "-categorylinks.sql";
     
     vidBinaryFileName = bindir + data + ".vid";
+    wgBinaryFileName = bindir + data + ".wgp";
     invBinaryFileName = bindir + data + ".iwgp";
 
     cidBinaryFileName = bindir +
@@ -96,9 +103,9 @@ public class CreateGraphCounts {
     cgraphFileName = bindir +
                     Configuration.type  + "-" +
                     Configuration.date  + "-" +
-                    Configuration.graph + ".cgraph";
+                    Configuration.graph + ".agraph";
     
-    outputCatFileName = bindir + data + count+ ".cgraph";
+    outputCatFileName = bindir + data + count + ".agraph";
   }
   
   /**
@@ -123,7 +130,8 @@ public class CreateGraphCounts {
 
     /* Open .cid file */
     ObjectInputStream in = null;
-    try {
+    try
+    {
       in = new ObjectInputStream(new FileInputStream(cidBinaryFileName));       
       System.out.println("Opening .cid file.");
       Cat2ID = (CategoryTitleToIDTranslation)in.readObject();
@@ -139,7 +147,8 @@ public class CreateGraphCounts {
     /* Open .cgraph file */
     System.out.println("Read .cgraph file.");
     CategoryGraph catGraph = null;
-    try {
+    try
+    {
       in = new ObjectInputStream(new FileInputStream(cgraphFileName));
       catGraph = (CategoryGraph) in.readObject();
     }
@@ -157,15 +166,19 @@ public class CreateGraphCounts {
     System.out.println("Opening .vid file.");
     IDVertexTranslation vids = new IDVertexTranslation(vidBinaryFileName);
 
-    /* STEP 2a
+    /* STEP 3
      * 
-     * Open inverted graph file (for edge counting)
+     * Open graph files (for edge counting)
      */
-    WikiInvGraph wg = null;
+    WikiInvGraph iwg = null;
     System.out.println("Opening .iwgp file.");
-    wg = new WikiInvGraph(invBinaryFileName);
+    iwg = new WikiInvGraph(invBinaryFileName);
+    
+    WikiGraph wg = null;
+    System.out.println("Opening .wgp file.");
+    wg = new WikiGraph(wgBinaryFileName);
 
-    /* STEP 3:
+    /* STEP 4
      * 
      * Open Category source for reading.
      */		
@@ -176,7 +189,7 @@ public class CreateGraphCounts {
       str = catIN.nextLine();
     }
 
-    /* STEP 4:
+    /* STEP 5
      * 
      * Add vertices to the category graph
      */
@@ -224,7 +237,7 @@ public class CreateGraphCounts {
             
             if(catGraph.isMember(parentCategoryID))
             { // Parent is found!
-              catGraph.addLeaf(parentCategoryID, childVertexNum);
+              catGraph.addVertex(parentCategoryID, childVertexNum);
             }//end: if(catGraph)
           }//end: if(vids && Cat2ID)
           
@@ -244,7 +257,8 @@ public class CreateGraphCounts {
      * - the edge count   [propagateInboundEdgeCounts()]
      */
     System.out.println("Propogating Counts");
-    catGraph.setInboundEdgeCounts(wg);
+    catGraph.setInboundEdgeCounts(iwg);
+    catGraph.setOutboundEdgeCounts(wg);
     System.out.println("Propogating Counts Done");
 
     /* STEP 6:

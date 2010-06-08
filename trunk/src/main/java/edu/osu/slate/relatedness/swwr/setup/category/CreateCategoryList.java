@@ -40,7 +40,7 @@ import edu.osu.slate.relatedness.swwr.data.category.IDToCategoryTitleTranslation
  * In the Category Tree creation pipeline, this program is:
  * <ul>
  *   <li>Preceded by -none-
- *   <li>Followed by {@link CreateCategoryAcyclicGraph}
+ *   <li>Followed by {@link CreateCategoryGraph}
  * </ul>
  * 
  * @author weale
@@ -224,13 +224,13 @@ public class CreateCategoryList {
     CategoryTitleToIDTranslation Cat2ID = new CategoryTitleToIDTranslation(tids);
     IDToCategoryTitleTranslation ID2Cat = new IDToCategoryTitleTranslation(tids);
 
-    int tmp = Cat2ID.getID("Fundamental");
-    System.out.println(tmp);
-    String[] arrs = ID2Cat.getTitle(tmp);
-    for(int i=0; i<arrs.length; i++)
-    {
-      System.out.println(arrs[i]);
-    }
+//    int tmp = Cat2ID.getID("Fundamental");
+//    System.out.println(tmp);
+//    String[] arrs = ID2Cat.getTitle(tmp);
+//    for(int i=0; i<arrs.length; i++)
+//    {
+//      System.out.println(arrs[i]);
+//    }
     
     /* STEP: 5
      * 
