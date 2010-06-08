@@ -59,8 +59,8 @@ public class CreateCategoryCoverage {
    * @param args
    * @throws IOException 
    */
-  public static void main(String[] args) throws IOException {
-    // TODO Auto-generated method stub
+  public static void main(String[] args) throws IOException
+  {
     TreeMap<String,Integer> TitleToID = new TreeMap<String,Integer>();
     parseConfigurationFile("/scratch/weale/data/config/enwiktionary/CreateTitleWordMapping.xml");
     
@@ -186,7 +186,7 @@ public class CreateCategoryCoverage {
              }
              else if(rdl.isRedirectID(id))
              {
-               vertex = rdl.redirectIDToVertex(id);
+               vertex = vid.getVertex(rdl.redirectIDToValidID(id));
              }
              //System.out.println(title);
              int catID = -1;
@@ -269,7 +269,7 @@ public class CreateCategoryCoverage {
              }
              else if(rdl.isRedirectID(id))
              {
-               vertex = rdl.redirectIDToVertex(id);
+               vertex = vid.getVertex(rdl.redirectIDToValidID(id));
              }
              //System.out.println(title);
              int catID = -1;
