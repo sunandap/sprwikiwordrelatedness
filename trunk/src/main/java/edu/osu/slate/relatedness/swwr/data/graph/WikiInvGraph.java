@@ -98,6 +98,36 @@ public class WikiInvGraph implements Serializable
     }
   }//end: WikiInvGraph(String)
   
+  public WikiInvGraph(int[][] igraph2, float[][] igraphtrans)
+  {
+    igraph = new int[igraph2.length][];
+    tProb = new float[igraphtrans.length][];
+    
+    for(int i = 0; i < this.igraph.length; i++)
+    {
+      if(igraph2[i] != null)
+      {
+        igraph[i] = new int[igraph2[i].length];
+        tProb[i] = new float[igraph2[i].length];
+        
+        for(int j = 0; j < igraph[i].length; j++)
+        {
+          igraph[i][j] = igraph2[i][j];
+        }//end: for(j)
+        
+        for(int j = 0; j < igraphtrans[i].length; j++)
+        {
+          tProb[i][j] = igraphtrans[i][j];          
+        }//end: for(j)
+      }
+      else
+      {
+        igraph[i] = null;
+        tProb[i] = null;
+      }//end: else
+    }//end: for(i)
+  }   
+
   /**
    * Returns the inbound links for a given vertex.
    * 
