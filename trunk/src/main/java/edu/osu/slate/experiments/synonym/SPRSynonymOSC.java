@@ -16,7 +16,9 @@
 package edu.osu.slate.experiments.synonym;
 
 import java.io.*;
+import java.util.LinkedList;
 
+import edu.osu.slate.experiments.wordpair.WordPairSPRThreadOSC;
 import edu.osu.slate.relatedness.Configuration;
 import edu.osu.slate.relatedness.swwr.data.*;
 import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
@@ -45,17 +47,20 @@ import edu.osu.slate.relatedness.swwr.data.mapping.algorithm.TermToVertexMapping
  * @author weale
  *
  */
-public class SPRSynonymR1K
+public class SPRSynonymOSC
 {
 
   // Names of the input mapping and graph files
   private static String termVertexMapFile;
   private static String graphFile;
 
-  // RDWP files
-  private static String rdwp1kTaskFile;
-  private static String rdwp1kResultFile;
-  private static String rdwp1kVertexFile;
+  // ESL files
+  private static String taskFile;
+  private static String resultFile;
+  private static String vertexFile;
+  
+  private static String task;
+  private static int numSplits;
   
   // Mapping and Graph Objects
   private static WikiGraph wgp;
@@ -88,23 +93,36 @@ public class SPRSynonymR1K
     
     graphFile = dir + data + transitionSource + ".wgp";
     
-    rdwp1kTaskFile = Configuration.taskDir + "/RDWP1K.part";
+    taskFile = Configuration.taskDir + "/" + task + ".part";
     
-    rdwp1kResultFile = Configuration.resultDir +
-                        "/synonym/" +
-                        Configuration.type + "/" +
-                        "RDWP1K-(" +
-                        Configuration.mapsource + "-" +
-                        Configuration.stemming + ")-(" +
-                        data+transitionSource + ").part";
+    resultFile = Configuration.resultDir +
+                 "/synonym/" +
+                 Configuration.type + "/" +
+                 task + "-(" +
+                 Configuration.mapsource + "-" +
+                 Configuration.stemming + ")-(" +
+                 data+transitionSource + ").part";
     
-    rdwp1kVertexFile = Configuration.resultDir +
-                        "/synonym/" +
-                        Configuration.type + "/vertex/" +
-                        "RDWP1K-(" +
-                        Configuration.mapsource + "-" +
-                        Configuration.stemming + ")-(" +
-                        data+transitionSource + ").part";
+    vertexFile = Configuration.resultDir +
+                    "/synonym/" +
+                    Configuration.type + "/vertex/" +
+                    task + "-(" +
+                    Configuration.mapsource + "-" +
+                    Configuration.stemming + ")-(" +
+                    data+transitionSource + ").part";
+    
+    if(task.equals("ESL"))
+    {
+      numSplits = 3;
+    }
+    else if(task.equals("TOEFL"))
+    {
+      numSplits = 5;
+    }
+    else if(task.contains("RDWP"))
+    {
+      numSplits = 8;
+    }
   }
   
   /**
@@ -120,7 +138,7 @@ public class SPRSynonymR1K
     
     Configuration.parseConfigurationFile(args[1]);
     Configuration.baseDir = args[0];
-    
+    task = "";
     setFiles();
 
     // Open Wiki Graph
@@ -139,17 +157,29 @@ public class SPRSynonymR1K
       System.exit(1);
     }
     
+    // Start Task Threads
+    LinkedList<String> tasks = new LinkedList<String>();
+    for(int i=2; i<args.length; i++)
+    {
+      tasks.add(args[i]);
+    }
+    
     // Open Mapping
     System.out.println("Opening Word To Vertex Mapping: " + 
         Configuration.mapsource + "-" + Configuration.stemming);
     term2Vertex = TermToVertexMapping.getMapping(termVertexMapFile);
     
-    // Start Task Threads
-    for(int i = 0; i < 8; i++)
+    for(int currTask = 0; currTask < tasks.size(); currTask++)
     {
-      (new Thread(new SPRThread(term2Vertex, wgp, rdwp1kTaskFile + i,
-          rdwp1kResultFile + i, rdwp1kVertexFile + i))).start();
-    }
+      task = tasks.get(currTask);
+      setFiles();
+      for(int part = 0; part < numSplits; part++)
+      {
+        // Start Task Threads
+        (new Thread(new SPRThread(term2Vertex, wgp, taskFile + part,
+                                  resultFile + part, vertexFile + part))).start();
+      }//end: for(part)
+    }//end: for(currTask)
   }//end: main
   
 }

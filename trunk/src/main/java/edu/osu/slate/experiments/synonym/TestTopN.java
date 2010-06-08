@@ -12,6 +12,7 @@ import edu.osu.slate.relatedness.swwr.algorithm.SourcedPageRank;
 import edu.osu.slate.relatedness.swwr.data.AliasSFToID;
 import edu.osu.slate.relatedness.swwr.data.AliasStrings;
 import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
+import edu.osu.slate.relatedness.swwr.data.mapping.TermToVertexCount;
 import edu.osu.slate.relatedness.swwr.data.mapping.VertexCount;
 import edu.osu.slate.relatedness.swwr.data.mapping.VertexToTermMapping;
 import edu.osu.slate.relatedness.swwr.data.mapping.TermCount;
@@ -120,24 +121,24 @@ public class TestTopN {
     
     SourcedPageRank ngd = new SourcedPageRank(wgp);
     
-    VertexCount[] vertices = word2Vertex.getVertexMappings("apple");
-    for(int i=0 ;i<vertices.length; i++)
-    {
-      int vertex = vertices[i].getVertex();
-      double [] vals = ngd.getRelatedness(vertex);
-      RelVertex[] rels = new RelVertex[vals.length];
-      for(int j=0; j<rels.length; j++)
-      {
-        rels[j] = new RelVertex(vals[j], j);
-      }
-      Arrays.sort(rels, new RelVertexComparator());
-      for(int j=0; j<20; j++)
-      {
-        TermCount[] wc = vertex2Word.getWordMappings(rels[j].getVertex());
-        System.out.println(wc[0].getWord() + "\t"+ rels[j].getRel());
-      }
-      System.out.println();
-    }
+//    TermToVertexCount[] vertices = word2Vertex.getVertexMappings("apple");
+//    for(int i=0 ;i<vertices.length; i++)
+//    {
+//      int vertex = vertices[i].getVertex();
+//      double [] vals = ngd.getRelatedness(vertex);
+//      RelVertex[] rels = new RelVertex[vals.length];
+//      for(int j=0; j<rels.length; j++)
+//      {
+//        rels[j] = new RelVertex(vals[j], j);
+//      }
+//      Arrays.sort(rels, new RelVertexComparator());
+//      for(int j=0; j<20; j++)
+//      {
+//        TermCount[] wc = vertex2Word.getWordMappings(rels[j].getVertex());
+//        System.out.println(wc[0].getWord() + "\t"+ rels[j].getRel());
+//      }
+//      System.out.println();
+//    }
   }
 
 }

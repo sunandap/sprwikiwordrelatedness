@@ -188,43 +188,43 @@ public class TextVectorCompare {
       /* Find the Surface Form ID of the given word */
       String[] candidateSourceWords = Common.resolve(arr[0], word2Vertex);
       
-      for(int x = 0; candidateSourceWords != null && x < candidateSourceWords.length; x++)
-      {
-        
-        VertexCount[] originalVertex = word2Vertex.getVertexMappings(candidateSourceWords[x]);
-        
-        for(int y = 0; originalVertex != null && y < originalVertex.length; y++)
-        {
-          
-          /* Get relatedness distributions for the ID */
-          int fromVertex = originalVertex[y].getVertex();
-  
-          /* For each potential confusion item */
-          for(int i = 1; i <= vals.length; i++)
-          {
-            /* Break string into all possible resolvable words */
-            String[] candidateWords = Common.resolve(arr[i], word2Vertex);
-  
-            for(int j = 0; candidateWords != null && j < candidateWords.length; j++)
-            {
-              /* For each potential ID for the surface form */
-              VertexCount[] candidateVertices = word2Vertex.getVertexMappings(candidateWords[j]);
-              
-              for(int k = 0; candidateVertices != null && k < candidateVertices.length; k++)
-              {
-                int toVertex = candidateVertices[k].getVertex();
-                
-                if(toVertex >= 0)
-                {
-                  double val = tvc.getCOSMeasure(fromVertex, toVertex);
-                  /* For each potential ID for the surface form */
-                  vals[i-1] = Math.max(vals[i-1], val);
-                }
-              }//end: for(k)
-            }//end: for(j)
-          }//end: for(i)
-        }//end: for(y)
-      }//end: for(x)
+//      for(int x = 0; candidateSourceWords != null && x < candidateSourceWords.length; x++)
+//      {
+//        
+//        VertexCount[] originalVertex = word2Vertex.getVertexMappings(candidateSourceWords[x]);
+//        
+//        for(int y = 0; originalVertex != null && y < originalVertex.length; y++)
+//        {
+//          
+//          /* Get relatedness distributions for the ID */
+//          int fromVertex = originalVertex[y].getVertex();
+//  
+//          /* For each potential confusion item */
+//          for(int i = 1; i <= vals.length; i++)
+//          {
+//            /* Break string into all possible resolvable words */
+//            String[] candidateWords = Common.resolve(arr[i], word2Vertex);
+//  
+//            for(int j = 0; candidateWords != null && j < candidateWords.length; j++)
+//            {
+//              /* For each potential ID for the surface form */
+//              VertexCount[] candidateVertices = word2Vertex.getVertexMappings(candidateWords[j]);
+//              
+//              for(int k = 0; candidateVertices != null && k < candidateVertices.length; k++)
+//              {
+//                int toVertex = candidateVertices[k].getVertex();
+//                
+//                if(toVertex >= 0)
+//                {
+//                  double val = tvc.getCOSMeasure(fromVertex, toVertex);
+//                  /* For each potential ID for the surface form */
+//                  vals[i-1] = Math.max(vals[i-1], val);
+//                }
+//              }//end: for(k)
+//            }//end: for(j)
+//          }//end: for(i)
+//        }//end: for(y)
+//      }//end: for(x)
 
       /* Check results */
 
