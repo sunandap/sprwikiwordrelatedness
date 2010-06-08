@@ -99,14 +99,14 @@ public class CreateRedirectFiles {
     
     /* STEP 1
      * 
-     * Open the files for 
+     * Open files.
      */
     System.out.println("Reading ID-Vertex Translation File");
     IDVertexTranslation vids = null;
     try
     {
       ObjectInputStream objIn = new ObjectInputStream(new FileInputStream(vidFileName));
-      vids = (IDVertexTranslation) objIn.readObject();;
+      vids = (IDVertexTranslation) objIn.readObject();
       objIn.close();
     }
     catch(Exception e)
@@ -131,106 +131,12 @@ public class CreateRedirectFiles {
       System.exit(1);
     }
     
-//    /* STEP 1
-//     * 
-//     * Read all titles that must be redirected.
-//     */
-//    Scanner in = new Scanner(new FileReader(redirectFileName));
-//
-//    // Contains X
-//    Object2IntAVLTreeMap<String> titleToIDMap = new Object2IntAVLTreeMap<String>();
-//
-//    // Contains a list of the IDs to redirect
-//    IntAVLTreeSet IDsToRedirect = new IntAVLTreeSet();
-//
-//    String str = in.nextLine();
-//    while(str.indexOf("INSERT INTO") == -1)
-//    {
-//      str = in.nextLine();
-//    }
-//
-//    while(str != null && !str.trim().equals("")) {
-//      str = str.substring(str.indexOf("(")+1, str.length()-3);
-//
-//      // Split the String into the page information
-//      String [] arr = str.split("\\),\\(");
-//      for(int i = 0; i < arr.length; i++)
-//      {
-//        String [] info = arr[i].split(",");
-//
-//        // Check if the information is in the correct format
-//        if(info.length >= 3) {
-//
-//          // Extract Namespace Information
-//          String namespace = info[1];
-//
-//          String title = info[2];
-//          for(int j=3; j<info.length;j++){
-//            title = title + "," + info[j];
-//          }
-//
-//          // Add the title if it's in the main namespace
-//          if(namespace.equals("0")) {
-//            IDsToRedirect.add(Integer.parseInt(info[0]));
-//            titleToIDMap.put(title, -1);
-//          }
-//        }//end: if(info.length)
-//      }//end: for(i)
-//
-//      str = in.nextLine();
-//    }//end: while()
-//    in.close();
-//
-//    /* STEP 2
-//     * 
-//     * Find the IDs for the redirect titles.
-//     */
-//    in = new Scanner(new FileReader(pageFileName));
-//
-//    str = in.nextLine();
-//    while(str.indexOf("INSERT INTO") == -1)
-//    {
-//      str = in.nextLine();
-//    }
-//
-//    while(str != null && !str.trim().equals("")) {
-//      str = str.substring(str.indexOf("(")+1, str.length()-3);
-//
-//      // Split the String into the page information
-//      String [] arr = str.split("\\d\\),\\(");
-//      for(int i = 0; i < arr.length; i++)
-//      {
-//        String [] info = arr[i].split(",");
-//
-//        // Check if the information is in the correct format
-//        if(info.length >= 11) {
-//
-//          // Extract page, namespace and redirect information
-//          int ID = Integer.parseInt(info[0]);
-//          String namespace = info[1];
-//
-//          String title = info[2];
-//          for(int j = 3; j < info.length - 8; j++){
-//            title = title + "," + info[j];
-//          }
-//
-//
-//          // Add the ID if it's in the needed namespace and not a redirect
-//          if(namespace.equals("0") && titleToIDMap.containsKey(title)) {
-//            titleToIDMap.put(title, ID);
-//          }
-//        }//end: if(info.length)
-//      }//end: for(i)
-//
-//      str = in.nextLine();
-//    }//end: while()
-//    in.close();
-
-    /* STEP 4
+    /* STEP 2
      * 
-     * Open redirect file and resolve Title->ID pairs.
+     * Set up initial redirects.
      * 
-     * All pairs should be in the following form: (Redr -> Redr U Vld)
+     * All redirects are as-is. That is, the resulting IDs
+     * may or may not be valid for our given graph.
      */
     System.out.println("Populating Initial Redirects");
     Int2IntAVLTreeMap IDToIDRedirect = new Int2IntAVLTreeMap();
@@ -287,15 +193,15 @@ public class CreateRedirectFiles {
     }//end: while()
     in.close();
 
-    /* STEP 5
+    /* STEP 3
      * 
      * Given ID to ID redirects, follow and converge the destination IDs
      * to a valid graph vertex (if possible).
      */
     System.out.println("Converging Redirects");
     boolean converged = false;
-    //Int2IntAVLTreeMap IDToVertexRedirect = (Int2IntAVLTreeMap) IDToIDRedirect.clone();
-
+    Int2IntAVLTreeMap Redirect = (Int2IntAVLTreeMap) IDToIDRedirect.clone();
+    
     while(!converged)
     {
       converged = true;
@@ -316,22 +222,23 @@ public class CreateRedirectFiles {
           if(fromID == toID)
           {
             // Self-redirect
-            IDToIDRedirect.remove(fromID);
+            Redirect.remove(fromID);
           }
 
           else if(IDToIDRedirect.get(toID) == IDToIDRedirect.defaultReturnValue())
           {
             // Redirect is not listed, or not in-scope of the graph
-            IDToIDRedirect.remove(fromID);
+            Redirect.remove(fromID);
           }
           else
           {
             // Redirect is valid, update list w/ new redirect value.
-            IDToIDRedirect.put(fromID, IDToIDRedirect.get(toID));
+            Redirect.put(fromID, IDToIDRedirect.get(toID));
           }
         }
       }//end: while(it)
-      //IDToIDRedirect = (Int2IntAVLTreeMap) IDToVertexRedirect.clone();
+      
+      IDToIDRedirect = (Int2IntAVLTreeMap) Redirect.clone();
     }//end: while(!converged)
 
     /* STEP 6
@@ -339,8 +246,8 @@ public class CreateRedirectFiles {
      * Create output arrays
      */
     System.out.println("Writing Redirect Arrays");
-    int[] IDs = new int[IDToIDRedirect.size()];
-    int[] vertices = new int[IDToIDRedirect.size()];
+    int[] fromID = new int[IDToIDRedirect.size()];
+    int[] redirID = new int[IDToIDRedirect.size()];
     int i = 0;
 
     ObjectSortedSet<Map.Entry<Integer, Integer>> oss = IDToIDRedirect.entrySet();
@@ -348,8 +255,8 @@ public class CreateRedirectFiles {
     while(it.hasNext())
     {
       Map.Entry<Integer, Integer> me = it.next();
-      IDs[i] = me.getKey();
-      vertices[i] = vids.getVertex(me.getValue());
+      fromID[i] = me.getKey();
+      redirID[i] = me.getValue();
       i++;
     }
 
@@ -361,7 +268,7 @@ public class CreateRedirectFiles {
     try
     {
       ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(outputFileName));
-      IDIDRedirect obj = new IDIDRedirect(IDs, vertices);
+      IDIDRedirect obj = new IDIDRedirect(fromID, redirID);
       out.writeObject(obj);
       out.close();
     }
