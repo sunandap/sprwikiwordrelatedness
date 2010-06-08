@@ -16,7 +16,7 @@
 package edu.osu.slate.relatedness.swwr.algorithm;
 
 import edu.osu.slate.relatedness.RelatednessInterface;
-import edu.osu.slate.relatedness.swwr.data.WikiGraph;
+import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
 
 /**
  * Implementation of the Sourced PageRank <b>(SPR)</b> version of vertex relatedness on a graph.
@@ -29,7 +29,7 @@ import edu.osu.slate.relatedness.swwr.data.WikiGraph;
  * @author weale
  * @version 1.0
  */
-public class SourcedPageRank extends PageRank implements RelatednessInterface{
+public class SourcedPageRank extends PageRank implements RelatednessInterface {
 	
 	/**
 	 * 
@@ -275,7 +275,6 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface{
 				tmp += GM_old[x];
 				GM_new[x] = 0;
 			}
-
 
 			numIterations++;
 		}while(change > 0.002);

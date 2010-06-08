@@ -19,12 +19,11 @@ import edu.osu.slate.relatedness.RelatednessTerm;
 import edu.osu.slate.relatedness.WordRelatedness;
 import edu.osu.slate.relatedness.swwr.data.AliasSFToID;
 import edu.osu.slate.relatedness.swwr.data.AliasStrings;
-import edu.osu.slate.relatedness.swwr.data.WikiGraph;
 
 /**
  * Main class for Sourced PageRank word relatedness.
  * <p>
- * Encapsulates {@link SourcedPageRank} graph and the {@link WordToVertexMapping} and {@link VertexToWordMapping} objects.
+ * Encapsulates {@link SourcedPageRank} graph and the {@link ExactMapping} and {@link VertexToTermMapping} objects.
  * 
  * @author weale
  *
