@@ -123,7 +123,7 @@ public class SPRCompare {
     {
       Configuration.parseConfigurationFile("/scratch/weale/data/config/enwiktionary/SynonymTask.xml");
     }
-    
+    Configuration.transitions = "simple";
     setFiles();
 
     System.out.println("Setting Synonym Task: " + Configuration.task);
