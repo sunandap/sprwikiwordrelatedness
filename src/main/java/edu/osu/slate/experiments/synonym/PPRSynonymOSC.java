@@ -47,7 +47,7 @@ import edu.osu.slate.relatedness.swwr.data.mapping.algorithm.TermToVertexMapping
  * @author weale
  *
  */
-public class SPRSynonymOSC
+public class PPRSynonymOSC
 {
 
   // Names of the input mapping and graph files
@@ -180,7 +180,7 @@ public class SPRSynonymOSC
       for(int part = 0; part < numSplits; part++)
       {
         // Start Task Threads
-        (new Thread(new SPRThread(term2Vertex, wgp, taskFile + part,
+        (new Thread(new PPRThread(term2Vertex, wgp, taskFile + part,
                                   resultFile + part, vertexFile + part))).start();
       }//end: for(part)
     }//end: for(currTask)
