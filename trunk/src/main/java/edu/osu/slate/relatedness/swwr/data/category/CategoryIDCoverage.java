@@ -21,8 +21,8 @@ package edu.osu.slate.relatedness.swwr.data.category;
  * @author weale
  * @version 1.0
  */
-public class CategoryIDCoverage {
-
+public class CategoryIDCoverage
+{
   private int catID;
   private int catCount;
   private float coverage;
