@@ -25,8 +25,8 @@ import java.util.Arrays;
  * @author weale
  *
  */
-public class VertexToCategoryIDCoverage {
-  
+public class VertexToCategoryIDCoverage
+{
   private int vertex;
   
   private CategoryIDCoverage[] cats;

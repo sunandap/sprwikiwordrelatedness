@@ -251,61 +251,6 @@ public class CategoryIDGraph implements Serializable
 //    }//end: for(i)
 //  }
   
-  public BFSNode[] setBFSNodes()
-  {
-    
-    BFSNode[] bfs = new BFSNode[graph.length];
-    
-    for(int i=0; i<bfs.length; i++)
-    {
-      bfs[i] = new BFSNode();
-    }
-    int depth = 0;
-    int setCount = 1;
-    TreeSet<Integer> ts = new TreeSet<Integer>();
-    ts.add(rootID);
-    while(setCount != 0)
-    {
-      setCount = 0;
-      TreeSet<Integer> newTS = new TreeSet<Integer>();
-      Iterator<Integer> it = ts.iterator();
-      while(it.hasNext())
-      {
-        // Get the category ID
-        int cat = it.next();
-        
-        // Find the index of the CategoryIDNode
-        CategoryIDNode tmp = new CategoryIDNode(cat);
-        int index = Arrays.binarySearch(graph, tmp);
-        
-        // Check to see if we've visited this yet
-        if(bfs[index].depth == -1)
-        {
-          // Set depth, ID
-          bfs[index].catID = cat;
-          bfs[index].depth = depth;
-          
-          // Check the children of the ID
-          int[] children = graph[index].getChildrenIDs();
-          for(int i = 0; children != null && i < children.length; i++)
-          {
-            tmp = new CategoryIDNode(children[i]);
-            index = Arrays.binarySearch(graph, tmp);
-            if(bfs[index].depth == -1)
-            {
-              newTS.add(children[i]);
-            }
-          }
-        }//end: if(bfs[index])
-      }//end: while(it)
-      
-      setCount = newTS.size();
-      ts = newTS;
-      newTS = null;
-    }//end: while(setCount)
-    return bfs;
-  }
-  
   /**
    *  
    */
@@ -381,21 +326,7 @@ public class CategoryIDGraph implements Serializable
      return numAncestors + 1;
    }//end: checkDFS(CategoryIDNode, int[], int, int)
    
- /**
-  *  
-  * @param bfs Array of {@link BFSNode} objects.
-  */
-  public void removeCycles(BFSNode[] bfs)
-  {
-    // Get the root node
-    CategoryIDNode tmp = new CategoryIDNode(rootID);
-    int index = Arrays.binarySearch(graph, tmp);
-    
-    // Check starting at the root node
-    checkDFS(new int[0], graph[index], bfs, 0);
-  }
-  
-  public void checkDFS(int[] parents, CategoryIDNode cin, BFSNode[] bfs, int depth)
+  public void checkDFS(int[] parents, CategoryIDNode cin, int depth)
   {
     // Get the children of the node
     int[] children = cin.getChildrenIDs();
@@ -429,7 +360,7 @@ public class CategoryIDGraph implements Serializable
     // Check all children
     for(int i = 0; i < children.length; i++)
     {
-      checkDFS(newParents, graph[index], bfs, depth+1);
+      checkDFS(newParents, graph[index], depth+1);
     }//end: for(i)
   }
   
