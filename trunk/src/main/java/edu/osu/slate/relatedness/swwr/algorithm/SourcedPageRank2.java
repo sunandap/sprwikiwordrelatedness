@@ -31,8 +31,8 @@ import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
  * @author weale
  * @version 1.0
  */
-public class SourcedPageRank extends PageRank implements RelatednessInterface {
-
+public class SourcedPageRank2 extends UniformPageRank implements RelatednessInterface
+{
   /**
    * 
    */
@@ -64,7 +64,8 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
    * 
    * @param graphFileName {@link java.lang.String} containing the path to the graph file.
    */
-  public SourcedPageRank(String graphFileName) {
+  public SourcedPageRank2(String graphFileName)
+  {
     super(graphFileName);
   }
 
@@ -73,7 +74,8 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
    * 
    * @param graph Previously initialized {@link WikiGraph} structure
    */
-  public SourcedPageRank(WikiGraph graph) {
+  public SourcedPageRank2(WikiGraph graph)
+  {
     super(graph);
   }
 

@@ -31,7 +31,7 @@ import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
  * @author weale
  * @version 1.0
  */
-public class SourcedPageRank extends PageRank implements RelatednessInterface {
+public class PersonalizedPageRank extends PageRank implements RelatednessInterface {
 
   /**
    * 
@@ -41,40 +41,43 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
   /**
    * 
    */
-  private double [] SPR_old;
+  private double [] PPR_old;
 
   /**
    * 
    */
-  private double [] SPR_new;
+  private double [] PPR_new;
 
   /**
    * 
    */
-  private double [] PR_init;
+  private double [] PR_jump;
 
   /**
    * Indicates the use of approximate (faster) or exact (more accurate) calculations.
    * <br>
    * Approximate calculations are guaranteed to converge, while exact calculations are not.
    */
+  protected boolean approximate = false;
 
   /**
    * Constructor for GreenRelatedness.  Calls the {@link PageRank} constructor.
    * 
    * @param graphFileName {@link java.lang.String} containing the path to the graph file.
    */
-  public SourcedPageRank(String graphFileName) {
-    super(graphFileName);
-  }
+//  public PersonalizedPageRank(String graphFileName)
+//  {
+//    super(graphFileName);
+//  }
 
   /**
    * Constructor for GreenRelatedness.  Calls the {@link PageRank} constructor.
    * 
    * @param graph Previously initialized {@link WikiGraph} structure
    */
-  public SourcedPageRank(WikiGraph graph) {
-    super(graph);
+  public PersonalizedPageRank(WikiGraph graph)
+  {
+    super(graph, false);
   }
 
   /**
@@ -89,7 +92,10 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
    * @param to Vertex ID number (compressed)
    * @return GreenMeasure resulting from running relatedness measure.
    */
-  public double getRelatedness(int from, int to) {
+  public double getRelatedness(int from, int to)
+  {
+    // Set Approximate Flag
+    approximate = true;
 
     // Return Results of getRelatedness
     return getExactRelatedness(from, to);
@@ -108,6 +114,9 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
    * @return GreenMeasure resulting from running relatedness measure.
    */
   public double getRelatedness(int[] from, int to) {
+
+    // Set Approximate Flag
+    approximate = true;
 
     // Return Results of getRelatedness
     return getRelatedness(from, to);
@@ -146,6 +155,9 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
    */
   public double[] getRelatedness(int from) {
 
+    // Set Approximate Flag
+    approximate = true;
+
     // Return Results of getRelatednessDistribution
     return getExactRelatedness(from);
   }
@@ -162,19 +174,21 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
    */
   public double[] getRelatedness(int[] from) {
 
+    // Set Approximate Flag
+    approximate = true;
 
-    SPR_old = new double[graph.length];
-    SPR_new = new double[graph.length];
-    PR_init = new double[graph.length];
+    PPR_old = new double[graph.length];
+    PPR_new = new double[graph.length];
+    PR_jump = new double[graph.length];
 
-    for(int j=0;j<PR_init.length;j++) {
-      PR_init[j] = PR[j] * -1;
-      SPR_old[j] = PR_init[j];
+    for(int j=0;j<PR_jump.length;j++) {
+      PR_jump[j] = 0;
+      PPR_old[j] = PR_jump[j];
     }
 
     for(int i=0; i<from.length; i++) {
-      PR_init[from[i]] = PR_init[from[i]] + (1.0/from.length);
-      SPR_old[from[i]] = SPR_old[from[i]] + (1.0/from.length);
+      PR_jump[from[i]] = PR_jump[from[i]] + (1.0/from.length);
+      PPR_old[from[i]] = PPR_old[from[i]] + (1.0/from.length);
     }
 
     // Return Results of getRelatednessDistribution
@@ -183,18 +197,20 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
 
   public double[] getRelatedness(int[] from, float[] vals)
   {
-    SPR_old = new double[graph.length];
-    SPR_new = new double[graph.length];
-    PR_init = new double[graph.length];
+    approximate = true;
 
-    for(int j=0;j<PR_init.length;j++) {
-      PR_init[j] = PR[j] * -1;
-      SPR_old[j] = PR_init[j];
+    PPR_old = new double[graph.length];
+    PPR_new = new double[graph.length];
+    PR_jump = new double[graph.length];
+
+    for(int j=0;j<PR_jump.length;j++) {
+      PR_jump[j] = PR[j] * -1;
+      PPR_old[j] = PR_jump[j];
     }
 
     for(int i=0; i<from.length; i++) {
-      PR_init[from[i]] = PR_init[from[i]] + vals[i];
-      SPR_old[from[i]] = SPR_old[from[i]] + vals[i];
+      PR_jump[from[i]] = PR_jump[from[i]] + vals[i];
+      PPR_old[from[i]] = PPR_old[from[i]] + vals[i];
     }
 
     return getExactRelatedness();
@@ -210,19 +226,20 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
    * @param from Vertex ID number (compressed)
    * @return Array containing relatedness distribution
    */
-  public double[] getExactRelatedness(int from) {
+  public double[] getExactRelatedness(int from)
+  {
+    PPR_old = new double[graph.length];
+    PPR_new = new double[graph.length];
+    PR_jump = new double[graph.length];
 
-    double [] SPR_old = new double[graph.length];
-    double [] SPR_new = new double[graph.length];
-    double [] PR_init = new double[graph.length];
-
-    for(int j=0;j<PR_init.length;j++) {
-      PR_init[j] = PR[j] * -1;
-      SPR_old[j] = PR_init[j];
+    for(int j = 0; j < PR_jump.length; j++)
+    {
+      PR_jump[j] = 0;
+      PPR_old[j] = PR_jump[j];
     }
 
-    PR_init[from] = PR_init[from] + 1;
-    SPR_old[from] = SPR_old[from] + 1;
+    PR_jump[from] = 1;
+    PPR_old[from] = 1;
 
     int numIterations = 0;
     double change;
@@ -231,39 +248,58 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
 
       for(int j = 0; j < graph.length; j++) {
 
-        if(graph[j] != null && graph[j].length != 0) {
+        if(graph[j] != null && graph[j].length != 0)
+        {
           // Valid transition array
-
-          for(int k=0; k<graph[j].length; k++) {
-            //						SPR_new[graph[j][k]] += (SPR_old[j] / graph[j].length);
-            SPR_new[graph[j][k]] += (SPR_old[j] * tProb[j][k]);
+          for(int k = 0; k < graph[j].length; k++)
+          {
+            PPR_new[graph[j][k]] += (PPR_old[j] * tProb[j][k]);
           }//end: for(k)
         }
-        else {
+        else
+        {
           // Add transition values to randomSurfer
-          randomSurfer += SPR_old[j] / graph.length;
+          randomSurfer += PPR_old[j] / PR_jump.length;
         }
 
       }//end: for(j)
 
-      for(int x=0; x<SPR_new.length; x++)
+      for(int x = 0; x < PPR_new.length; x++)
       {
-        SPR_new[x] = .85 * ((SPR_new[x] + randomSurfer) + PR_init[x]) + (.15 / PR_init.length);
+        if(PR_jump[x] == 0.0)
+        {
+          PPR_new[x] = (.85 * PPR_new[x]);
+        }
+        else
+        {
+          PPR_new[x] = (.85 * PPR_new[x]) + (.15 * (PR_jump[x] + randomSurfer));
+        }
       }
 
-      change = pageRankDiff(SPR_old, SPR_new);
-      System.arraycopy(SPR_new, 0, SPR_old, 0, SPR_new.length);
-      Arrays.fill(SPR_new, 0.0);
-
+      change = pageRankDiff(PPR_old, PPR_new);
+      
+//      double tmp = 0.0;
+//      for(int x=0; x<PPR_new.length; x++)
+//      {
+//        PPR_old[x] = PPR_new[x];
+//        tmp += PPR_old[x];
+//        PPR_new[x] = 0;
+//      }
+//      System.out.println(tmp);
+      
+      System.arraycopy(PPR_new, 0, PPR_old, 0, PPR_new.length);
+      Arrays.fill(PPR_new, 0.0);
+      
       numIterations++;
     }while(change > 0.002);
 
-    for(int j=0; j<SPR_old.length; j++)
-    {
-      SPR_old[j] = SPR_old[j] * Math.log10(1.0/PR[j]);
-    }//end: for(j)
+//    for(int j = 0; j < PPR_old.length; j++)
+//    {
+//      PPR_old[j] = PPR_old[j] * Math.log10(1.0/PR[j]);
+//    }
 
-    return SPR_old;
+    approximate = false;
+    return PPR_old;
   }
 
   /**
@@ -276,8 +312,7 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
    * @param from Vertex ID number (compressed)
    * @return Array containing relatedness distribution
    */
-  public double[] getExactRelatedness()
-  {
+  public double[] getExactRelatedness() {
 
     int numIterations = 0;
     double change;
@@ -289,38 +324,53 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
         if(graph[j] != null && graph[j].length != 0)
         {
           // Valid transition array
-
-          for(int k=0; k<graph[j].length; k++)
+          for(int k = 0; k < graph[j].length; k++)
           {
-            SPR_new[graph[j][k]] += (SPR_old[j] * tProb[j][k]);
+            PPR_new[graph[j][k]] += (PPR_old[j] * tProb[j][k]);
           }//end: for(k)
         }
         else
         {
           // Add transition values to randomSurfer
-          randomSurfer += SPR_old[j] / graph.length;
+          randomSurfer += PPR_old[j] / PR_jump.length;
         }
 
       }//end: for(j)
 
-      for(int x=0; x<SPR_new.length; x++)
+      for(int x = 0; x < PPR_new.length; x++)
       {
-        SPR_new[x] = .85 * ((SPR_new[x] + randomSurfer) + PR_init[x]) + (.15 / PR_init.length);
+        if(PR_jump[x] == 0.0)
+        {
+          PPR_new[x] = (.85 * PPR_new[x]);
+        }
+        else
+        {
+          PPR_new[x] = (.85 * PPR_new[x]) + (.15 * (PR_jump[x] + randomSurfer));
+        }
       }
 
-      change = pageRankDiff(SPR_old, SPR_new);
-      System.arraycopy(SPR_new, 0, SPR_old, 0, SPR_new.length);
-      Arrays.fill(SPR_new, 0.0);
+      change = pageRankDiff(PPR_old, PPR_new);
 
+//      double tmp = 0.0;
+//      for(int x=0; x<PPR_new.length; x++) {
+//        PPR_old[x] = PPR_new[x];
+//        tmp += PPR_old[x];
+//        PPR_new[x] = 0;
+//      }
+
+      System.arraycopy(PPR_new, 0, PPR_old, 0, PPR_new.length);
+      Arrays.fill(PPR_new, 0.0);
+      
       numIterations++;
     }while(change > 0.002);
 
-    for(int j=0; j<SPR_old.length; j++)
-    {
-      SPR_old[j] = SPR_old[j] * Math.log10(1.0/PR[j]);
-    }
+//    for(int j = 0; j < PPR_old.length; j++)
+//    {
+//      PPR_old[j] = PPR_old[j] * Math.log10(1.0/PR[j]);
+//    }
 
-    return SPR_old;
-  }
+    approximate = false;
+    return PPR_old;
+  }//end: getExactRelatedness()
 
-}//end: GreenRelatedness
+}//end: PersonalizedPageRank
