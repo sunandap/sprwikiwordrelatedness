@@ -37,6 +37,8 @@ public class PageRank extends WikiGraph {
    */
   protected double[] PR;
 
+  protected double alpha;
+  
   /**
    * Calculates PageRank values for a given graph using the default value for alpha (0.15).
    * 
@@ -58,22 +60,15 @@ public class PageRank extends WikiGraph {
     super(graph);
     calculatePageRank(0.85);
   }
-  
-  public double[] getPageRankValues()
-  {
-    return PR;
-  }
-  
-  protected PageRank(WikiGraph graph, boolean b)
-  { super(graph); }
 
   /**
    * Re-calculates PageRank values using a non-default value of alpha.
    * 
    * @param alpha Parameter to weight the Random Walk influence on PageRank
    */
-  public void calculatePageRank(double alpha) {
-
+  public void calculatePageRank(double a)
+  {
+    alpha = a;
     // Create new/old PageRank vectors for iteration
     PR = new double[graph.length];
     double [] PR_new = new double[graph.length];
@@ -160,6 +155,46 @@ public class PageRank extends WikiGraph {
   }//end: calculatePageRank(double)
 
   /**
+   * Calculates the absolute change between two PageRank value arrays.
+   * 
+   * @param i Old PageRank array
+   * @param j New PageRank array
+   * @return Sum of the absolute value of the difference between all corresponding element pairs.
+   */
+  protected static double pageRankDiff(double[] oldPR, double[] newPR)
+  {
+    float diff = 0;
+    
+    for(int x = 0; x < oldPR.length; x++)
+    {
+      diff += Math.abs( oldPR[x] - newPR[x] );
+    }//end: for(x)
+    
+    return diff;
+  }//end: pageRankDiff(double[], double[])
+
+  /**
+   * Returns the array of PageRank values.
+   * 
+   * @return double[] of PageRank values.
+   */
+  public double[] getPageRankValues()
+  {
+    return PR;
+  }
+  
+  /**
+   * Returns the PageRank value for the given vertex number.
+   * 
+   * @param v Vertex Number
+   * @return PageRank value
+   */
+  public double getPageRankValue(int v)
+  {
+    return PR[v];
+  }
+
+  /**
    * Prints the PageRank values in a readable file format.
    * 
    * @param outputFile Name of the file to print the PageRank values to.
@@ -195,28 +230,5 @@ public class PageRank extends WikiGraph {
       System.out.println(i + ":\t" + PR[i]);
     }//end: for(i)
   }//end: printPageRank()
-
-  public double getPageRankValue(int v)
-  {
-    return PR[v];
-  }
-  /**
-   * Calculates the absolute change between two PageRank value arrays.
-   * 
-   * @param i Old PageRank array
-   * @param j New PageRank array
-   * @return Sum of the absolute value of the difference between all corresponding element pairs.
-   */
-  protected static double pageRankDiff(double[] oldPR, double[] newPR)
-  {
-    float diff = 0;
-    
-    for(int x = 0; x < oldPR.length; x++)
-    {
-      diff += Math.abs( oldPR[x] - newPR[x] );
-    }//end: for(x)
-    
-    return diff;
-  }//end: pageRankDiff(double[], double[])
-
+  
 }//end: PageRank
