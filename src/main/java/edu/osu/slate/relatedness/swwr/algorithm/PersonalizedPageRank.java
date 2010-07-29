@@ -77,7 +77,7 @@ public class PersonalizedPageRank extends PageRank implements RelatednessInterfa
    */
   public PersonalizedPageRank(WikiGraph graph)
   {
-    super(graph, false);
+    super(graph);
   }
 
   /**
