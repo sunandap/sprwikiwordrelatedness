@@ -25,7 +25,7 @@ import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
  * @author weale
  * @version 1.0
  */
-public class PageRank extends WikiGraph {
+public class UniformPageRank extends WikiGraph {
 
   /**
    *
@@ -37,14 +37,34 @@ public class PageRank extends WikiGraph {
    */
   protected double[] PR;
 
+  private float[][] uniformTrans;
+  
   /**
    * Calculates PageRank values for a given graph using the default value for alpha (0.15).
    * 
    * @param graphFile {@link String} containing the path to the graph file.
    */
-  public PageRank(String graphFile)
+  public UniformPageRank(String graphFile)
   {
     super(graphFile);
+    
+    uniformTrans = new float[tProb.length][];
+    
+    // Set PR
+    for(int i = 0; i < tProb.length; i++)
+    {
+      if(tProb[i] != null)
+      {
+        uniformTrans[i] = new float[tProb[i].length];
+        
+        for(int j = 0; j < tProb[i].length; j++)
+        {
+          uniformTrans[i][j] = (float) 1.0 / tProb[i].length;
+        }//end: for(j)
+      }//end: if(!null)
+      
+    }//end: for(i)
+    
     calculatePageRank(0.85);
   }
 
@@ -53,9 +73,27 @@ public class PageRank extends WikiGraph {
    * 
    * @param graph Previously initialized {@link WikiGraph} structure
    */
-  public PageRank(WikiGraph graph)
+  public UniformPageRank(WikiGraph graph)
   {
     super(graph);
+
+    uniformTrans = new float[tProb.length][];
+    
+    // Set PR
+    for(int i = 0; i < tProb.length; i++)
+    {
+      if(tProb[i] != null)
+      {
+        uniformTrans[i] = new float[tProb[i].length];
+        
+        for(int j = 0; j < tProb[i].length; j++)
+        {
+          uniformTrans[i][j] = (float) 1.0 / tProb[i].length;
+        }//end: for(j)
+      }//end: if(!null)
+      
+    }//end: for(i)
+    
     calculatePageRank(0.85);
   }
   
@@ -64,7 +102,7 @@ public class PageRank extends WikiGraph {
     return PR;
   }
   
-  protected PageRank(WikiGraph graph, boolean b)
+  protected UniformPageRank(WikiGraph graph, boolean b)
   { super(graph); }
 
   /**
@@ -99,7 +137,7 @@ public class PageRank extends WikiGraph {
           // Update new values for neighbor vertices
           for(int j = 0; j < graph[i].length; j++)
           {
-            PR_new[graph[i][j]] += (PR[i] * tProb[i][j]);
+            PR_new[graph[i][j]] += (PR[i] * uniformTrans[i][j]);
           }//end: for(j)
         }
         else

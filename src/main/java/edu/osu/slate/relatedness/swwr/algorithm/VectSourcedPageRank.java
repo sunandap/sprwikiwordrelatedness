@@ -31,7 +31,7 @@ import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
  * @author weale
  * @version 1.0
  */
-public class SourcedPageRank extends PageRank implements RelatednessInterface {
+public class VectSourcedPageRank extends PageRank implements RelatednessInterface {
 
   /**
    * 
@@ -53,18 +53,22 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
    */
   private double [] PR_init;
 
+  private int fromVertex;
+  private double[] fromArray;
+  
   /**
    * Indicates the use of approximate (faster) or exact (more accurate) calculations.
    * <br>
    * Approximate calculations are guaranteed to converge, while exact calculations are not.
    */
+  protected boolean approximate = false;
 
   /**
    * Constructor for GreenRelatedness.  Calls the {@link PageRank} constructor.
    * 
    * @param graphFileName {@link java.lang.String} containing the path to the graph file.
    */
-  public SourcedPageRank(String graphFileName) {
+  public VectSourcedPageRank(String graphFileName) {
     super(graphFileName);
   }
 
@@ -73,7 +77,7 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
    * 
    * @param graph Previously initialized {@link WikiGraph} structure
    */
-  public SourcedPageRank(WikiGraph graph) {
+  public VectSourcedPageRank(WikiGraph graph) {
     super(graph);
   }
 
@@ -89,10 +93,40 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
    * @param to Vertex ID number (compressed)
    * @return GreenMeasure resulting from running relatedness measure.
    */
-  public double getRelatedness(int from, int to) {
+  public double getRelatedness(int from, int to)
+  {
 
-    // Return Results of getRelatedness
-    return getExactRelatedness(from, to);
+    //Get distribution
+    double [] GM1 = null;
+    if(from != fromVertex)
+    {
+      GM1 = getExactRelatedness(from);
+      fromArray = new double[GM1.length];
+      System.arraycopy(GM1, 0, fromArray, 0, GM1.length);
+      fromVertex = from;
+    }
+    else
+    {
+      GM1 = fromArray;
+    }
+    
+    double [] GM2 = getExactRelatedness(to);
+
+    double num = 0.0;
+    double length1 = 0.0;
+    double length2 = 0.0;
+    for(int i = 0; i < GM1.length; i++)
+    {
+      num += (GM1[i] * GM2[i]);
+      length1 += (GM1[i] * GM1[i]);
+      length2 += (GM2[i] * GM2[i]);
+    }
+
+    length1 = Math.sqrt(length1);
+    length2 = Math.sqrt(length2);
+
+    // Return value at the 'to' index
+    return num / (length1 * length2);
   }
 
   /**
@@ -108,6 +142,9 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
    * @return GreenMeasure resulting from running relatedness measure.
    */
   public double getRelatedness(int[] from, int to) {
+
+    // Set Approximate Flag
+    approximate = true;
 
     // Return Results of getRelatedness
     return getRelatedness(from, to);
@@ -146,6 +183,9 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
    */
   public double[] getRelatedness(int from) {
 
+    // Set Approximate Flag
+    approximate = true;
+
     // Return Results of getRelatednessDistribution
     return getExactRelatedness(from);
   }
@@ -162,6 +202,8 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
    */
   public double[] getRelatedness(int[] from) {
 
+    // Set Approximate Flag
+    approximate = true;
 
     SPR_old = new double[graph.length];
     SPR_new = new double[graph.length];
@@ -181,8 +223,10 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
     return getExactRelatedness();
   }
 
-  public double[] getRelatedness(int[] from, float[] vals)
-  {
+  public double[] getRelatedness(int[] from, float[] vals) {
+
+    approximate = true;
+
     SPR_old = new double[graph.length];
     SPR_new = new double[graph.length];
     PR_init = new double[graph.length];
@@ -210,19 +254,76 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
    * @param from Vertex ID number (compressed)
    * @return Array containing relatedness distribution
    */
-  public double[] getExactRelatedness(int from) {
-
+  public double[] getExactRelatedness(int from)
+  {
     double [] SPR_old = new double[graph.length];
     double [] SPR_new = new double[graph.length];
     double [] PR_init = new double[graph.length];
 
-    for(int j=0;j<PR_init.length;j++) {
+    for(int j = 0; j < PR_init.length; j++)
+    {
       PR_init[j] = PR[j] * -1;
       SPR_old[j] = PR_init[j];
     }
 
     PR_init[from] = PR_init[from] + 1;
     SPR_old[from] = SPR_old[from] + 1;
+
+    int numIterations = 0;
+    double change;
+    do {
+      double randomSurfer = 0;
+
+      for(int j = 0; j < graph.length; j++)
+      {
+
+        if(graph[j] != null && graph[j].length != 0) {
+          // Valid transition array
+
+          for(int k = 0; k < graph[j].length; k++)
+          {
+            SPR_new[graph[j][k]] += (SPR_old[j] * tProb[j][k]);
+          }//end: for(k)
+        }
+        else
+        {
+          // Add transition values to randomSurfer
+          randomSurfer += SPR_old[j] / graph.length;
+        }
+
+      }//end: for(j)
+
+      for(int x = 0; x < SPR_new.length; x++)
+      {
+        SPR_new[x] = .85 * ((SPR_new[x] + randomSurfer) + PR_init[x]) + (.15 / PR_init.length);
+      }
+
+      change = pageRankDiff(SPR_old, SPR_new);
+      System.arraycopy(SPR_new, 0, SPR_old, 0, SPR_new.length);
+      Arrays.fill(SPR_new, 0.0);
+
+      numIterations++;
+    }while(change > 0.002);
+
+    for(int j=0; j<SPR_old.length; j++)
+    {
+      SPR_old[j] = SPR_old[j] * Math.log10(1.0/PR[j]);
+    }
+
+    return SPR_old;
+  }
+
+  /**
+   * Finds the relatedness distribution sourced at a vertex using the exact inference routine.
+   * <p>
+   * This runs slower than getRelatedness, but should return more accurate results.
+   * <p>
+   * This is NOT guaranteed to converge.
+   *
+   * @param from Vertex ID number (compressed)
+   * @return Array containing relatedness distribution
+   */
+  public double[] getExactRelatedness() {
 
     int numIterations = 0;
     double change;
@@ -246,80 +347,34 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface {
 
       }//end: for(j)
 
-      for(int x=0; x<SPR_new.length; x++)
-      {
-        SPR_new[x] = .85 * ((SPR_new[x] + randomSurfer) + PR_init[x]) + (.15 / PR_init.length);
+      for(int x=0; x<SPR_new.length; x++) {
+        if(approximate) {
+          SPR_new[x] = .85 * ((SPR_new[x] + randomSurfer) + PR_init[x]) + (.15 / PR_init.length);
+        }
+        else {
+          SPR_new[x] = (SPR_new[x] + randomSurfer) + PR_init[x];
+        }
       }
 
       change = pageRankDiff(SPR_old, SPR_new);
+
+      //			double tmp = 0.0;
+      //			for(int x=0; x<SPR_new.length; x++) {
+      //				SPR_old[x] = SPR_new[x];
+      //				tmp += SPR_old[x];
+      //				SPR_new[x] = 0;
+      //			}
       System.arraycopy(SPR_new, 0, SPR_old, 0, SPR_new.length);
       Arrays.fill(SPR_new, 0.0);
 
       numIterations++;
     }while(change > 0.002);
 
-    for(int j=0; j<SPR_old.length; j++)
-    {
-      SPR_old[j] = SPR_old[j] * Math.log10(1.0/PR[j]);
-    }//end: for(j)
-
-    return SPR_old;
-  }
-
-  /**
-   * Finds the relatedness distribution sourced at a vertex using the exact inference routine.
-   * <p>
-   * This runs slower than getRelatedness, but should return more accurate results.
-   * <p>
-   * This is NOT guaranteed to converge.
-   *
-   * @param from Vertex ID number (compressed)
-   * @return Array containing relatedness distribution
-   */
-  public double[] getExactRelatedness()
-  {
-
-    int numIterations = 0;
-    double change;
-    do {
-      double randomSurfer = 0;
-
-      for(int j = 0; j < graph.length; j++)
-      {
-        if(graph[j] != null && graph[j].length != 0)
-        {
-          // Valid transition array
-
-          for(int k=0; k<graph[j].length; k++)
-          {
-            SPR_new[graph[j][k]] += (SPR_old[j] * tProb[j][k]);
-          }//end: for(k)
-        }
-        else
-        {
-          // Add transition values to randomSurfer
-          randomSurfer += SPR_old[j] / graph.length;
-        }
-
-      }//end: for(j)
-
-      for(int x=0; x<SPR_new.length; x++)
-      {
-        SPR_new[x] = .85 * ((SPR_new[x] + randomSurfer) + PR_init[x]) + (.15 / PR_init.length);
-      }
-
-      change = pageRankDiff(SPR_old, SPR_new);
-      System.arraycopy(SPR_new, 0, SPR_old, 0, SPR_new.length);
-      Arrays.fill(SPR_new, 0.0);
-
-      numIterations++;
-    }while(change > 0.002);
-
-    for(int j=0; j<SPR_old.length; j++)
-    {
+    for(int j=0; j<SPR_old.length; j++) {
       SPR_old[j] = SPR_old[j] * Math.log10(1.0/PR[j]);
     }
 
+    approximate = false;
     return SPR_old;
   }
 
