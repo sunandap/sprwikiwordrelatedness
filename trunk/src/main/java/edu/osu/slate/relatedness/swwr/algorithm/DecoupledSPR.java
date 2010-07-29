@@ -23,18 +23,18 @@ import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
 /**
  * Implementation of the Sourced PageRank <b>(SPR)</b> version of vertex relatedness on a graph.
  * <p>
- * In this version, the same transition probabilities are used for the SPR and the PR algorithms.
- * If this is not desired, use the {@link DecoupledSPR} class.
+ * In this version, uniform PageRank transition probabilities are used to calculate the PR values.
+ * Non-uniform transition probabilities are used for SPR calculation.
+ * If this is not desired, use the {@link SourcedPageRank} class.
  * <p>
- * 
  * Source Paper: Y. Ollivier and P. Senellart, <i>Finding Related Pages Using Green Measures: An Illustration with Wikipedia.</i>
  * 
  * @author weale
  * @version 2.0
  */
-public class SourcedPageRank extends PageRank implements RelatednessInterface
+public class DecoupledSPR extends UniformPageRank implements RelatednessInterface
 {
-
+  
   /* Serialization UID  */
   private static final long serialVersionUID = 6168622709678063605L;
 
@@ -49,155 +49,84 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface
 
   /* Sourcing Vector Weight */
   private double beta;
-  
-  /**
-   * Indicates the use of approximate (faster) or exact (more accurate) calculations.
-   * <br>
-   * Approximate calculations are guaranteed to converge, while exact calculations are not.
-   */
 
   /**
-   * Constructor for GreenRelatedness.  Calls the {@link PageRank} constructor.
+   * Constructor.  Calls the {@link UniformPageRank} constructor.
    * 
    * @param graphFileName {@link java.lang.String} containing the path to the graph file.
    */
-  public SourcedPageRank(String graphFileName)
+  public DecoupledSPR(String graphFileName)
   {
     super(graphFileName);
     beta = alpha;
   }
 
   /**
-   * Constructor for Sourced PageRank.  Calls the {@link PageRank} constructor.
+   * Constructor.  Calls the {@link UniformPageRank} constructor.
    * 
-   * @param graph Previously initialized {@link WikiGraph} structure
+   * @param graph Previously initialized {@link WikiGraph} structure.
    */
-  public SourcedPageRank(WikiGraph graph)
+  public DecoupledSPR(WikiGraph graph)
   {
     super(graph);
     beta = alpha;
   }
-
+  
   /**
-   * Constructor for Sourced PageRank.  Calls the {@link PageRank} constructor.
+   * Constructor. Calls the {@link UniformPageRank} constructor.
    * 
-   * @param graph Previously initialized {@link WikiGraph} structure
+   * @param graph Previously initialized {@link WikiGraph} structure.
    * @param beta Sourcing vector weight
    */
-  public SourcedPageRank(WikiGraph graph, double beta)
+  public DecoupledSPR(WikiGraph graph, double beta)
   {
     super(graph);
     this.beta = beta;
   }
-  
+
   /**
-   * Finds the relatedness value between two vertices using the exact inference routine.
+   * Finds the relatedness value between two vertices (compressed value) using the approximate inference routine.
    * <p>
-   * This runs slower than getRelatedness, but should return more accurate results.
-   * This is NOT guaranteed to converge.
+   * This runs faster than getExactRelatedness, but may return less accurate results.
+   * This is guaranteed to converge.
    * <p>
    * Requires relatedness calculations on the full-graph.
-   *
-   * @param from Vertex number
-   * @param to Vertex number (compressed)
+   * 
+   * @param from Vertex ID number (compressed)
+   * @param to Vertex ID number (compressed)
    * @return GreenMeasure resulting from running relatedness measure.
    */
-  public double getRelatedness(int from, int to)
-  {
-    //Get SPR distribution
+  public double getRelatedness(int[] from, int to) {
+
+    // Return Results of getRelatedness
+    return getRelatedness(from, to);
+  }
+
+  /**
+   * Finds the relatedness value between two vertex numbers.
+   * <p>
+   * Requires relatedness calculations on the full-graph.
+   * 
+   * @param from Source vertex number.
+   * @param to Destination vertex number.
+   * @return DecoupledSPR value.
+   */
+  public double getRelatedness(int from, int to) {
+
+    //Get Sourced PageRank distribution
     double [] SPRVals = getRelatedness(from);		
 
-    // Return value at the 'to' vertex
+    // Return value at the 'to' index
     return SPRVals[to];
   }
-  
   /**
    * Finds the relatedness distribution sourced at a vertex using the approximate inference routine.
-   * <p>
-   * This runs faster than getExactRelatedness, but should return less accurate results.
-   * <p>
-   * This is guaranteed to converge.
    *
-   * @param from Vertex number
+   * @param from Vertex ID number (compressed)
    * @return Array containing relatedness distribution
    */
-   public double[] getRelatedness(int from)
-   {
-     SPR_old = new double[graph.length];
-     SPR_new = new double[graph.length];
-     SourceVect = new double[graph.length];
+  public double[] getRelatedness(int from) {
 
-     for(int j = 0; j < SourceVect.length; j++)
-     {
-       SourceVect[j] = PR[j] * -1;
-     }//end: for(j)
-     
-     System.arraycopy(SourceVect, 0, SPR_old, 0, SourceVect.length);
-     
-     SourceVect[from] = SourceVect[from] + 1;
-     SPR_old[from] = SPR_old[from] + 1;
-
-     int numIterations = 0;
-     double change;
-     
-     // SOURCED PAGERANK ALGORITHM
-     do
-     {
-       double randomSurfer = 0;
-
-       // for each graph vertex
-       for(int j = 0; j < graph.length; j++)
-       {
-         if(graph[j] != null && graph[j].length != 0)
-         {
-           // Valid transition array
-           // Propagate values forward in graph
-           for(int k = 0; k < graph[j].length; k++)
-           {
-             SPR_new[graph[j][k]] += (SPR_old[j] * tProb[j][k]);
-           }//end: for(k)
-         }
-         else
-         {
-           // No out-bound edges
-           // Add transition values to randomSurfer for universal weight dispersion
-           randomSurfer += SPR_old[j] / graph.length;
-         }
-
-       }//end: for(j)
-
-       // Combine three models
-       for(int x = 0; x < SPR_new.length; x++)
-       {
-         SPR_new[x] = alpha * (SPR_new[x] + randomSurfer) + ((1-alpha) / graph.length) + beta * SourceVect[x];
-       }
-
-       change = pageRankDiff(SPR_old, SPR_new);
-       System.arraycopy(SPR_new, 0, SPR_old, 0, SPR_new.length);
-       Arrays.fill(SPR_new, 0.0);
-
-       numIterations++;
-     }while(change > 0.002);
-
-     for(int j = 0; j < SPR_old.length; j++)
-     {
-       SPR_old[j] = SPR_old[j] * Math.log10(1.0/PR[j]);
-     }//end: for(j)
-
-     return SPR_old;
-   }
-
-  /**
-   * Finds the relatedness distribution sourced at set vertices.
-   * <p>
-   * All source vertices are given uniform weights.
-   * 
-   * @param from Array of vertex numbers
-   * @return SPR values
-   */
-  public double[] getRelatedness(int[] from)
-  {
-    
     SPR_old = new double[graph.length];
     SPR_new = new double[graph.length];
     SourceVect = new double[graph.length];
@@ -209,6 +138,83 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface
     
     System.arraycopy(SourceVect, 0, SPR_old, 0, SourceVect.length);
 
+    SourceVect[from] = SourceVect[from] + 1;
+    SPR_old[from] = SPR_old[from] + 1;
+
+    int numIterations = 0;
+    double change;
+    
+    // SOURCED PAGERANK ALGORITHM
+    do
+    {
+      double randomSurfer = 0;
+
+      // for each graph vertex
+      for(int j = 0; j < graph.length; j++)
+      {
+        if(graph[j] != null && graph[j].length != 0)
+        {
+          // Valid transition array
+          // Propagate values forward in graph
+          for(int k = 0; k < graph[j].length; k++)
+          {
+            SPR_new[graph[j][k]] += (SPR_old[j] * tProb[j][k]);
+          }//end: for(k)
+        }
+        else
+        {
+          // No out-bound edges
+          // Add transition values to randomSurfer for universal weight dispersion
+          randomSurfer += SPR_old[j] / graph.length;
+        }
+
+      }//end: for(j)
+
+      // Combine three models
+      for(int x=0; x<SPR_new.length; x++)
+      {
+        SPR_new[x] = alpha * (SPR_new[x] + randomSurfer) + ((1-alpha) / graph.length) + beta * SourceVect[x];
+      }
+
+      change = pageRankDiff(SPR_old, SPR_new);
+      System.arraycopy(SPR_new, 0, SPR_old, 0, SPR_new.length);
+      Arrays.fill(SPR_new, 0.0);
+
+      numIterations++;
+    }while(change > 0.002);
+
+    for(int j=0; j<SPR_old.length; j++)
+    {
+      SPR_old[j] = SPR_old[j] * Math.log10(1.0/PR[j]);
+    }//end: for(j)
+
+    return SPR_old;
+  }
+  
+  /**
+   * Finds the relatedness distribution sourced at a vertex using the approximate inference routine.
+   * <p>
+   * This runs faster than getExactRelatedness, but should return less accurate results.
+   * <p>
+   * This is guaranteed to converge.
+   *
+   * @param from Vertex ID number (compressed)
+   * @return Array containing relatedness distribution
+   */
+  public double[] getRelatedness(int[] from) {
+
+
+    SPR_old = new double[graph.length];
+    SPR_new = new double[graph.length];
+    SourceVect = new double[graph.length];
+
+    for(int j = 0; j < SourceVect.length; j++)
+    {
+      SourceVect[j] = PR[j] * -1;
+    }
+    
+    System.arraycopy(SourceVect, 0, SPR_old, 0, SourceVect.length);
+    
     for(int i = 0; i < from.length; i++)
     {
       SourceVect[from[i]] = SourceVect[from[i]] + (1.0/from.length);
@@ -220,9 +226,14 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface
   }
 
   /**
-   * Finds the relatedness distribution sourced at set vertices.
+   * Finds the relatedness distribution sourced at a vertex using the approximate inference routine.
    * <p>
-   * All source vertices are given weights based on the vals array.  Vals array is assumed to sum to one.
+   * This runs faster than getExactRelatedness, but should return less accurate results.
+   * <p>
+   * This is guaranteed to converge.
+   *
+   * @param from Vertex ID number (compressed)
+   * @return Array containing relatedness distribution
    */
   public double[] getRelatedness(int[] from, float[] vals)
   {
@@ -233,15 +244,15 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface
     for(int j = 0; j < SourceVect.length; j++)
     {
       SourceVect[j] = PR[j] * -1;
-    }//end: for(j)
+    }
     
     System.arraycopy(SourceVect, 0, SPR_old, 0, SourceVect.length);
-    
+
     for(int i = 0; i < from.length; i++)
     {
       SourceVect[from[i]] = SourceVect[from[i]] + vals[i];
       SPR_old[from[i]] = SPR_old[from[i]] + vals[i];
-    }//end: for(i)
+    }
 
     return getRelatedness();
   }
@@ -307,4 +318,5 @@ public class SourcedPageRank extends PageRank implements RelatednessInterface
     return SPR_old;
   }
 
-}//end: SourcedPageRank
+
+}//end: DecoupledSPR

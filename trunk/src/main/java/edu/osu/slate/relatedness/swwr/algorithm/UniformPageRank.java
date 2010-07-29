@@ -16,6 +16,7 @@
 package edu.osu.slate.relatedness.swwr.algorithm;
 
 import java.io.*;
+import java.util.Arrays;
 
 import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
 
@@ -25,19 +26,21 @@ import edu.osu.slate.relatedness.swwr.data.graph.WikiGraph;
  * @author weale
  * @version 1.0
  */
-public class UniformPageRank extends WikiGraph {
-
+public class UniformPageRank extends WikiGraph
+{
   /**
    *
    */
   private static final long serialVersionUID = 4484834055399872458L;
 
-  /**
-   *  Array of PageRank values
-   */
+  /* Array of PageRank values */
   protected double[] PR;
 
+  /* Array of transition probabilities */
   private float[][] uniformTrans;
+  
+  /* Model parameter */
+  protected double alpha;
   
   /**
    * Calculates PageRank values for a given graph using the default value for alpha (0.15).
@@ -50,7 +53,7 @@ public class UniformPageRank extends WikiGraph {
     
     uniformTrans = new float[tProb.length][];
     
-    // Set PR
+    // Set uniform transition probabilities
     for(int i = 0; i < tProb.length; i++)
     {
       if(tProb[i] != null)
@@ -97,20 +100,14 @@ public class UniformPageRank extends WikiGraph {
     calculatePageRank(0.85);
   }
   
-  public double[] getPageRankValues()
-  {
-    return PR;
-  }
-  
-  protected UniformPageRank(WikiGraph graph, boolean b)
-  { super(graph); }
-
   /**
    * Re-calculates PageRank values using a non-default value of alpha.
    * 
    * @param alpha Parameter to weight the Random Walk influence on PageRank
    */
-  public void calculatePageRank(double alpha) {
+  public void calculatePageRank(double alpha)
+  {
+    this.alpha = alpha;
 
     // Create new/old PageRank vectors for iteration
     PR = new double[graph.length];
@@ -145,17 +142,9 @@ public class UniformPageRank extends WikiGraph {
           randomSurfer += PR[i] / graph.length;
         }
 
-        if(verbose && i%200000 == 0)
-        {
-          System.out.print(".");
-        }
       }//end: for(i)
       
-      if(verbose)
-      {
-        System.out.println();
-      }
-
+      // Combine the two models
       for(int x = 0; x < PR_new.length; x++)
       {
         PR_new[x] = (alpha * (PR_new[x] + randomSurfer)) + ((1-alpha) / PR_new.length);
@@ -165,11 +154,8 @@ public class UniformPageRank extends WikiGraph {
       change = pageRankDiff(PR, PR_new);
 
       // Reset new PR array.
-      for(int x = 0; x < PR.length; x++)
-      {
-        PR[x] = PR_new[x];
-        PR_new[x] = 0;
-      }
+      System.arraycopy(PR_new, 0, PR, 0, PR.length);
+      Arrays.fill(PR_new, 0.0);
 
       // Calculate the magnitude for normalization
       double mag = 0;
@@ -178,24 +164,54 @@ public class UniformPageRank extends WikiGraph {
         mag += PR[i];
       }//end: for(i)
       
-      if(verbose)
-      { // Sanity Check
-        System.out.println("This should be about one: " + mag);
-      }
-      
       // Normalize PR vector
       for(int i = 0; i < PR.length; i++)
       {
         PR[i] = (float) (PR[i] / mag);
       }//end: for(i)
 
-      if(verbose)
-      { // Sanity Check
-        System.out.println(change);
-      }
-
-    }while(change > 0.001);		
+    } while(change > 0.001);
   }//end: calculatePageRank(double)
+
+  /**
+   * Calculates the absolute change between two PageRank value arrays.
+   * 
+   * @param i Old PageRank array
+   * @param j New PageRank array
+   * @return Sum of the absolute value of the difference between all corresponding element pairs.
+   */
+  protected static double pageRankDiff(double[] oldPR, double[] newPR)
+  {
+    float diff = 0;
+    
+    for(int x = 0; x < oldPR.length; x++)
+    {
+      diff += Math.abs( oldPR[x] - newPR[x] );
+    }//end: for(x)
+    
+    return diff;
+  }//end: pageRankDiff(double[], double[])
+
+  /**
+   * Gets the array of PageRank values.
+   * 
+   * @return double[] of PageRank values.
+   */
+  public double[] getPageRankValues()
+  {
+    return PR;
+  }
+  
+  /**
+   * Returns the PageRank value for the given vertex.
+   * 
+   * @param v Vertex number.
+   * @return PageRank value.
+   */
+  public double getPageRankValue(int v)
+  {
+    return PR[v];
+  }
 
   /**
    * Prints the PageRank values in a readable file format.
@@ -234,27 +250,4 @@ public class UniformPageRank extends WikiGraph {
     }//end: for(i)
   }//end: printPageRank()
 
-  public double getPageRankValue(int v)
-  {
-    return PR[v];
-  }
-  /**
-   * Calculates the absolute change between two PageRank value arrays.
-   * 
-   * @param i Old PageRank array
-   * @param j New PageRank array
-   * @return Sum of the absolute value of the difference between all corresponding element pairs.
-   */
-  protected static double pageRankDiff(double[] oldPR, double[] newPR)
-  {
-    float diff = 0;
-    
-    for(int x = 0; x < oldPR.length; x++)
-    {
-      diff += Math.abs( oldPR[x] - newPR[x] );
-    }//end: for(x)
-    
-    return diff;
-  }//end: pageRankDiff(double[], double[])
-
-}//end: PageRank
+}//end: UniformPageRank

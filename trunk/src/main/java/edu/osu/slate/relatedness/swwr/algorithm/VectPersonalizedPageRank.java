@@ -80,7 +80,7 @@ public class VectPersonalizedPageRank extends PageRank implements RelatednessInt
    */
   public VectPersonalizedPageRank(WikiGraph graph)
   {
-    super(graph, false);
+    super(graph);
     fromVertex = -1;
   }
 
